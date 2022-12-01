@@ -13,12 +13,14 @@ impl Plugin for PhysicsPlugin {
 impl PhysicsPlugin {
 
     fn update_positions(
-        mut commands: Commands,
-        mut sail_query: Query<(&components::SailElement, &components::Mass)>
+        //mut commands: Commands,
+        mut sail_query: Query<(&components::SailElement, &mut Transform)>
         ) {
 
-        for (element, mass) in sail_query.iter_mut() {
-            println!("Mass: {:?}", mass);
+        let translation = Vec3::new(0.0, 0.1, 0.0);
+
+        for (_element, mut transform) in sail_query.iter_mut() {
+            transform.translation += translation;
         }
     }
 }
