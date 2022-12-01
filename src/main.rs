@@ -4,6 +4,8 @@ use bevy_prototype_lyon::prelude::*;
 mod components;
 mod graphics;
 use graphics::GraphicsPlugin;
+mod physics;
+use physics::PhysicsPlugin;
 
 fn main() {
     App::new()
@@ -11,6 +13,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_plugin(ShapePlugin)
         .add_plugin(GraphicsPlugin)
+        .add_plugin(PhysicsPlugin)
         .add_startup_system(camera_system)
         .run();
 }
