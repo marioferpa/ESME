@@ -1,1 +1,3 @@
-# ESME
+# ESME (Electric Sail Mission Expeditor)
+
+TBC
