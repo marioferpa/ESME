@@ -8,3 +8,10 @@ pub struct Mass (
 
 #[derive(Component)]
 pub struct SailElement;
+
+// Needs a better name
+#[derive(Component)]
+pub struct CanMove {
+    pub previous_x: f32,
+    pub previous_y: f32,
+}

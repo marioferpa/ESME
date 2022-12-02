@@ -52,7 +52,9 @@ impl GraphicsPlugin {
                 Transform::from_xyz(50.0, 0.0, 0.0),
             ))
             .insert(components::SailElement)
-            .insert(components::Mass(1.0));
+            .insert(components::Mass(1.0))
+            .insert(components::CanMove{previous_x: 50.0, previous_y: 0.0})
+            ;
 
         commands
             .spawn(GeometryBuilder::build_as(
@@ -64,7 +66,9 @@ impl GraphicsPlugin {
                 Transform::from_xyz(70.0, 0.0, 0.0),
             ))
             .insert(components::SailElement)
-            .insert(components::Mass(1.0));
+            .insert(components::Mass(1.0))
+            .insert(components::CanMove{previous_x: 50.0, previous_y: 0.0})
+            ;
 
         commands
             .spawn(GeometryBuilder::build_as(
@@ -76,7 +80,9 @@ impl GraphicsPlugin {
                 Transform::from_xyz(90.0, 0.0, 0.0),
             ))
             .insert(components::SailElement)
-            .insert(components::Mass(1.0));
+            .insert(components::Mass(1.0))
+            .insert(components::CanMove{previous_x: 50.0, previous_y: 0.0})
+            ;
 
     }
 }
