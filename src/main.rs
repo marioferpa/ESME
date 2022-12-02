@@ -1,3 +1,5 @@
+//https://gamedevelopment.tutsplus.com/tutorials/simulate-tearable-cloth-and-ragdolls-with-simple-verlet-integration--gamedev-519
+
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 
