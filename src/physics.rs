@@ -4,12 +4,22 @@ use bevy::prelude::*;
 use crate::{ components };
 
 // Lowercase g is not rustacean
-pub const ACCELERATION: f32 = -9.8;  // pixel*s⁻² ?
+pub const ACCELERATION: f32 = -9.8;     // pixel*s⁻² ?
+pub const PHYSICS_TIMESTEP:     f32 = 1.0/60.0; // seconds
 
 #[derive(Resource)]
 pub struct SimulationParameters {
-    timestep:       f32, // Timestep for the physics simulation, in seconds
-    leftover_time:  f32,  // Unused time from the previous simulation loop
+    timestep:       f32,    // Timestep for the physics simulation, in seconds
+    leftover_time:  f32,    // Unused time from the previous simulation loop
+}
+
+impl Default for SimulationParameters {
+    fn default() -> SimulationParameters {
+        SimulationParameters {
+            timestep:       1.0/60.0,
+            leftover_time:  0.0,
+        }
+    }
 }
 
 pub struct PhysicsPlugin;
@@ -18,7 +28,7 @@ impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_system(Self::update_positions)
-            .insert_resource(SimulationParameters{timestep: 1.0/60.0, leftover_time: 0.0});
+            .insert_resource(SimulationParameters{timestep: PHYSICS_TIMESTEP, ..Default::default()});
     }
 }
 
@@ -31,10 +41,11 @@ impl PhysicsPlugin {
         mut sail_query: Query<(&components::SailElement, &mut Transform, &mut components::CanMove)>
         ) {
 
-        //let _velocity_x: f32 = 0.0;    // unclear units for now 
-        //let velocity_y: f32 = -50.0;
+        // Bevy's timestep may not be consistent, and instead of trying to control it, I choose the
+        // timestep that I want, calculate as many timesteps as possible, and add the leftover time
+        // to the next timestep's physics loop.
 
-        // Time since last update plus leftover time
+        // Time since last update plus leftover time from previous frame
         let elapsed_time = time.delta_seconds() + sim_params.leftover_time;
 
         // Number of timesteps that should be calculated during this update
@@ -47,10 +58,6 @@ impl PhysicsPlugin {
         // Simulation loop, for whatever many timesteps are needed
         for _ in 0..timesteps { // Make sure that this is not skipping one or something
             for (_element, mut transform, mut can_move) in sail_query.iter_mut() {
-
-                // Euler integration, right?
-                //transform.translation.y += velocity_y * sim_params.timestep;
-                //println!("{:?}", transform.translation.y);
 
                 // Verlet integration
                 //println!("{:?}", can_move.previous_y);
