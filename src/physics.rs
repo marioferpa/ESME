@@ -49,24 +49,26 @@ impl PhysicsPlugin {
             for entity in esail.elements.iter() {
                 // Make sure this iterates in order, and in the order you want!
 
-                let (_element, mut transform, mut can_move) = sail_query.get_mut(*entity).expect("No sail element found");
+                if let Some(entity) = entity {
 
-                //println!("{:?}", transform.translation.y);
-                
-                // Applying acceleration
+                    let (_element, mut transform, mut can_move) = sail_query.get_mut(*entity).expect("No sail element found");
 
-                let velocity_y = transform.translation.y - can_move.previous_y;
+                    //println!("{:?}", transform.translation.y);
+                    
+                    // Applying acceleration
 
-                let next_y = transform.translation.y + velocity_y + ACCELERATION * sim_params.timestep * sim_params.timestep;
+                    let velocity_y = transform.translation.y - can_move.previous_y;
 
-                // Applying constraints
+                    let next_y = transform.translation.y + velocity_y + ACCELERATION * sim_params.timestep * sim_params.timestep;
 
-                // Updating positions
+                    // Applying constraints
 
-                can_move.previous_y = transform.translation.y;
+                    // Updating positions
 
-                transform.translation.y = next_y;
-            
+                    can_move.previous_y = transform.translation.y;
+
+                    transform.translation.y = next_y;
+                }
             }
         }
     }

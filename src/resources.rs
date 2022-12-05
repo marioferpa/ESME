@@ -19,6 +19,5 @@ impl Default for SimulationParameters {
 #[derive(Resource)]
 // Inspired by https://stackoverflow.com/questions/74031066/is-there-a-way-to-do-complex-queries-in-bevy-ecs
 pub struct ESail {
-    //pub elements: Vec<Option<Entity>>,
-    pub elements: Vec<Entity>,
+    pub elements: Vec<Option<Entity>>, // Option so that this can be empty?
 }
