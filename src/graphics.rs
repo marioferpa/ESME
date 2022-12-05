@@ -62,7 +62,8 @@ impl GraphicsPlugin {
         ;
 
         // Add the entity to the ESail resource. Did it work?
-        esail.elements.push(Some(element1));
+        //esail.elements.push(Some(element1));
+        esail.elements.push(element1);
 
         let element2 = commands
             .spawn(GeometryBuilder::build_as(
@@ -79,7 +80,8 @@ impl GraphicsPlugin {
             .id()
         ;
 
-        esail.elements.push(Some(element2));
+        //esail.elements.push(Some(element2));
+        esail.elements.push(element2);
 
     }
 }

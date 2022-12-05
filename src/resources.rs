@@ -15,8 +15,10 @@ impl Default for SimulationParameters {
     }
 }
 
+// Maybe it would make more sense as an entity with this as a component
 #[derive(Resource)]
 // Inspired by https://stackoverflow.com/questions/74031066/is-there-a-way-to-do-complex-queries-in-bevy-ecs
 pub struct ESail {
-    pub elements: Vec<Option<Entity>>,
+    //pub elements: Vec<Option<Entity>>,
+    pub elements: Vec<Entity>,
 }

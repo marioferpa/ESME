@@ -32,9 +32,6 @@ impl PhysicsPlugin {
         // timestep that I want, calculate as many timesteps as possible, and add the leftover time
         // to the next timestep's physics loop.
 
-        //println!("----- NEW FRAME -----");
-        //println!("Timesteps: {}", timesteps);
-
         // Time since last update plus leftover time from previous frame
         let elapsed_time = time.delta_seconds() + sim_params.leftover_time;
 
@@ -45,10 +42,17 @@ impl PhysicsPlugin {
         let leftover_time = elapsed_time - timesteps as f32 * sim_params.timestep;
         sim_params.leftover_time = leftover_time;
 
-        // Simulation loop, for whatever many timesteps are needed
+        // Simulation loop, for however many timesteps are needed
         for _ in 0..timesteps { // Make sure that this is not skipping one or something
-            for (_element, mut transform, mut can_move) in sail_query.iter_mut() {
 
+            // Iterating over esail elements, in order.
+            for entity in esail.elements.iter() {
+                // Make sure this iterates in order, and in the order you want!
+
+                let (_element, mut transform, mut can_move) = sail_query.get_mut(*entity).expect("No sail element found");
+
+                //println!("{:?}", transform.translation.y);
+                
                 // Applying acceleration
 
                 let velocity_y = transform.translation.y - can_move.previous_y;
@@ -59,12 +63,10 @@ impl PhysicsPlugin {
 
                 // Updating positions
 
-
                 can_move.previous_y = transform.translation.y;
 
                 transform.translation.y = next_y;
-
-
+            
             }
         }
     }
