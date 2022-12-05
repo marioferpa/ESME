@@ -8,13 +8,17 @@ pub struct GraphicsPlugin;
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_startup_system(Self::spawn_shapes);
+            .add_startup_system(Self::spawn_shapes)
+            .insert_resource(components::ESail{elements: Vec::new()});
     }
 }
 
 impl GraphicsPlugin {
 
-    fn spawn_shapes(mut commands: Commands) {
+    fn spawn_shapes(
+        mut commands: Commands,
+        mut esail: ResMut<components::ESail>,
+        ) {
 
         // Satellite body
 
@@ -42,7 +46,7 @@ impl GraphicsPlugin {
             ..shapes::Circle::default() // Editing the transform later.
         };
 
-        commands
+        let element1 = commands
             .spawn(GeometryBuilder::build_as(
                 &ball_shape,
                 DrawMode::Outlined {
@@ -51,12 +55,16 @@ impl GraphicsPlugin {
                 },
                 Transform::from_xyz(50.0, 0.0, 0.0),
             ))
-            .insert(components::SailElement)
+            .insert(components::SailElement{ index: 0 })
             .insert(components::Mass(1.0))
             .insert(components::CanMove{previous_x: 50.0, previous_y: 0.0})
-            ;
+            .id()
+        ;
 
-        commands
+        // Add the entity to the ESail resource. Did it work?
+        esail.elements.push(Some(element1));
+
+        let element2 = commands
             .spawn(GeometryBuilder::build_as(
                 &ball_shape,
                 DrawMode::Outlined {
@@ -65,24 +73,13 @@ impl GraphicsPlugin {
                 },
                 Transform::from_xyz(70.0, 0.0, 0.0),
             ))
-            .insert(components::SailElement)
+            .insert(components::SailElement{ index: 1 })
             .insert(components::Mass(1.0))
             .insert(components::CanMove{previous_x: 50.0, previous_y: 0.0})
-            ;
+            .id()
+        ;
 
-        commands
-            .spawn(GeometryBuilder::build_as(
-                &ball_shape,
-                DrawMode::Outlined {
-                    fill_mode: FillMode::color(Color::WHITE),
-                    outline_mode: StrokeMode::new(Color::GRAY, 1.0),
-                },
-                Transform::from_xyz(90.0, 0.0, 0.0),
-            ))
-            .insert(components::SailElement)
-            .insert(components::Mass(1.0))
-            .insert(components::CanMove{previous_x: 50.0, previous_y: 0.0})
-            ;
+        esail.elements.push(Some(element2));
 
     }
 }
