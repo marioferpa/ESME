@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 
-use crate::{ components };
+use crate::{ components, resources };
 
 pub struct GraphicsPlugin;
 
@@ -9,7 +9,7 @@ impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_startup_system(Self::spawn_shapes)
-            .insert_resource(components::ESail{elements: Vec::new()});
+            .insert_resource(resources::ESail{elements: Vec::new()});
     }
 }
 
@@ -17,7 +17,7 @@ impl GraphicsPlugin {
 
     fn spawn_shapes(
         mut commands: Commands,
-        mut esail: ResMut<components::ESail>,
+        mut esail: ResMut<resources::ESail>,
         ) {
 
         // Satellite body

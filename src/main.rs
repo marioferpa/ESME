@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 
 mod components;
+mod resources;
 mod graphics;
 use graphics::GraphicsPlugin;
 mod physics;

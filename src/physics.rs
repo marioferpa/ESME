@@ -1,26 +1,12 @@
 // Problem, maybe: The simulation seems to be idle for the two first frames
 
 use bevy::prelude::*;
-use crate::{ components };
+use crate::{ components, resources };
 
 // Lowercase g is not rustacean
 pub const ACCELERATION: f32 = -9.8;     // pixel*s⁻² ?
 pub const PHYSICS_TIMESTEP:     f32 = 1.0/60.0; // seconds
 
-#[derive(Resource)]
-pub struct SimulationParameters {
-    timestep:       f32,    // Timestep for the physics simulation, in seconds
-    leftover_time:  f32,    // Unused time from the previous simulation loop
-}
-
-impl Default for SimulationParameters {
-    fn default() -> SimulationParameters {
-        SimulationParameters {
-            timestep:       1.0/60.0,
-            leftover_time:  0.0,
-        }
-    }
-}
 
 pub struct PhysicsPlugin;
 
@@ -28,7 +14,7 @@ impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_system(Self::update_positions)
-            .insert_resource(SimulationParameters{timestep: PHYSICS_TIMESTEP, ..Default::default()});
+            .insert_resource(resources::SimulationParameters{timestep: PHYSICS_TIMESTEP, ..Default::default()});
     }
 }
 
@@ -37,7 +23,8 @@ impl PhysicsPlugin {
 
     fn update_positions(
         time: Res<Time>,
-        mut sim_params: ResMut<SimulationParameters>,
+        esail: Res<resources::ESail>,
+        mut sim_params: ResMut<resources::SimulationParameters>,
         mut sail_query: Query<(&components::SailElement, &mut Transform, &mut components::CanMove)>
         ) {
 
