@@ -4,7 +4,8 @@ use bevy::prelude::*;
 use crate::{ components, resources };
 
 // Lowercase g is not rustacean
-pub const ACCELERATION: f32 = -9.8;     // pixel*s⁻² ?
+pub const ACCELERATION_X: f32 = 0.0;    // pixel*s⁻² ?
+pub const ACCELERATION_Y: f32 = -9.8;   // pixel*s⁻² ?
 pub const PHYSICS_TIMESTEP:     f32 = 1.0/60.0; // seconds
 
 
@@ -42,31 +43,45 @@ impl PhysicsPlugin {
         let leftover_time = elapsed_time - timesteps as f32 * sim_params.timestep;
         sim_params.leftover_time = leftover_time;
 
+        //for i in 1..esail.elements.len() {
+        //    //println!("{}", i);
+        //    let entity = esail.elements[i];
+        //    //println!("{:?}", entity);
+        //    let prev_entity = esail.elements[i-1];
+        //    //println!("{:?}", prev_entity);
+        //    //println!("--------");
+        //}
+
+
         // Simulation loop, for however many timesteps are needed
         for _ in 0..timesteps { // Make sure that this is not skipping one or something
 
-            // Iterating over esail elements, in order.
-            for entity in esail.elements.iter() {
+            // Iterating over esail elements, in order. The first doesn't move.
+            for entity in esail.elements.iter().skip(1) {
                 // Make sure this iterates in order, and in the order you want!
 
                 if let Some(entity) = entity {
 
                     let (_element, mut transform, mut can_move) = sail_query.get_mut(*entity).expect("No sail element found");
 
-                    //println!("{:?}", transform.translation.y);
-                    
                     // Applying acceleration
 
+                    let velocity_x = transform.translation.x - can_move.previous_x;
                     let velocity_y = transform.translation.y - can_move.previous_y;
 
-                    let next_y = transform.translation.y + velocity_y + ACCELERATION * sim_params.timestep * sim_params.timestep;
+                    let next_x = transform.translation.x + velocity_x + ACCELERATION_X * sim_params.timestep * sim_params.timestep;
+                    let next_y = transform.translation.y + velocity_y + ACCELERATION_Y * sim_params.timestep * sim_params.timestep;
 
                     // Applying constraints
+                    // I need access to the previous item! There's a crate for that it seems, but
+                    // I'd like something vanilla.
 
                     // Updating positions
 
+                    can_move.previous_x = transform.translation.x;
                     can_move.previous_y = transform.translation.y;
 
+                    transform.translation.x = next_x;
                     transform.translation.y = next_y;
                 }
             }
