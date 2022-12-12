@@ -69,20 +69,25 @@ impl PhysicsPlugin {
         for _ in 0..timesteps { // Make sure that this is not skipping one or something
 
             // Iterating over esail elements, in order. The first one is skipped.
-            for (index, entity) in esail.elements.iter().enumerate().skip(1) {
+            for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {
 
                 // Seems like if I use two of these if let Some then I can query two entities with the same components
+                // Works because it creates a different scope. But now the variables are trapped within it!
 
-                let prev_entity = esail.elements[index - 1];
+                let prev_sail_element = esail.elements[index - 1];
 
-                if let Some(prev_entity) = prev_entity {
-                    let (_element, transform, _can_move) = sail_query.get(prev_entity).expect("No previous sail element found");
+                if let Some(prev_sail_element) = prev_sail_element {
+                    let (_element, transform, _can_move) = sail_query.get(prev_sail_element).expect("No previous sail element found");
                     //println!("{}", transform.translation.y);
+
+                    let prev_element_x = transform.translation.x;
+                    let prev_element_y = transform.translation.y;
+
                 }
 
-                if let Some(entity) = entity {
+                if let Some(sail_element) = sail_element {
 
-                    let (_element, mut transform, mut can_move) = sail_query.get_mut(*entity).expect("No sail element found");
+                    let (_element, mut transform, mut can_move) = sail_query.get_mut(*sail_element).expect("No sail element found");
 
                     // Applying acceleration
 
@@ -96,8 +101,12 @@ impl PhysicsPlugin {
                     // I need access to the previous item! There's a crate for that it seems, but
                     // I'd like something vanilla.
 
-                    //let prev_entity = esail.elements[index - 1];
-                        //let (_prev_element, mut _prev_transform, mut prev_can_move) = sail_query.get_mut(prev_entity).expect("No previous sail element found");
+                    if (next_y - prev_element_y) < -10.0 {
+                        next_y = transform.translation.y;
+                    }
+
+                    //let prev_sail_element = esail.elements[index - 1];
+                        //let (_prev_element, mut _prev_transform, mut prev_can_move) = sail_query.get_mut(prev_sail_element).expect("No previous sail element found");
                     //}
 
                     // Updating positions
