@@ -63,8 +63,9 @@ impl GraphicsPlugin {
             .id()
         ;
 
-        // Add the entity to the ESail resource. Did it work?
-        esail.elements.push(Some(element1));
+        // Add the entity to the ESail resource
+        //esail.elements.push(Some(element1));
+        esail.elements.push(element1);
 
         let x2: f32 = 20.0 + 2.0 * esail.resting_distance;
 
@@ -83,7 +84,8 @@ impl GraphicsPlugin {
             .id()
         ;
 
-        esail.elements.push(Some(element2));
+        //esail.elements.push(Some(element2));
+        esail.elements.push(element2);
 
         let x3: f32 = 20.0 + 3.0 * esail.resting_distance;
 
@@ -102,6 +104,7 @@ impl GraphicsPlugin {
             .id()
         ;
 
-        esail.elements.push(Some(element3));
+        //esail.elements.push(Some(element3));
+        esail.elements.push(element3);
     }
 }

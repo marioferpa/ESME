@@ -76,47 +76,46 @@ impl PhysicsPlugin {
 
                 let prev_sail_element = esail.elements[index - 1];
 
-                if let Some(prev_sail_element) = prev_sail_element {
-                    let (_element, transform, _can_move) = sail_query.get(prev_sail_element).expect("No previous sail element found");
-                    //println!("{}", transform.translation.y);
+                //if let Some(prev_sail_element) = prev_sail_element {
 
-                    let prev_element_x = transform.translation.x;
-                    let prev_element_y = transform.translation.y;
+                let (_prev_element, transform, _can_move) = sail_query.get(prev_sail_element).expect("No previous sail element found");
+                //println!("{}", transform.translation.y);
 
+                let prev_element_x = transform.translation.x;
+                let prev_element_y = transform.translation.y;
+
+                //if let Some(sail_element) = sail_element {
+
+                let (_element, mut transform, mut can_move) = sail_query.get_mut(*sail_element).expect("No sail element found");
+
+                // Applying acceleration
+
+                let velocity_x = transform.translation.x - can_move.previous_x;
+                let velocity_y = transform.translation.y - can_move.previous_y;
+
+                let mut next_x = transform.translation.x + velocity_x + ACCELERATION_X * sim_params.timestep * sim_params.timestep;
+                let mut next_y = transform.translation.y + velocity_y + ACCELERATION_Y * sim_params.timestep * sim_params.timestep;
+
+                // Applying constraints
+                // I need access to the previous item! There's a crate for that it seems, but
+                // I'd like something vanilla.
+
+                if (next_y - prev_element_y) < -10.0 {
+                    next_y = transform.translation.y;
                 }
 
-                if let Some(sail_element) = sail_element {
+                //let prev_sail_element = esail.elements[index - 1];
+                    //let (_prev_element, mut _prev_transform, mut prev_can_move) = sail_query.get_mut(prev_sail_element).expect("No previous sail element found");
+                //}
 
-                    let (_element, mut transform, mut can_move) = sail_query.get_mut(*sail_element).expect("No sail element found");
+                // Updating positions
 
-                    // Applying acceleration
+                can_move.previous_x = transform.translation.x;
+                can_move.previous_y = transform.translation.y;
 
-                    let velocity_x = transform.translation.x - can_move.previous_x;
-                    let velocity_y = transform.translation.y - can_move.previous_y;
-
-                    let next_x = transform.translation.x + velocity_x + ACCELERATION_X * sim_params.timestep * sim_params.timestep;
-                    let next_y = transform.translation.y + velocity_y + ACCELERATION_Y * sim_params.timestep * sim_params.timestep;
-
-                    // Applying constraints
-                    // I need access to the previous item! There's a crate for that it seems, but
-                    // I'd like something vanilla.
-
-                    if (next_y - prev_element_y) < -10.0 {
-                        next_y = transform.translation.y;
-                    }
-
-                    //let prev_sail_element = esail.elements[index - 1];
-                        //let (_prev_element, mut _prev_transform, mut prev_can_move) = sail_query.get_mut(prev_sail_element).expect("No previous sail element found");
-                    //}
-
-                    // Updating positions
-
-                    can_move.previous_x = transform.translation.x;
-                    can_move.previous_y = transform.translation.y;
-
-                    transform.translation.x = next_x;
-                    transform.translation.y = next_y;
-                }
+                transform.translation.x = next_x;
+                transform.translation.y = next_y;
+                
             }
         }
     }
