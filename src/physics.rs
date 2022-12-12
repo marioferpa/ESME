@@ -1,3 +1,6 @@
+// With a lot of help from https://gamedevelopment.tutsplus.com/tutorials/simulate-tearable-cloth-and-ragdolls-with-simple-verlet-integration--gamedev-519
+// And https://toqoz.fyi/game-rope.html
+
 // Problem, maybe: The simulation seems to be idle for the two first frames
 
 use bevy::prelude::*;
@@ -6,7 +9,6 @@ use crate::{ components, resources };
 pub const ACCELERATION_X:   f32 = 0.0;    // pixel*s⁻² ?
 pub const ACCELERATION_Y:   f32 = -9.8;   // pixel*s⁻² ?
 pub const PHYSICS_TIMESTEP: f32 = 1.0/60.0; // seconds
-
 
 pub struct PhysicsPlugin;
 
@@ -41,29 +43,6 @@ impl PhysicsPlugin {
         let leftover_time = elapsed_time - timesteps as f32 * sim_params.timestep;
         sim_params.leftover_time = leftover_time;
 
-        // Starting from one, so there is a previous one to access
-        //for i in 1..esail.elements.len() {
-        //    println!("{}", i);  
-
-        //    let entity = esail.elements[i];
-        //    println!("{:?}", entity);
-
-        //    if let Some(entity) = entity {
-        //        let sail_element = sail_query.get(entity);
-        //        println!("{:?}", sail_element);
-        //    }
-
-        //    let prev_entity = esail.elements[i-1];
-        //    println!("{:?}", prev_entity);
-
-        //    if let Some(prev_entity) = prev_entity {
-        //        let prev_sail_element = sail_query.get(prev_entity);
-        //        println!("{:?}", prev_sail_element);
-        //    }
-
-        //    println!("--------");
-        //}
-
 
         // Simulation loop, for however many timesteps are needed
         for _ in 0..timesteps { // Make sure that this is not skipping one or something
@@ -71,12 +50,8 @@ impl PhysicsPlugin {
             // Iterating over esail elements, in order. The first one is skipped.
             for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {
 
-                // Seems like if I use two of these if let Some then I can query two entities with the same components
-                // Works because it creates a different scope. But now the variables are trapped within it!
-
+                // Getting coordinates of the previous sail element in line
                 let prev_sail_element = esail.elements[index - 1];
-
-                //if let Some(prev_sail_element) = prev_sail_element {
 
                 let (_prev_element, transform, _can_move) = sail_query.get(prev_sail_element).expect("No previous sail element found");
                 //println!("{}", transform.translation.y);
@@ -84,38 +59,47 @@ impl PhysicsPlugin {
                 let prev_element_x = transform.translation.x;
                 let prev_element_y = transform.translation.y;
 
-                //if let Some(sail_element) = sail_element {
-
+                // Getting coordinates of the current element and modifying its state
                 let (_element, mut transform, mut can_move) = sail_query.get_mut(*sail_element).expect("No sail element found");
 
-                // Applying acceleration
+                // APPLYING (gravitational for now) ACCELERATION
 
-                let velocity_x = transform.translation.x - can_move.previous_x;
-                let velocity_y = transform.translation.y - can_move.previous_y;
+                let position_x = transform.translation.x;
+                let position_y = transform.translation.y;
 
-                let mut next_x = transform.translation.x + velocity_x + ACCELERATION_X * sim_params.timestep * sim_params.timestep;
-                let mut next_y = transform.translation.y + velocity_y + ACCELERATION_Y * sim_params.timestep * sim_params.timestep;
+                let velocity_x = position_x - can_move.previous_x;
+                let velocity_y = position_y - can_move.previous_y;
 
-                // Applying constraints
-                // I need access to the previous item! There's a crate for that it seems, but
-                // I'd like something vanilla.
+                let next_position_x = position_x + velocity_x + ACCELERATION_X * sim_params.timestep * sim_params.timestep;
+                let next_position_y = position_y + velocity_y + ACCELERATION_Y * sim_params.timestep * sim_params.timestep;
 
-                if (next_y - prev_element_y) < -10.0 {
-                    next_y = transform.translation.y;
+                // APPLYING CONSTRAINTS
+
+                // Calculating distance between current sail element and previous element in the line
+                let diff_x = position_x - prev_element_x;
+                let diff_y = position_y - prev_element_y;
+                let distance_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
+                
+                let mut difference = 0.0;
+
+                if distance_between_elements > 0.0 {
+                    // Don't get this
+                    //difference = (esail.resting_distance - distance_between_elements) / distance_between_elements;
+                    difference = (distance_between_elements - esail.resting_distance) / distance_between_elements;
                 }
 
-                //let prev_sail_element = esail.elements[index - 1];
-                    //let (_prev_element, mut _prev_transform, mut prev_can_move) = sail_query.get_mut(prev_sail_element).expect("No previous sail element found");
-                //}
+                let translate_x = diff_x * difference;
+                let translate_y = diff_y * difference;
+
+                // APPLYING INERTIA
 
                 // Updating positions
 
                 can_move.previous_x = transform.translation.x;
                 can_move.previous_y = transform.translation.y;
 
-                transform.translation.x = next_x;
-                transform.translation.y = next_y;
-                
+                transform.translation.x = next_position_x - translate_x;
+                transform.translation.y = next_position_y - translate_y;
             }
         }
     }
