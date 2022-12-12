@@ -4,6 +4,8 @@ use bevy_prototype_lyon::prelude::*;
 use crate::{ components, resources };
 
 const Z_ESAIL: f32 = 1.0;   // Will need to change if I move to 3D
+const X_FIRST_ELEMENT: f32 = 20.0;
+const NUMBER_OF_ESAIL_ELEMENTS: i32 = 5;
 
 pub struct GraphicsPlugin;
 
@@ -16,7 +18,6 @@ impl Plugin for GraphicsPlugin {
 }
 
 impl GraphicsPlugin {
-
 
     fn spawn_shapes(
         mut commands: Commands,
@@ -42,20 +43,11 @@ impl GraphicsPlugin {
             ))
             .insert(components::Mass(10.0));
 
-        // Sail elements
+        // Spawn a number of elements
 
-        let x1: f32 = 20.0 + 1.0 * esail.resting_distance;
-
-        spawn_esail_element(x1, 0.0, &mut commands, &mut esail);
-
-        let x2: f32 = 20.0 + 2.0 * esail.resting_distance;
-
-        spawn_esail_element(x2, 0.0, &mut commands, &mut esail);
-
-        let x3: f32 = 20.0 + 3.0 * esail.resting_distance;
-
-        spawn_esail_element(x3, 0.0, &mut commands, &mut esail);
-
+        for number in 1..=NUMBER_OF_ESAIL_ELEMENTS {
+            spawn_esail_element(X_FIRST_ELEMENT + number as f32 * esail.resting_distance, 0.0, &mut commands, &mut esail);
+        }
     }
 }
 
