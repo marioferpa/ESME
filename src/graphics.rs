@@ -3,6 +3,8 @@ use bevy_prototype_lyon::prelude::*;
 
 use crate::{ components, resources };
 
+const Z_ESAIL: f32 = 1.0;   // Will need to change if I move to 3D
+
 pub struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
@@ -14,6 +16,7 @@ impl Plugin for GraphicsPlugin {
 }
 
 impl GraphicsPlugin {
+
 
     fn spawn_shapes(
         mut commands: Commands,
@@ -41,70 +44,47 @@ impl GraphicsPlugin {
 
         // Sail elements
 
-        let ball_shape = shapes::Circle {
-            radius: 5.0,
-            ..shapes::Circle::default() // Editing the transform later.
-        };
-
         let x1: f32 = 20.0 + 1.0 * esail.resting_distance;
 
-        let element1 = commands
-            .spawn(GeometryBuilder::build_as(
-                &ball_shape,
-                DrawMode::Outlined {
-                    fill_mode: FillMode::color(Color::WHITE),
-                    outline_mode: StrokeMode::new(Color::GRAY, 1.0),
-                },
-                Transform::from_xyz(x1, 0.0, 0.0),
-            ))
-            .insert(components::SailElement{ index: 0 })
-            .insert(components::Mass(1.0))
-            .insert(components::CanMove{previous_x: x1, previous_y: 0.0})
-            .id()
-        ;
-
-        // Add the entity to the ESail resource
-        //esail.elements.push(Some(element1));
-        esail.elements.push(element1);
+        spawn_esail_element(x1, 0.0, &mut commands, &mut esail);
 
         let x2: f32 = 20.0 + 2.0 * esail.resting_distance;
 
-        let element2 = commands
-            .spawn(GeometryBuilder::build_as(
-                &ball_shape,
-                DrawMode::Outlined {
-                    fill_mode: FillMode::color(Color::WHITE),
-                    outline_mode: StrokeMode::new(Color::GRAY, 1.0),
-                },
-                Transform::from_xyz(x2, 0.0, 0.0),
-            ))
-            .insert(components::SailElement{ index: 1 })
-            .insert(components::Mass(1.0))
-            .insert(components::CanMove{previous_x: x2, previous_y: 0.0})
-            .id()
-        ;
-
-        //esail.elements.push(Some(element2));
-        esail.elements.push(element2);
+        spawn_esail_element(x2, 0.0, &mut commands, &mut esail);
 
         let x3: f32 = 20.0 + 3.0 * esail.resting_distance;
 
-        let element3 = commands
-            .spawn(GeometryBuilder::build_as(
-                &ball_shape,
-                DrawMode::Outlined {
-                    fill_mode: FillMode::color(Color::WHITE),
-                    outline_mode: StrokeMode::new(Color::GRAY, 1.0),
-                },
-                Transform::from_xyz(x3, 0.0, 0.0),
-            ))
-            .insert(components::SailElement{ index: 1 })
-            .insert(components::Mass(1.0))
-            .insert(components::CanMove{previous_x: x3, previous_y: 0.0})
-            .id()
-        ;
+        spawn_esail_element(x3, 0.0, &mut commands, &mut esail);
 
-        //esail.elements.push(Some(element3));
-        esail.elements.push(element3);
     }
+}
+
+fn spawn_esail_element(
+    x: f32, y: f32,
+    commands: &mut Commands,
+    esail: &mut ResMut<resources::ESail>,
+    ) {
+
+    let esail_element_shape = shapes::Circle {
+        radius: 5.0,
+        ..shapes::Circle::default() // Editing the transform later.
+    };
+
+    let sail_element = commands
+        .spawn(GeometryBuilder::build_as(
+            &esail_element_shape,
+            DrawMode::Outlined {
+                fill_mode: FillMode::color(Color::WHITE),
+                outline_mode: StrokeMode::new(Color::GRAY, 1.0),
+            },
+            Transform::from_xyz(x, y, Z_ESAIL),
+        ))
+        .insert(components::SailElement{})
+        .insert(components::CanMove{previous_x: x, previous_y: y})
+        .id()
+    ;
+
+    // Add the entity to the ESail resource
+    esail.elements.push(sail_element);
+
 }

@@ -10,8 +10,7 @@ pub struct Mass (
 // Should this include the link with the previous item?
 // Or what if every sailelement has an index, an integer, and it links to the previous one?
 pub struct SailElement {
-    //pub linked_to: Entity,
-    pub index: i32,
+    //pub index: i32,
     // resting_distance
 }
 
