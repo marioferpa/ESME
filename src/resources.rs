@@ -20,5 +20,6 @@ impl Default for SimulationParameters {
 // Inspired by https://stackoverflow.com/questions/74031066/is-there-a-way-to-do-complex-queries-in-bevy-ecs
 pub struct ESail {
     pub elements: Vec<Option<Entity>>,  // Option so that this can be empty?
+                                        // I don't know if it's worth it
     pub resting_distance: f32,          // In meters, ideally
 }

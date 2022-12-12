@@ -3,10 +3,9 @@
 use bevy::prelude::*;
 use crate::{ components, resources };
 
-// Lowercase g is not rustacean
-pub const ACCELERATION_X: f32 = 0.0;    // pixel*s⁻² ?
-pub const ACCELERATION_Y: f32 = -9.8;   // pixel*s⁻² ?
-pub const PHYSICS_TIMESTEP:     f32 = 1.0/60.0; // seconds
+pub const ACCELERATION_X:   f32 = 0.0;    // pixel*s⁻² ?
+pub const ACCELERATION_Y:   f32 = -9.8;   // pixel*s⁻² ?
+pub const PHYSICS_TIMESTEP: f32 = 1.0/60.0; // seconds
 
 
 pub struct PhysicsPlugin;
@@ -18,7 +17,6 @@ impl Plugin for PhysicsPlugin {
             .insert_resource(resources::SimulationParameters{timestep: PHYSICS_TIMESTEP, ..Default::default()});
     }
 }
-
 
 impl PhysicsPlugin {
 
@@ -43,22 +41,44 @@ impl PhysicsPlugin {
         let leftover_time = elapsed_time - timesteps as f32 * sim_params.timestep;
         sim_params.leftover_time = leftover_time;
 
+        // Starting from one, so there is a previous one to access
         //for i in 1..esail.elements.len() {
-        //    //println!("{}", i);
+        //    println!("{}", i);  
+
         //    let entity = esail.elements[i];
-        //    //println!("{:?}", entity);
+        //    println!("{:?}", entity);
+
+        //    if let Some(entity) = entity {
+        //        let sail_element = sail_query.get(entity);
+        //        println!("{:?}", sail_element);
+        //    }
+
         //    let prev_entity = esail.elements[i-1];
-        //    //println!("{:?}", prev_entity);
-        //    //println!("--------");
+        //    println!("{:?}", prev_entity);
+
+        //    if let Some(prev_entity) = prev_entity {
+        //        let prev_sail_element = sail_query.get(prev_entity);
+        //        println!("{:?}", prev_sail_element);
+        //    }
+
+        //    println!("--------");
         //}
 
 
         // Simulation loop, for however many timesteps are needed
         for _ in 0..timesteps { // Make sure that this is not skipping one or something
 
-            // Iterating over esail elements, in order. The first doesn't move.
-            for entity in esail.elements.iter().skip(1) {
-                // Make sure this iterates in order, and in the order you want!
+            // Iterating over esail elements, in order. The first one is skipped.
+            for (index, entity) in esail.elements.iter().enumerate().skip(1) {
+
+                // Seems like if I use two of these if let Some then I can query two entities with the same components
+
+                let prev_entity = esail.elements[index - 1];
+
+                if let Some(prev_entity) = prev_entity {
+                    let (_element, transform, _can_move) = sail_query.get(prev_entity).expect("No previous sail element found");
+                    //println!("{}", transform.translation.y);
+                }
 
                 if let Some(entity) = entity {
 
@@ -75,6 +95,10 @@ impl PhysicsPlugin {
                     // Applying constraints
                     // I need access to the previous item! There's a crate for that it seems, but
                     // I'd like something vanilla.
+
+                    //let prev_entity = esail.elements[index - 1];
+                        //let (_prev_element, mut _prev_transform, mut prev_can_move) = sail_query.get_mut(prev_entity).expect("No previous sail element found");
+                    //}
 
                     // Updating positions
 

@@ -6,7 +6,7 @@ pub struct Mass (
     pub f32
 );
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 // Should this include the link with the previous item?
 // Or what if every sailelement has an index, an integer, and it links to the previous one?
 pub struct SailElement {
@@ -16,7 +16,7 @@ pub struct SailElement {
 }
 
 // Needs a better name. VerletObject?
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct CanMove {
     pub previous_x: f32,
     pub previous_y: f32,
