@@ -5,7 +5,7 @@ use crate::{ components, resources };
 
 const Z_ESAIL: f32 = 1.0;   // Will need to change if I move to 3D
 const X_FIRST_ELEMENT: f32 = 20.0;
-const NUMBER_OF_ESAIL_ELEMENTS: i32 = 5;
+const NUMBER_OF_ESAIL_ELEMENTS: i32 = 20;
 
 pub struct GraphicsPlugin;
 
@@ -72,7 +72,7 @@ fn spawn_esail_element(
             Transform::from_xyz(x, y, Z_ESAIL),
         ))
         .insert(components::SailElement{})
-        .insert(components::CanMove{previous_x: x, previous_y: y})
+        .insert(components::VerletElement{previous_x: x, previous_y: y, current_x: x, current_y: y})
         .id()
     ;
 

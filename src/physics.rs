@@ -6,8 +6,8 @@
 use bevy::prelude::*;
 use crate::{ components, resources };
 
-pub const ACCELERATION_X:   f32 = 0.0;    // pixel*s⁻² ?
-pub const ACCELERATION_Y:   f32 = -9.8;   // pixel*s⁻² ?
+pub const ACCELERATION_X:   f32 = 10000.0;    // pixel*s⁻² ?
+pub const ACCELERATION_Y:   f32 = 5000.0;   // pixel*s⁻² ?
 pub const PHYSICS_TIMESTEP: f32 = 1.0/60.0; // seconds
 const ITERATIONS:           i32 = 1;
 
@@ -27,8 +27,10 @@ impl PhysicsPlugin {
         time: Res<Time>,
         esail: Res<resources::ESail>,
         mut sim_params: ResMut<resources::SimulationParameters>,
-        mut sail_query: Query<(&components::SailElement, &mut Transform, &mut components::CanMove)>
+        mut sail_query: Query<(&components::SailElement, &mut Transform, &mut components::VerletElement)>
         ) {
+
+        // CALCULATION OF NUMBER OF TIMESTEPS
 
         // Bevy's timestep may not be consistent, and instead of trying to control it, I choose the
         // timestep that I want, calculate as many timesteps as possible, and add the leftover time
@@ -44,64 +46,89 @@ impl PhysicsPlugin {
         let leftover_time = elapsed_time - timesteps as f32 * sim_params.timestep;
         sim_params.leftover_time = leftover_time;
 
+        println!("New frame ------------------");
 
-        // Simulation loop, for however many timesteps are needed
-        for _ in 0..timesteps { // Make sure that this is not skipping one or something
+        for _ in 0..timesteps { 
+
+            println!("New timestep ---------------");
+
+            // I think I need two loops. One to calculate where each element would end up if moving
+            // freely. And then another, again over all sail elements but also over multiple
+            // iterations, checking each element and the previous and applying the constraints.
+
+            // SIMULATION LOOP
+
+            // Iterating over esail elements, in order. The first one is skipped because it's static
+            for sail_element in esail.elements.iter().skip(1) {
+
+                // Getting coordinates of the current sail element
+                let (_sail_element, mut transform, mut verlet_element) = sail_query.get_mut(*sail_element).expect("No sail element found");
+
+                let position_x = transform.translation.x;
+                let position_y = transform.translation.y;
+
+                // APPLYING (gravitational for now) ACCELERATION
+
+                let velocity_x = position_x - verlet_element.previous_x;
+                let velocity_y = position_y - verlet_element.previous_y;
+
+                let next_position_x = position_x + velocity_x + ACCELERATION_X * sim_params.timestep * sim_params.timestep;
+                let next_position_y = position_y + velocity_y + ACCELERATION_Y * sim_params.timestep * sim_params.timestep;
+
+                verlet_element.previous_x = transform.translation.x;
+                verlet_element.previous_y = transform.translation.y;
+
+                verlet_element.current_x = next_position_x;
+                verlet_element.current_y = next_position_y;
+
+                transform.translation.x = verlet_element.current_x;
+                transform.translation.y = verlet_element.current_y;
+
+            }
+
+            // CONSTRAINT LOOP
 
             for _ in 0..ITERATIONS {
-            // Iterating over esail elements, in order. The first one is skipped.
+                println!("New constraint iteration ---");
+
+                // Iterate again over all the objects
                 for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {
 
                     // Getting coordinates of the previous sail element in line
                     let prev_sail_element = esail.elements[index - 1];
 
-                    let (_prev_element, transform, _can_move) = sail_query.get(prev_sail_element).expect("No previous sail element found");
-                    //println!("{}", transform.translation.y);
+                    let (_prev_element, prev_element_transform, _prev_verlet_element) = sail_query.get(prev_sail_element).expect("No previous sail element found");
 
-                    let prev_element_x = transform.translation.x;
-                    let prev_element_y = transform.translation.y;
+                    let prev_element_x = prev_element_transform.translation.x;
+                    let prev_element_y = prev_element_transform.translation.y;
 
-                    // Getting coordinates of the current element and modifying its state
-                    let (_element, mut transform, mut can_move) = sail_query.get_mut(*sail_element).expect("No sail element found");
-
-                    // APPLYING (gravitational for now) ACCELERATION
-
-                    let position_x = transform.translation.x;
-                    let position_y = transform.translation.y;
-
-                    let velocity_x = position_x - can_move.previous_x;
-                    let velocity_y = position_y - can_move.previous_y;
-
-                    let next_position_x = position_x + velocity_x + ACCELERATION_X * sim_params.timestep * sim_params.timestep;
-                    let next_position_y = position_y + velocity_y + ACCELERATION_Y * sim_params.timestep * sim_params.timestep;
-
-                    // APPLYING CONSTRAINTS
-
+                    // Getting coordinates of the current sail element
+                    let (_sail_element, mut transform, mut verlet_element) = sail_query.get_mut(*sail_element).expect("No sail element found");
+                
                     // Calculating distance between current sail element and previous element in the line
-                    let diff_x = position_x - prev_element_x;
-                    let diff_y = position_y - prev_element_y;
+                    let diff_x = verlet_element.current_x - prev_element_x;
+                    let diff_y = verlet_element.current_y - prev_element_y;
                     let distance_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
-                    
+
+                    println!("Index: {} | Distance between elements: {}", index, distance_between_elements);
+
                     let mut difference = 0.0;
 
                     if distance_between_elements > 0.0 {
-                        // Don't get this
-                        //difference = (esail.resting_distance - distance_between_elements) / distance_between_elements;
+                        // Don't get this formula really
                         difference = (distance_between_elements - esail.resting_distance) / distance_between_elements;
                     }
 
-                    let translate_x = diff_x * difference;
-                    let translate_y = diff_y * difference;
-
-                    // APPLYING INERTIA
+                    let correction_x = diff_x * difference;
+                    let correction_y = diff_y * difference;
 
                     // Updating positions
 
-                    can_move.previous_x = transform.translation.x;
-                    can_move.previous_y = transform.translation.y;
+                    verlet_element.previous_x = verlet_element.current_x;
+                    verlet_element.previous_y = verlet_element.current_y;
 
-                    transform.translation.x = next_position_x - translate_x;
-                    transform.translation.y = next_position_y - translate_y;
+                    transform.translation.x = verlet_element.current_x - correction_x;
+                    transform.translation.y = verlet_element.current_y - correction_y;
                 }
             }
         }

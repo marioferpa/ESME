@@ -16,7 +16,9 @@ pub struct SailElement {
 
 // Needs a better name. VerletObject?
 #[derive(Component, Debug)]
-pub struct CanMove {
+pub struct VerletElement {
     pub previous_x: f32,
     pub previous_y: f32,
+    pub current_x:  f32,
+    pub current_y:  f32,
 }
