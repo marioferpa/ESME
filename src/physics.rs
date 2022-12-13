@@ -6,10 +6,8 @@
 use bevy::prelude::*;
 use crate::{ components, resources };
 
-pub const ACCELERATION_X:   f32 = 10000.0;    // pixel*s⁻² ?
-pub const ACCELERATION_Y:   f32 = 5000.0;   // pixel*s⁻² ?
 pub const PHYSICS_TIMESTEP: f32 = 1.0/60.0; // seconds
-const ITERATIONS:           i32 = 1;
+const ITERATIONS:           i32 = 1;    // One seems to be enough now
 
 pub struct PhysicsPlugin;
 
@@ -72,8 +70,8 @@ impl PhysicsPlugin {
                 let velocity_x = position_x - verlet_element.previous_x;
                 let velocity_y = position_y - verlet_element.previous_y;
 
-                let next_position_x = position_x + velocity_x + ACCELERATION_X * sim_params.timestep * sim_params.timestep;
-                let next_position_y = position_y + velocity_y + ACCELERATION_Y * sim_params.timestep * sim_params.timestep;
+                let next_position_x = position_x + velocity_x + sim_params.acceleration_x * sim_params.timestep * sim_params.timestep;
+                let next_position_y = position_y + velocity_y + sim_params.acceleration_y * sim_params.timestep * sim_params.timestep;
 
                 verlet_element.previous_x = transform.translation.x;
                 verlet_element.previous_y = transform.translation.y;

@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
+use bevy_egui::EguiPlugin;
 
 mod components;
 mod resources;
@@ -9,6 +10,8 @@ mod graphics;
 use graphics::GraphicsPlugin;
 mod physics;
 use physics::PhysicsPlugin;
+mod gui;
+use gui::GUIPlugin;
 
 fn main() {
     App::new()
@@ -17,6 +20,8 @@ fn main() {
         .add_plugin(ShapePlugin)
         .add_plugin(GraphicsPlugin)
         .add_plugin(PhysicsPlugin)
+        .add_plugin(EguiPlugin)
+        .add_plugin(GUIPlugin)
         .add_startup_system(camera_system)
         .run();
 }
