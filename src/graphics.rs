@@ -46,13 +46,21 @@ impl GraphicsPlugin {
         // Spawn a number of elements
 
         for number in 1..=NUMBER_OF_ESAIL_ELEMENTS {
-            spawn_esail_element(X_FIRST_ELEMENT + number as f32 * esail.resting_distance, 0.0, &mut commands, &mut esail);
+
+            let x = X_FIRST_ELEMENT + number as f32 * esail.resting_distance;
+
+            if number == 1 {
+                spawn_esail_element(x, 0.0, false, &mut commands, &mut esail);
+            } else {
+                spawn_esail_element(x, 0.0, true, &mut commands, &mut esail);
+            }
         }
     }
 }
 
 fn spawn_esail_element(
     x: f32, y: f32,
+    is_deployed: bool,
     commands: &mut Commands,
     esail: &mut ResMut<resources::ESail>,
     ) {
@@ -71,7 +79,7 @@ fn spawn_esail_element(
             },
             Transform::from_xyz(x, y, Z_ESAIL),
         ))
-        .insert(components::SailElement{})
+        .insert(components::SailElement{is_deployed: is_deployed}) 
         .insert(components::VerletObject{previous_x: x, previous_y: y, current_x: x, current_y: y})
         .id()
     ;

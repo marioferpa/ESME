@@ -11,7 +11,7 @@ pub struct Mass (
 // Or what if every sailelement has an index, an integer, and it links to the previous one?
 pub struct SailElement {
     //pub index: i32,
-    // resting_distance
+    pub is_deployed: bool,
 }
 
 // Needs a better name. VerletObject?

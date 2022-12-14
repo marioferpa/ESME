@@ -66,7 +66,7 @@ fn verlet_integration(
     verlet_object.previous_x = current_position_x;
     verlet_object.previous_y = current_position_y;
 
-    // And next position becomes current position.
+    // and next position becomes current position.
     verlet_object.current_x = next_position_x;
     verlet_object.current_y = next_position_y;
 }
@@ -75,7 +75,7 @@ fn verlet_simulation(
     time: Res<Time>,
     esail: Res<resources::ESail>,
     mut sim_params: ResMut<resources::SimulationParameters>,
-    mut sail_query: Query<(&components::SailElement, &mut Transform, &mut components::VerletObject)>
+    mut sail_query: Query<(&components::SailElement, &mut components::VerletObject, &mut Transform)>
     ) {
 
     // CALCULATION OF TIMESTEPS FOR THE CURRENT FRAME
@@ -91,17 +91,19 @@ fn verlet_simulation(
         // SIMULATION LOOP
 
         // Iterating over esail elements, in order. The first one is skipped because it's static
-        for element in esail.elements.iter().skip(1) {
+        //for element in esail.elements.iter().skip(1) {
+        for element in esail.elements.iter() {
 
             // Getting information about the current sail element
-            let (_element, mut transform, mut verlet_object) = sail_query.get_mut(*element).expect("No sail element found");
+            let (sail_element,  mut verlet_object, mut transform) = sail_query.get_mut(*element).expect("No sail element found");
 
-            // Updating the values of the verlet object
-            verlet_integration(&mut verlet_object, &mut sim_params);
+            if sail_element.is_deployed {
+                // Updating the values of the verlet object
+                verlet_integration(&mut verlet_object, &mut sim_params);
 
-            transform.translation.x = verlet_object.current_x;
-            transform.translation.y = verlet_object.current_y;
-
+                transform.translation.x = verlet_object.current_x;
+                transform.translation.y = verlet_object.current_y;
+            }
         }
 
         // CONSTRAINT LOOP
@@ -109,13 +111,15 @@ fn verlet_simulation(
         for _ in 0..ITERATIONS {
             println!("New constraint iteration ---");
 
-        //    // Iterate again over all the objects
-        //    for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {
+            // Iterate again over all the objects
+            for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {
 
         //        // Getting coordinates of the previous sail element in line
-        //        let prev_sail_element = esail.elements[index - 1];
+                let prev_sail_element = esail.elements[index - 1];
 
-        //        let (_prev_element, prev_element_transform, _prev_verlet_object) = sail_query.get(prev_sail_element).expect("No previous sail element found");
+                // NEW! I'm going to mutate both elements now (except the first)
+
+                let (_prev_element, mut prev_element_transform, mut prev_verlet_object) = sail_query.get(prev_sail_element).expect("No previous sail element found");
 
         //        let prev_element_x = prev_element_transform.translation.x;
         //        let prev_element_y = prev_element_transform.translation.y;
@@ -147,7 +151,7 @@ fn verlet_simulation(
 
         //        transform.translation.x = verlet_object.current_x - correction_x;
         //        transform.translation.y = verlet_object.current_y - correction_y;
-        //    }
+            }
         }
     }
 }
