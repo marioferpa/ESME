@@ -38,6 +38,39 @@ fn timestep_calculation(
     return timesteps;
 }
 
+/// Updates the position of a verlet object
+fn verlet_integration(
+    verlet_object:  &mut components::VerletObject,
+    sim_params:     &mut ResMut<resources::SimulationParameters>,
+    ){
+
+    let current_position_x  = verlet_object.current_x;
+    let current_position_y  = verlet_object.current_y;
+
+    let previous_position_x = verlet_object.previous_x;
+    let previous_position_y = verlet_object.previous_y;
+
+    // Applying accelerations
+
+    let velocity_x = current_position_x - previous_position_x;
+    let velocity_y = current_position_y - previous_position_y;
+
+    let next_position_x = current_position_x + velocity_x + sim_params.acceleration_x * sim_params.timestep * sim_params.timestep;
+    let next_position_y = current_position_y + velocity_y + sim_params.acceleration_y * sim_params.timestep * sim_params.timestep;
+
+    // Updating verlet object:
+
+    // Previous position is forgotten,
+    
+    // current position becomes previous position,
+    verlet_object.previous_x = current_position_x;
+    verlet_object.previous_y = current_position_y;
+
+    // And next position becomes current position.
+    verlet_object.current_x = next_position_x;
+    verlet_object.current_y = next_position_y;
+}
+
 fn verlet_simulation(
     time: Res<Time>,
     esail: Res<resources::ESail>,
@@ -58,32 +91,14 @@ fn verlet_simulation(
         // SIMULATION LOOP
 
         // Iterating over esail elements, in order. The first one is skipped because it's static
-        for sail_element in esail.elements.iter().skip(1) {
+        for element in esail.elements.iter().skip(1) {
 
-            // Getting coordinates of the current sail element
-            let (_sail_element, mut transform, mut verlet_object) = sail_query.get_mut(*sail_element).expect("No sail element found");
+            // Getting information about the current sail element
+            let (_element, mut transform, mut verlet_object) = sail_query.get_mut(*element).expect("No sail element found");
 
-            let current_position_x = verlet_object.current_x;
-            let current_position_y = verlet_object.current_y;
+            // Updating the values of the verlet object
+            verlet_integration(&mut verlet_object, &mut sim_params);
 
-            let previous_position_x = verlet_object.previous_x;
-            let previous_position_y = verlet_object.previous_y;
-
-            // Applying acceleration
-
-            let velocity_x = current_position_x - previous_position_x;
-            let velocity_y = current_position_y - previous_position_y;
-
-            let next_position_x = current_position_x + velocity_x + sim_params.acceleration_x * sim_params.timestep * sim_params.timestep;
-            let next_position_y = current_position_y + velocity_y + sim_params.acceleration_y * sim_params.timestep * sim_params.timestep;
-
-            verlet_object.previous_x = current_position_x;
-            verlet_object.previous_y = current_position_y;
-
-            verlet_object.current_x = next_position_x;
-            verlet_object.current_y = next_position_y;
-
-            // No need to apply the transform until the end of the timestep, right? Or the frame, even
             transform.translation.x = verlet_object.current_x;
             transform.translation.y = verlet_object.current_y;
 
