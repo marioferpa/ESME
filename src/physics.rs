@@ -7,7 +7,7 @@ use bevy::prelude::*;
 use crate::{ components, resources };
 
 pub const PHYSICS_TIMESTEP: f32 = 1.0/60.0; // seconds
-const ITERATIONS:           i32 = 1;    // One seems to be enough now
+pub const ITERATIONS:       i32 = 3;    // One seems to be enough now
 
 pub struct PhysicsPlugin;
 
@@ -21,8 +21,8 @@ impl Plugin for PhysicsPlugin {
 
 /// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.
 fn timestep_calculation(
-    time: Res<Time>,
-    mut sim_params: ResMut<resources::SimulationParameters>,
+    time: &Res<Time>,
+    sim_params: &mut ResMut<resources::SimulationParameters>,
     ) -> i32 {
 
     // Time since last update plus leftover time from previous frame
@@ -47,16 +47,7 @@ fn verlet_simulation(
 
     // CALCULATION OF TIMESTEPS FOR THE CURRENT FRAME
 
-
-    // Time since last update plus leftover time from previous frame
-    let elapsed_time = time.delta_seconds() + sim_params.leftover_time;
-
-    // Number of timesteps that should be calculated during this update
-    let timesteps = (elapsed_time / sim_params.timestep).floor() as i32; 
-    
-    // Recalculation of leftover time for next update
-    let leftover_time = elapsed_time - timesteps as f32 * sim_params.timestep;
-    sim_params.leftover_time = leftover_time;
+    let timesteps = timestep_calculation(&time, &mut sim_params);
 
     println!("New frame ------------------");
 
@@ -100,8 +91,8 @@ fn verlet_simulation(
 
         // CONSTRAINT LOOP
 
-        //for _ in 0..ITERATIONS {
-        //    println!("New constraint iteration ---");
+        for _ in 0..ITERATIONS {
+            println!("New constraint iteration ---");
 
         //    // Iterate again over all the objects
         //    for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {
@@ -142,6 +133,6 @@ fn verlet_simulation(
         //        transform.translation.x = verlet_object.current_x - correction_x;
         //        transform.translation.y = verlet_object.current_y - correction_y;
         //    }
-        //}
+        }
     }
 }
