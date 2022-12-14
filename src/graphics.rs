@@ -72,7 +72,7 @@ fn spawn_esail_element(
             Transform::from_xyz(x, y, Z_ESAIL),
         ))
         .insert(components::SailElement{})
-        .insert(components::VerletElement{previous_x: x, previous_y: y, current_x: x, current_y: y})
+        .insert(components::VerletObject{previous_x: x, previous_y: y, current_x: x, current_y: y})
         .id()
     ;
 
