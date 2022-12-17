@@ -4,7 +4,7 @@ use bevy_prototype_lyon::prelude::*;
 use crate::{ components, resources };
 
 const Z_ESAIL: f32 = 1.0;   // Will need to change if I move to 3D
-const X_FIRST_ELEMENT: f32 = 20.0;
+const X_FIRST_ELEMENT: f32 = 15.0;
 const NUMBER_OF_ESAIL_ELEMENTS: i32 = 20;
 
 pub struct GraphicsPlugin;
@@ -80,7 +80,7 @@ fn spawn_esail_element(
             Transform::from_xyz(x, y, Z_ESAIL),
         ))
         .insert(components::SailElement{is_deployed: is_deployed}) 
-        .insert(components::VerletObject{previous_x: x, previous_y: y, current_x: x, current_y: y})
+        .insert(components::VerletObject{previous_x: x, previous_y: y, current_x: x, current_y: y, is_deployed: is_deployed})
         .id()
     ;
 

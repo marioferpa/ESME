@@ -7,7 +7,9 @@ use bevy::prelude::*;
 use crate::{ components, resources };
 
 pub const PHYSICS_TIMESTEP: f32 = 1.0/60.0; // seconds
-pub const ITERATIONS:       i32 = 3;    // One seems to be enough now
+pub const ITERATIONS:       i32 = 100;    // One seems to be enough now
+
+pub const DEBUG:            bool = false;
 
 pub struct PhysicsPlugin;
 
@@ -15,6 +17,7 @@ impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_system(verlet_simulation)
+            .add_system(transform_update) // Does this always work after the previous system is finished?
             .insert_resource(resources::SimulationParameters{timestep: PHYSICS_TIMESTEP, ..Default::default()});
     }
 }
@@ -71,87 +74,100 @@ fn verlet_integration(
     verlet_object.current_y = next_position_y;
 }
 
+/// Simulation proper
 fn verlet_simulation(
     time: Res<Time>,
     esail: Res<resources::ESail>,
     mut sim_params: ResMut<resources::SimulationParameters>,
-    mut sail_query: Query<(&components::SailElement, &mut components::VerletObject, &mut Transform)>
+    //mut sail_query: Query<(&components::SailElement, &mut components::VerletObject)>,
+    mut sail_query: Query<&mut components::VerletObject, With<components::SailElement>>,
+    //mut sail_query: Query<&mut components::VerletObject>,
     ) {
 
     // CALCULATION OF TIMESTEPS FOR THE CURRENT FRAME
 
     let timesteps = timestep_calculation(&time, &mut sim_params);
 
-    println!("New frame ------------------");
+    if DEBUG { println!("New frame ------------------"); }
 
     for _ in 0..timesteps { 
 
-        println!("New timestep ---------------");
+        if DEBUG { println!("New timestep ---------------"); }
 
         // SIMULATION LOOP
 
-        // Iterating over esail elements, in order. The first one is skipped because it's static
-        //for element in esail.elements.iter().skip(1) {
+        // Iterating over esail elements, in order.
         for element in esail.elements.iter() {
 
             // Getting information about the current sail element
-            let (sail_element,  mut verlet_object, mut transform) = sail_query.get_mut(*element).expect("No sail element found");
+            //let (sail_element,  mut verlet_object) = sail_query.get_mut(*element).expect("No sail element found");
+            let mut verlet_object = sail_query.get_mut(*element).expect("No sail element found");
 
-            if sail_element.is_deployed {
-                // Updating the values of the verlet object
+            //if sail_element.is_deployed {
+            //    // Updating the values of the verlet object
+            //    verlet_integration(&mut verlet_object, &mut sim_params);
+            //}
+
+            if verlet_object.is_deployed {
                 verlet_integration(&mut verlet_object, &mut sim_params);
-
-                transform.translation.x = verlet_object.current_x;
-                transform.translation.y = verlet_object.current_y;
             }
         }
 
         // CONSTRAINT LOOP
 
         for _ in 0..ITERATIONS {
-            println!("New constraint iteration ---");
 
-            // Iterate again over all the objects
-            for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {
+            if DEBUG { println!("New constraint iteration ---"); }
 
-        //        // Getting coordinates of the previous sail element in line
-                let prev_sail_element = esail.elements[index - 1];
+            let mut verlet_combinations = sail_query.iter_combinations_mut::<2>();
 
-                // NEW! I'm going to mutate both elements now (except the first)
+            while let Some([mut first_verlet, mut second_verlet]) = verlet_combinations.fetch_next() {
 
-                let (_prev_element, mut prev_element_transform, mut prev_verlet_object) = sail_query.get(prev_sail_element).expect("No previous sail element found");
+                let mut first_verlet_x = first_verlet.current_x;
+                let mut first_verlet_y = first_verlet.current_y;
+                
+                let mut second_verlet_x = second_verlet.current_x;
+                let mut second_verlet_y = second_verlet.current_y;
 
-        //        let prev_element_x = prev_element_transform.translation.x;
-        //        let prev_element_y = prev_element_transform.translation.y;
+                // Calculating distance between elements
 
-        //        // Getting coordinates of the current sail element
-        //        let (_sail_element, mut transform, mut verlet_object) = sail_query.get_mut(*sail_element).expect("No sail element found");
-        //    
-        //        // Calculating distance between current sail element and previous element in the line
-        //        let diff_x = verlet_object.current_x - prev_element_x;
-        //        let diff_y = verlet_object.current_y - prev_element_y;
-        //        let distance_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
+                let diff_x = first_verlet_x - second_verlet_x;
+                let diff_y = first_verlet_y - second_verlet_y;
+                let distance_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
+                
+                let mut difference = 0.0;
 
-        //        println!("Index: {} | Distance between elements: {}", index, distance_between_elements);
+                if distance_between_elements > 0.0 {
+                    // Don't get this formula really
+                    difference = (distance_between_elements - esail.resting_distance) / distance_between_elements;
+                }
 
-        //        let mut difference = 0.0;
+                let correction_x = diff_x * difference;
+                let correction_y = diff_y * difference;
 
-        //        if distance_between_elements > 0.0 {
-        //            // Don't get this formula really
-        //            difference = (distance_between_elements - esail.resting_distance) / distance_between_elements;
-        //        }
+                // Updating positions
 
-        //        let correction_x = diff_x * difference;
-        //        let correction_y = diff_y * difference;
+                if first_verlet.is_deployed {
+                    first_verlet.current_x -= correction_x;
+                    first_verlet.current_y -= correction_y;
+                }
 
-        //        // Updating positions
-
-        //        verlet_object.previous_x = verlet_object.current_x;
-        //        verlet_object.previous_y = verlet_object.current_y;
-
-        //        transform.translation.x = verlet_object.current_x - correction_x;
-        //        transform.translation.y = verlet_object.current_y - correction_y;
+                if second_verlet.is_deployed {
+                    second_verlet.current_x += correction_x;
+                    second_verlet.current_y += correction_y;
+                }
             }
+
         }
     }
 }
+
+fn transform_update(
+    mut sail_query: Query<(&components::VerletObject, &mut Transform)>,
+    ){
+    
+    for (verlet_object, mut transform) in sail_query.iter_mut() {
+        transform.translation.x = verlet_object.current_x;
+        transform.translation.y = verlet_object.current_y;
+    }
+} 

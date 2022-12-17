@@ -14,11 +14,12 @@ pub struct SailElement {
     pub is_deployed: bool,
 }
 
-// Needs a better name. VerletObject?
+// I could call this SailElement and make everything simpler
 #[derive(Component, Debug)]
 pub struct VerletObject {
     pub previous_x: f32,
     pub previous_y: f32,
     pub current_x:  f32,
     pub current_y:  f32,
+    pub is_deployed: bool,
 }
