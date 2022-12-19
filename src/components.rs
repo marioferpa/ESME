@@ -1,5 +1,8 @@
 use bevy::prelude::*;
 
+#[derive(Component)]
+pub struct CenterOfMass;
+
 #[derive(Component, Debug)]
 // A 'tuple struct', I didn't know these existed.
 pub struct Mass (

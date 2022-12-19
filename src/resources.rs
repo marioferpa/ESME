@@ -8,6 +8,7 @@ pub struct SimulationParameters {
     pub acceleration_x: f32,
     pub acceleration_y: f32,
     pub debug:          bool,
+    pub center_of_mass: bool,
 }
 
 impl Default for SimulationParameters {
@@ -19,6 +20,7 @@ impl Default for SimulationParameters {
             acceleration_x: 0.0,
             acceleration_y: 0.0,
             debug:          false,
+            center_of_mass: true,
         }
     }
 }

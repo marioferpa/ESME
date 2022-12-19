@@ -16,9 +16,11 @@ pub struct PhysicsPlugin;
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
+            .insert_resource(resources::SimulationParameters{timestep: PHYSICS_TIMESTEP, iterations: ITERATIONS, ..Default::default()})
             .add_system(verlet_simulation)
-            .add_system(transform_update) // Does this always work after the previous system is finished?
-            .insert_resource(resources::SimulationParameters{timestep: PHYSICS_TIMESTEP, iterations: ITERATIONS, ..Default::default()});
+            .add_system(update_transform_verlets) // Does this always work after the previous system is finished?
+            .add_system(update_center_of_mass)
+            ;
     }
 }
 
@@ -169,7 +171,7 @@ fn verlet_simulation(
     }
 }
 
-fn transform_update(
+fn update_transform_verlets(
     mut sail_query: Query<(&components::VerletObject, &mut Transform)>,
     ){
     
@@ -178,3 +180,29 @@ fn transform_update(
         transform.translation.y = verlet_object.current_y;
     }
 } 
+
+fn update_center_of_mass(
+    sim_params:     Res<resources::SimulationParameters>,
+    mut com_query:  Query<&mut Transform, With<components::CenterOfMass>>, 
+    mass_query:     Query<(&Transform, &components::Mass), Without<components::CenterOfMass>>,
+    ){
+
+    let mut total_mass:     f32 = 0.0;
+    let mut center_mass_x:  f32 = 0.0;
+    let mut center_mass_y:  f32 = 0.0;
+
+    for (transform, object_mass) in mass_query.iter() {
+        total_mass += object_mass.0;
+        center_mass_x += transform.translation.x * object_mass.0;
+        center_mass_y += transform.translation.y * object_mass.0;
+    }
+
+    if sim_params.debug {
+        println!("Total mass: {} | Center of mass: ({},{})", total_mass, center_mass_x, center_mass_y);
+    }
+
+    let mut com_transform = com_query.single_mut();
+
+    com_transform.translation.x = center_mass_x;
+    com_transform.translation.y = center_mass_y;
+}

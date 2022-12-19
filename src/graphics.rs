@@ -3,9 +3,15 @@ use bevy_prototype_lyon::prelude::*;
 
 use crate::{ components, resources };
 
-const Z_ESAIL: f32 = 1.0;   // Will need to change if I move to 3D
-const X_FIRST_ELEMENT: f32 = 15.0;
+const Z_ESAIL:                  f32 = 1.0;   // Will need to change if I move to 3D
+const Z_CENTER_MASS:            f32 = 10.0;
+const X_FIRST_ELEMENT:          f32 = 15.0;
+
 const NUMBER_OF_ESAIL_ELEMENTS: i32 = 20;
+
+const BODY_MASS:                f32 = 10.0;
+const SAIL_ELEMENT_MASS:        f32 = 0.01;
+const ENDMASS_MASS:             f32 = 0.1;  // Didn't we have a better name for this?
 
 pub struct GraphicsPlugin;
 
@@ -13,8 +19,31 @@ impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_startup_system(Self::spawn_shapes)
+            .add_startup_system(spawn_center_mass)
             .insert_resource(resources::ESail{elements: Vec::new(), resting_distance: 20.0});
     }
+}
+
+// Next: figure out how to toggle visibility
+fn spawn_center_mass(
+    mut commands: Commands,
+    ){
+    
+    let center_mass_shape = shapes::Circle {
+        radius: 10.0,
+        ..shapes::Circle::default() // Editing the transform later.
+    };
+
+    commands.spawn(GeometryBuilder::build_as(
+            &center_mass_shape,
+            DrawMode::Outlined {
+                fill_mode: FillMode::color(Color::YELLOW),
+                outline_mode: StrokeMode::new(Color::BLACK, 1.0),
+            },
+            Transform::from_xyz(0.0, 0.0, Z_CENTER_MASS),
+        ))
+        .insert(components::CenterOfMass)
+        ;
 }
 
 impl GraphicsPlugin {
@@ -41,7 +70,7 @@ impl GraphicsPlugin {
                 },
                 Transform::default(),
             ))
-            .insert(components::Mass(10.0));
+            .insert(components::Mass(BODY_MASS));
 
         // Spawn a number of elements
 
@@ -51,14 +80,14 @@ impl GraphicsPlugin {
 
             if number == 1 {
                 // First element, not deployed
-                spawn_esail_element(x, 0.0, 5.0, false, &mut commands, &mut esail);
+                spawn_esail_element(x, 0.0, 5.0, SAIL_ELEMENT_MASS, false, &mut commands, &mut esail);
             } else {
                 if number == NUMBER_OF_ESAIL_ELEMENTS {
                     // Last element, is the endmass
-                    spawn_esail_element(x, 0.0, 10.0, true, &mut commands, &mut esail);
+                    spawn_esail_element(x, 0.0, 10.0, ENDMASS_MASS, true, &mut commands, &mut esail);
                 } else { 
                     // Elements in the middle
-                    spawn_esail_element(x, 0.0, 5.0, true, &mut commands, &mut esail);
+                    spawn_esail_element(x, 0.0, 5.0, SAIL_ELEMENT_MASS, true, &mut commands, &mut esail);
                 }
             }
         }
@@ -66,9 +95,7 @@ impl GraphicsPlugin {
 }
 
 fn spawn_esail_element(
-    x: f32, y: f32,
-    radius: f32,
-    is_deployed: bool,
+    x: f32, y: f32, radius: f32, mass: f32, is_deployed: bool,
     commands: &mut Commands,
     esail: &mut ResMut<resources::ESail>,
     ) {
@@ -88,6 +115,7 @@ fn spawn_esail_element(
             Transform::from_xyz(x, y, Z_ESAIL),
         ))
         .insert(components::SailElement{is_deployed: is_deployed}) 
+        .insert(components::Mass(mass))
         .insert(components::VerletObject{previous_x: x, previous_y: y, current_x: x, current_y: y, is_deployed: is_deployed})
         .id()
     ;
