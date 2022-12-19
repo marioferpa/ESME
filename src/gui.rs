@@ -38,10 +38,11 @@ impl GUIPlugin {
             ui.horizontal(|ui| { ui.label("Constraint iterations per timestep"); });
             ui.add(egui::Slider::new(&mut sim_params.iterations, 1..=100).text("Iterations"));
 
-            // Checkbox, for later
-            //ui.horizontal(|ui| { 
-            //    ui.checkbox(&mut debug, "checkbox");
-            //});
+            ui.separator();
+
+            ui.horizontal(|ui| { 
+                ui.checkbox(&mut sim_params.debug, "Debug mode");
+            });
         });
     }
 }

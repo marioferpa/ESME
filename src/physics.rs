@@ -7,9 +7,9 @@ use bevy::prelude::*;
 use crate::{ components, resources };
 
 pub const PHYSICS_TIMESTEP: f32 = 1.0/60.0; // seconds
-//pub ITERATIONS:       i32 = 1;    
+pub const ITERATIONS:       i32 = 11;    
 
-pub const DEBUG:            bool = false;
+//pub const DEBUG:            bool = false;
 
 pub struct PhysicsPlugin;
 
@@ -18,7 +18,7 @@ impl Plugin for PhysicsPlugin {
         app
             .add_system(verlet_simulation)
             .add_system(transform_update) // Does this always work after the previous system is finished?
-            .insert_resource(resources::SimulationParameters{timestep: PHYSICS_TIMESTEP, ..Default::default()});
+            .insert_resource(resources::SimulationParameters{timestep: PHYSICS_TIMESTEP, iterations: ITERATIONS, ..Default::default()});
     }
 }
 
@@ -87,11 +87,11 @@ fn verlet_simulation(
 
     let timesteps = timestep_calculation(&time, &mut sim_params);
 
-    if DEBUG { println!("New frame ------------------"); }
+    if sim_params.debug { println!("New frame ------------------"); }
 
     for _ in 0..timesteps { 
 
-        if DEBUG { println!("New timestep ---------------"); }
+        if sim_params.debug { println!("New timestep ---------------"); }
 
         // SIMULATION LOOP
 
@@ -111,7 +111,7 @@ fn verlet_simulation(
         //for _ in 0..ITERATIONS {
         for _ in 0..sim_params.iterations {
 
-            if DEBUG { println!("New constraint iteration ---"); }
+            if sim_params.debug { println!("New constraint iteration ---"); }
 
             for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {
 
@@ -133,7 +133,7 @@ fn verlet_simulation(
                 let diff_y = current_element_y - prev_element_y;
                 let distance_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
 
-                if DEBUG {
+                if sim_params.debug {
                     println!("Index: {} | Distance between elements: {}", index, distance_between_elements);
                 }
 

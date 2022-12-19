@@ -50,11 +50,14 @@ impl GraphicsPlugin {
             let x = X_FIRST_ELEMENT + number as f32 * esail.resting_distance;
 
             if number == 1 {
+                // First element, not deployed
                 spawn_esail_element(x, 0.0, 5.0, false, &mut commands, &mut esail);
             } else {
                 if number == NUMBER_OF_ESAIL_ELEMENTS {
+                    // Last element, is the endmass
                     spawn_esail_element(x, 0.0, 10.0, true, &mut commands, &mut esail);
                 } else { 
+                    // Elements in the middle
                     spawn_esail_element(x, 0.0, 5.0, true, &mut commands, &mut esail);
                 }
             }
