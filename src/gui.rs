@@ -28,10 +28,10 @@ impl GUIPlugin {
 
             // Sliders
             ui.horizontal(|ui| { ui.label("'Centrifugal' acceleration (x)"); });
-            ui.add(egui::Slider::new(&mut sim_params.acceleration_x, 0.0..=10000.0).text("value"));
+            ui.add(egui::Slider::new(&mut sim_params.acceleration_x, 0.0..=100.0).text("value"));
 
             ui.horizontal(|ui| { ui.label("'Coulomb' acceleration (y)"); });
-            ui.add(egui::Slider::new(&mut sim_params.acceleration_y, -10000.0..=10000.0).text("value"));
+            ui.add(egui::Slider::new(&mut sim_params.acceleration_y, -100.0..=100.0).text("value"));
 
             ui.separator();
         });

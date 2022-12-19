@@ -7,7 +7,7 @@ use bevy::prelude::*;
 use crate::{ components, resources };
 
 pub const PHYSICS_TIMESTEP: f32 = 1.0/60.0; // seconds
-pub const ITERATIONS:       i32 = 100;    // One seems to be enough now
+pub const ITERATIONS:       i32 = 100;    
 
 pub const DEBUG:            bool = false;
 
@@ -79,9 +79,7 @@ fn verlet_simulation(
     time: Res<Time>,
     esail: Res<resources::ESail>,
     mut sim_params: ResMut<resources::SimulationParameters>,
-    //mut sail_query: Query<(&components::SailElement, &mut components::VerletObject)>,
     mut sail_query: Query<&mut components::VerletObject, With<components::SailElement>>,
-    //mut sail_query: Query<&mut components::VerletObject>,
     ) {
 
     // CALCULATION OF TIMESTEPS FOR THE CURRENT FRAME
@@ -100,13 +98,7 @@ fn verlet_simulation(
         for element in esail.elements.iter() {
 
             // Getting information about the current sail element
-            //let (sail_element,  mut verlet_object) = sail_query.get_mut(*element).expect("No sail element found");
             let mut verlet_object = sail_query.get_mut(*element).expect("No sail element found");
-
-            //if sail_element.is_deployed {
-            //    // Updating the values of the verlet object
-            //    verlet_integration(&mut verlet_object, &mut sim_params);
-            //}
 
             if verlet_object.is_deployed {
                 verlet_integration(&mut verlet_object, &mut sim_params);
@@ -119,45 +111,63 @@ fn verlet_simulation(
 
             if DEBUG { println!("New constraint iteration ---"); }
 
-            let mut verlet_combinations = sail_query.iter_combinations_mut::<2>();
+            // Not working. I don't want all pairs of objects to be connected, I don't know what I was thinking.
+            //let mut verlet_combinations = sail_query.iter_combinations_mut::<2>();
+            //while let Some([mut first_verlet, mut second_verlet]) = verlet_combinations.fetch_next() {
+            
+            for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {
 
-            while let Some([mut first_verlet, mut second_verlet]) = verlet_combinations.fetch_next() {
+                // Information from current element
+                let current_verlet_object = sail_query.get(*sail_element).expect("No previous sail element found");
 
-                let mut first_verlet_x = first_verlet.current_x;
-                let mut first_verlet_y = first_verlet.current_y;
-                
-                let mut second_verlet_x = second_verlet.current_x;
-                let mut second_verlet_y = second_verlet.current_y;
+                let current_element_x = current_verlet_object.current_x;
+                let current_element_y = current_verlet_object.current_y;
 
-                // Calculating distance between elements
+                // Information from previous element
+                let prev_sail_element = esail.elements[index - 1];
+                let prev_verlet_object = sail_query.get(prev_sail_element).expect("No previous sail element found");
 
-                let diff_x = first_verlet_x - second_verlet_x;
-                let diff_y = first_verlet_y - second_verlet_y;
+                let prev_element_x = prev_verlet_object.current_x;
+                let prev_element_y = prev_verlet_object.current_y;
+
+                // Calculating distance between current sail element and previous element in the line
+                let diff_x = current_element_x - prev_element_x;
+                let diff_y = current_element_y - prev_element_y;
                 let distance_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
-                
+
+                if DEBUG {
+                    println!("Index: {} | Distance between elements: {}", index, distance_between_elements);
+                }
+
                 let mut difference = 0.0;
 
                 if distance_between_elements > 0.0 {
-                    // Don't get this formula really
-                    difference = (distance_between_elements - esail.resting_distance) / distance_between_elements;
+                    // Don't get this formula really. Is it correct?
+                    difference = (esail.resting_distance - distance_between_elements) / distance_between_elements;
                 }
 
-                let correction_x = diff_x * difference;
-                let correction_y = diff_y * difference;
+                // This shouldn't be .5 if one object is not deployed, although I believe it tends to the correct spot anyways.
+                let correction_x = diff_x * 0.5 * difference;
+                let correction_y = diff_y * 0.5 * difference;
 
-                // Updating positions
-
-                if first_verlet.is_deployed {
-                    first_verlet.current_x -= correction_x;
-                    first_verlet.current_y -= correction_y;
+                // UPDATING POSITIONS
+                // Here's where, I think, I'll have to get the queries again. Or at least operate
+                // on the prev query, that is still open, and then reopen the one for the current element.
+                
+                let mut current_verlet_object = sail_query.get_mut(*sail_element).expect("No previous sail element found");
+                
+                if current_verlet_object.is_deployed {
+                    current_verlet_object.current_x += correction_x;
+                    current_verlet_object.current_y += correction_y;
                 }
 
-                if second_verlet.is_deployed {
-                    second_verlet.current_x += correction_x;
-                    second_verlet.current_y += correction_y;
+                let mut prev_verlet_object = sail_query.get_mut(prev_sail_element).expect("No previous sail element found");
+                
+                if prev_verlet_object.is_deployed {
+                    prev_verlet_object.current_x -= correction_x;
+                    prev_verlet_object.current_y -= correction_y;
                 }
             }
-
         }
     }
 }

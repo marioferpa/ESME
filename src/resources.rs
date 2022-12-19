@@ -25,9 +25,3 @@ pub struct ESail {
     pub elements: Vec<Entity>,
     pub resting_distance: f32,  // In pixels for now, go metric as soon as you can.
 }
-
-impl ESail {
-    pub fn distance_between_elements(&self) {
-        println!("{:?}", self.elements[0]);
-    }
-}
