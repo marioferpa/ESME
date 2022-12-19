@@ -34,6 +34,14 @@ impl GUIPlugin {
             ui.add(egui::Slider::new(&mut sim_params.acceleration_y, -100.0..=100.0).text("value"));
 
             ui.separator();
+
+            ui.horizontal(|ui| { ui.label("Constraint iterations per timestep"); });
+            ui.add(egui::Slider::new(&mut sim_params.iterations, 1..=100).text("Iterations"));
+
+            // Checkbox, for later
+            //ui.horizontal(|ui| { 
+            //    ui.checkbox(&mut debug, "checkbox");
+            //});
         });
     }
 }

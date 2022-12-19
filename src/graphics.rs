@@ -50,9 +50,13 @@ impl GraphicsPlugin {
             let x = X_FIRST_ELEMENT + number as f32 * esail.resting_distance;
 
             if number == 1 {
-                spawn_esail_element(x, 0.0, false, &mut commands, &mut esail);
+                spawn_esail_element(x, 0.0, 5.0, false, &mut commands, &mut esail);
             } else {
-                spawn_esail_element(x, 0.0, true, &mut commands, &mut esail);
+                if number == NUMBER_OF_ESAIL_ELEMENTS {
+                    spawn_esail_element(x, 0.0, 10.0, true, &mut commands, &mut esail);
+                } else { 
+                    spawn_esail_element(x, 0.0, 5.0, true, &mut commands, &mut esail);
+                }
             }
         }
     }
@@ -60,13 +64,14 @@ impl GraphicsPlugin {
 
 fn spawn_esail_element(
     x: f32, y: f32,
+    radius: f32,
     is_deployed: bool,
     commands: &mut Commands,
     esail: &mut ResMut<resources::ESail>,
     ) {
 
     let esail_element_shape = shapes::Circle {
-        radius: 5.0,
+        radius: radius,
         ..shapes::Circle::default() // Editing the transform later.
     };
 

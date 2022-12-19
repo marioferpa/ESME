@@ -7,7 +7,7 @@ use bevy::prelude::*;
 use crate::{ components, resources };
 
 pub const PHYSICS_TIMESTEP: f32 = 1.0/60.0; // seconds
-pub const ITERATIONS:       i32 = 100;    
+//pub ITERATIONS:       i32 = 1;    
 
 pub const DEBUG:            bool = false;
 
@@ -54,6 +54,7 @@ fn verlet_integration(
     let previous_position_y = verlet_object.previous_y;
 
     // Applying accelerations
+    // Next: apply forces next, and calculate acceleration later, so the mass plays a role.
 
     let velocity_x = current_position_x - previous_position_x;
     let velocity_y = current_position_y - previous_position_y;
@@ -107,14 +108,11 @@ fn verlet_simulation(
 
         // CONSTRAINT LOOP
 
-        for _ in 0..ITERATIONS {
+        //for _ in 0..ITERATIONS {
+        for _ in 0..sim_params.iterations {
 
             if DEBUG { println!("New constraint iteration ---"); }
 
-            // Not working. I don't want all pairs of objects to be connected, I don't know what I was thinking.
-            //let mut verlet_combinations = sail_query.iter_combinations_mut::<2>();
-            //while let Some([mut first_verlet, mut second_verlet]) = verlet_combinations.fetch_next() {
-            
             for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {
 
                 // Information from current element
@@ -151,8 +149,7 @@ fn verlet_simulation(
                 let correction_y = diff_y * 0.5 * difference;
 
                 // UPDATING POSITIONS
-                // Here's where, I think, I'll have to get the queries again. Or at least operate
-                // on the prev query, that is still open, and then reopen the one for the current element.
+                // Here's where, I think, I'll have to get the queries again.
                 
                 let mut current_verlet_object = sail_query.get_mut(*sail_element).expect("No previous sail element found");
                 
