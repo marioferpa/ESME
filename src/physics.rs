@@ -3,13 +3,13 @@
 
 // Problem, maybe: The simulation seems to be idle for the two first frames
 
+use std::f32::consts;
+
 use bevy::prelude::*;
 use crate::{ components, resources };
 
 pub const PHYSICS_TIMESTEP: f32 = 1.0/60.0; // seconds
 pub const ITERATIONS:       i32 = 11;    
-
-//pub const DEBUG:            bool = false;
 
 pub struct PhysicsPlugin;
 
@@ -18,7 +18,7 @@ impl Plugin for PhysicsPlugin {
         app
             .insert_resource(resources::SimulationParameters{timestep: PHYSICS_TIMESTEP, iterations: ITERATIONS, ..Default::default()})
             .add_system(verlet_simulation)
-            .add_system(update_transform_verlets) // Does this always work after the previous system is finished?
+            .add_system(update_transform_verlets) 
             .add_system(update_center_of_mass)
             ;
     }
@@ -45,7 +45,9 @@ fn timestep_calculation(
 
 /// Updates the position of a verlet object
 fn verlet_integration(
+    object_mass:    &components::Mass,
     verlet_object:  &mut components::VerletObject,
+    // Also the transform, the voltage... Should I pass them all together somehow?
     sim_params:     &mut ResMut<resources::SimulationParameters>,
     ){
 
@@ -56,12 +58,21 @@ fn verlet_integration(
     let previous_position_y = verlet_object.previous_y;
 
     // Applying accelerations
-    // Next: apply forces next, and calculate acceleration later, so the mass plays a role.
+
+    // Calculating centrifugal acceleration
+    // Wait, I don't need the mass.
+
+    // This should be to the center of mass
+    let distance_to_center = (current_position_x * current_position_x + current_position_y * current_position_y).sqrt();
+
+    let angular_velocity = sim_params.rpm as f32 * consts::PI / 30.0;
+
+    let acceleration_x = distance_to_center * angular_velocity * angular_velocity;
 
     let velocity_x = current_position_x - previous_position_x;
     let velocity_y = current_position_y - previous_position_y;
 
-    let next_position_x = current_position_x + velocity_x + sim_params.acceleration_x * sim_params.timestep * sim_params.timestep;
+    let next_position_x = current_position_x + velocity_x + acceleration_x * sim_params.timestep * sim_params.timestep;
     let next_position_y = current_position_y + velocity_y + sim_params.acceleration_y * sim_params.timestep * sim_params.timestep;
 
     // Updating verlet object:
@@ -82,7 +93,7 @@ fn verlet_simulation(
     time: Res<Time>,
     esail: Res<resources::ESail>,
     mut sim_params: ResMut<resources::SimulationParameters>,
-    mut sail_query: Query<&mut components::VerletObject, With<components::SailElement>>,
+    mut sail_query: Query<(&mut components::VerletObject, &components::Mass), With<components::SailElement>>,
     ) {
 
     // CALCULATION OF TIMESTEPS FOR THE CURRENT FRAME
@@ -101,10 +112,10 @@ fn verlet_simulation(
         for element in esail.elements.iter() {
 
             // Getting information about the current sail element
-            let mut verlet_object = sail_query.get_mut(*element).expect("No sail element found");
+            let (mut verlet_object, object_mass) = sail_query.get_mut(*element).expect("No sail element found");
 
             if verlet_object.is_deployed {
-                verlet_integration(&mut verlet_object, &mut sim_params);
+                verlet_integration(&object_mass, &mut verlet_object, &mut sim_params);
             }
         }
 
@@ -118,14 +129,16 @@ fn verlet_simulation(
             for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {
 
                 // Information from current element
-                let current_verlet_object = sail_query.get(*sail_element).expect("No previous sail element found");
+                //let current_verlet_object = sail_query.get(*sail_element).expect("No previous sail element found");
+                let (current_verlet_object, _) = sail_query.get(*sail_element).expect("No previous sail element found");
 
                 let current_element_x = current_verlet_object.current_x;
                 let current_element_y = current_verlet_object.current_y;
 
                 // Information from previous element
                 let prev_sail_element = esail.elements[index - 1];
-                let prev_verlet_object = sail_query.get(prev_sail_element).expect("No previous sail element found");
+                //let prev_verlet_object = sail_query.get(prev_sail_element).expect("No previous sail element found");
+                let (prev_verlet_object, _) = sail_query.get(prev_sail_element).expect("No previous sail element found");
 
                 let prev_element_x = prev_verlet_object.current_x;
                 let prev_element_y = prev_verlet_object.current_y;
@@ -153,14 +166,15 @@ fn verlet_simulation(
                 // UPDATING POSITIONS
                 // Here's where, I think, I'll have to get the queries again.
                 
-                let mut current_verlet_object = sail_query.get_mut(*sail_element).expect("No previous sail element found");
+                //let mut current_verlet_object = sail_query.get_mut(*sail_element).expect("No previous sail element found");
+                let (mut current_verlet_object, _) = sail_query.get_mut(*sail_element).expect("No previous sail element found");
                 
                 if current_verlet_object.is_deployed {
                     current_verlet_object.current_x += correction_x;
                     current_verlet_object.current_y += correction_y;
                 }
 
-                let mut prev_verlet_object = sail_query.get_mut(prev_sail_element).expect("No previous sail element found");
+                let (mut prev_verlet_object, _) = sail_query.get_mut(prev_sail_element).expect("No previous sail element found");
                 
                 if prev_verlet_object.is_deployed {
                     prev_verlet_object.current_x -= correction_x;

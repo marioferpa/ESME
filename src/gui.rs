@@ -19,6 +19,7 @@ impl GUIPlugin {
         mut egui_ctx: ResMut<EguiContext>,
         mut sim_params: ResMut<resources::SimulationParameters>,
         ) {
+
         egui::SidePanel::left("side_panel")
         .default_width(200.0)
         .show(egui_ctx.ctx_mut(), |ui| {
@@ -27,8 +28,8 @@ impl GUIPlugin {
             ui.heading("Options");
 
             // Sliders
-            ui.horizontal(|ui| { ui.label("'Centrifugal' acceleration (x)"); });
-            ui.add(egui::Slider::new(&mut sim_params.acceleration_x, 0.0..=100.0).text("value"));
+            ui.horizontal(|ui| { ui.label("RPM"); });
+            ui.add(egui::Slider::new(&mut sim_params.rpm, 0..=100).text("value"));
 
             ui.horizontal(|ui| { ui.label("'Coulomb' acceleration (y)"); });
             ui.add(egui::Slider::new(&mut sim_params.acceleration_y, -100.0..=100.0).text("value"));
@@ -42,6 +43,11 @@ impl GUIPlugin {
 
             ui.horizontal(|ui| { 
                 ui.checkbox(&mut sim_params.debug, "Debug mode");
+            });
+
+            ui.horizontal(|ui| { 
+                //ui.toggle_value(&mut sim_params.center_of_mass, "Show center of mass");
+                ui.checkbox(&mut sim_params.center_of_mass, "Show center of mass");
             });
         });
     }

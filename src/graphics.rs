@@ -20,17 +20,34 @@ impl Plugin for GraphicsPlugin {
         app
             .add_startup_system(Self::spawn_shapes)
             .add_startup_system(spawn_center_mass)
+            //.add_system(toggle_center_mass)
             .insert_resource(resources::ESail{elements: Vec::new(), resting_distance: 20.0});
     }
 }
 
-// Next: figure out how to toggle visibility
+//fn toggle_center_mass(
+//    sim_params: ResMut<resources::SimulationParameters>,
+//    com_query:  Query<&mut Transform, With<components::CenterOfMass>>, 
+//    ){
+//    
+//    let com_transform = com_query.get_single();
+//
+//    let com_radius = if sim_params.center_of_mass {
+//        10.0
+//    } else {
+//        0.0
+//    };
+//
+//}
+
 fn spawn_center_mass(
     mut commands: Commands,
     ){
+
     
     let center_mass_shape = shapes::Circle {
         radius: 10.0,
+        //radius: 0.0,
         ..shapes::Circle::default() // Editing the transform later.
     };
 
@@ -114,7 +131,7 @@ fn spawn_esail_element(
             },
             Transform::from_xyz(x, y, Z_ESAIL),
         ))
-        .insert(components::SailElement{is_deployed: is_deployed}) 
+        .insert(components::SailElement) 
         .insert(components::Mass(mass))
         .insert(components::VerletObject{previous_x: x, previous_y: y, current_x: x, current_y: y, is_deployed: is_deployed})
         .id()

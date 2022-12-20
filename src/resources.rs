@@ -7,6 +7,7 @@ pub struct SimulationParameters {
     pub leftover_time:  f32,    // Unused time from the previous simulation loop
     pub acceleration_x: f32,
     pub acceleration_y: f32,
+    pub rpm:            i32,
     pub debug:          bool,
     pub center_of_mass: bool,
 }
@@ -19,6 +20,7 @@ impl Default for SimulationParameters {
             leftover_time:  0.0,
             acceleration_x: 0.0,
             acceleration_y: 0.0,
+            rpm:            0,
             debug:          false,
             center_of_mass: true,
         }
