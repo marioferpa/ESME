@@ -45,7 +45,6 @@ fn timestep_calculation(
 
 /// Updates the position of a verlet object
 fn verlet_integration(
-    object_mass:    &components::Mass,
     verlet_object:  &mut components::VerletObject,
     // Also the transform, the voltage... Should I pass them all together somehow?
     sim_params:     &mut ResMut<resources::SimulationParameters>,
@@ -120,10 +119,10 @@ fn verlet_simulation(
         for element in craft_params.elements.iter() {
 
             // Getting information about the current sail element
-            let (mut verlet_object, object_mass) = sail_query.get_mut(*element).expect("No sail element found");
+            let (mut verlet_object, _) = sail_query.get_mut(*element).expect("No sail element found");
 
             if verlet_object.is_deployed {
-                verlet_integration(&object_mass, &mut verlet_object, &mut sim_params, &craft_params);
+                verlet_integration(&mut verlet_object, &mut sim_params, &craft_params);
             }
         }
 
@@ -202,10 +201,11 @@ fn update_transform_verlets(
     }
 } 
 
+/// Updates position and visibility of the center of mass
 fn update_center_of_mass(
     sim_params:     Res<resources::SimulationParameters>,
-    mut com_query:  Query<&mut Transform, With<components::CenterOfMass>>, 
     mass_query:     Query<(&Transform, &components::Mass), Without<components::CenterOfMass>>,
+    mut com_query:  Query<(&mut Transform, &mut Visibility), With<components::CenterOfMass>>, 
     ){
 
     let mut total_mass:     f32 = 0.0;
@@ -222,8 +222,11 @@ fn update_center_of_mass(
         println!("Total mass: {} | Center of mass: ({},{})", total_mass, center_mass_x, center_mass_y);
     }
 
-    let mut com_transform = com_query.single_mut();
+    //let mut com_transform = com_query.single_mut();
+    let (mut com_transform, mut com_visibility) = com_query.single_mut();
 
     com_transform.translation.x = center_mass_x;
     com_transform.translation.y = center_mass_y;
+
+    com_visibility.is_visible = sim_params.com_visibility;
 }
