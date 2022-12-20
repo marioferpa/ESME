@@ -49,7 +49,10 @@ fn verlet_integration(
     verlet_object:  &mut components::VerletObject,
     // Also the transform, the voltage... Should I pass them all together somehow?
     sim_params:     &mut ResMut<resources::SimulationParameters>,
+    craft_params:   &Res<resources::SpacecraftParameters>,
     ){
+
+    // VELOCITIES
 
     let current_position_x  = verlet_object.current_x;
     let current_position_y  = verlet_object.current_y;
@@ -57,25 +60,30 @@ fn verlet_integration(
     let previous_position_x = verlet_object.previous_x;
     let previous_position_y = verlet_object.previous_y;
 
-    // Applying accelerations
-
-    // Calculating centrifugal acceleration
-    // Wait, I don't need the mass.
-
-    // This should be to the center of mass
-    let distance_to_center = (current_position_x * current_position_x + current_position_y * current_position_y).sqrt();
-
-    let angular_velocity = sim_params.rpm as f32 * consts::PI / 30.0;
-
-    let acceleration_x = distance_to_center * angular_velocity * angular_velocity;
-
     let velocity_x = current_position_x - previous_position_x;
     let velocity_y = current_position_y - previous_position_y;
 
+
+    // FORCES
+
+    // X AXIS: Centrifugal force
+
+    // This should be distance to the center of mass
+    let distance_to_center = (current_position_x * current_position_x + current_position_y * current_position_y).sqrt();
+
+    let angular_velocity = craft_params.rpm as f32 * consts::PI / 30.0;
+
+    let acceleration_x = distance_to_center * angular_velocity * angular_velocity;
+
     let next_position_x = current_position_x + velocity_x + acceleration_x * sim_params.timestep * sim_params.timestep;
+
+    // Y AXIS: Coulomb drag
+    // TBD
+
     let next_position_y = current_position_y + velocity_y + sim_params.acceleration_y * sim_params.timestep * sim_params.timestep;
 
-    // Updating verlet object:
+
+    // UPDATING OBJECT POSITION
 
     // Previous position is forgotten,
     
@@ -91,7 +99,7 @@ fn verlet_integration(
 /// Simulation proper
 fn verlet_simulation(
     time: Res<Time>,
-    esail: Res<resources::ESail>,
+    craft_params: Res<resources::SpacecraftParameters>,
     mut sim_params: ResMut<resources::SimulationParameters>,
     mut sail_query: Query<(&mut components::VerletObject, &components::Mass), With<components::SailElement>>,
     ) {
@@ -109,24 +117,23 @@ fn verlet_simulation(
         // SIMULATION LOOP
 
         // Iterating over esail elements, in order.
-        for element in esail.elements.iter() {
+        for element in craft_params.elements.iter() {
 
             // Getting information about the current sail element
             let (mut verlet_object, object_mass) = sail_query.get_mut(*element).expect("No sail element found");
 
             if verlet_object.is_deployed {
-                verlet_integration(&object_mass, &mut verlet_object, &mut sim_params);
+                verlet_integration(&object_mass, &mut verlet_object, &mut sim_params, &craft_params);
             }
         }
 
         // CONSTRAINT LOOP
 
-        //for _ in 0..ITERATIONS {
         for _ in 0..sim_params.iterations {
 
             if sim_params.debug { println!("New constraint iteration ---"); }
 
-            for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {
+            for (index, sail_element) in craft_params.elements.iter().enumerate().skip(1) {
 
                 // Information from current element
                 //let current_verlet_object = sail_query.get(*sail_element).expect("No previous sail element found");
@@ -136,7 +143,7 @@ fn verlet_simulation(
                 let current_element_y = current_verlet_object.current_y;
 
                 // Information from previous element
-                let prev_sail_element = esail.elements[index - 1];
+                let prev_sail_element = craft_params.elements[index - 1];
                 //let prev_verlet_object = sail_query.get(prev_sail_element).expect("No previous sail element found");
                 let (prev_verlet_object, _) = sail_query.get(prev_sail_element).expect("No previous sail element found");
 
@@ -156,7 +163,7 @@ fn verlet_simulation(
 
                 if distance_between_elements > 0.0 {
                     // Don't get this formula really. Is it correct?
-                    difference = (esail.resting_distance - distance_between_elements) / distance_between_elements;
+                    difference = (craft_params.resting_distance - distance_between_elements) / distance_between_elements;
                 }
 
                 // This shouldn't be .5 if one object is not deployed, although I believe it tends to the correct spot anyways.

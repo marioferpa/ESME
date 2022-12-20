@@ -18,6 +18,7 @@ impl GUIPlugin {
     fn sidebar(
         mut egui_ctx: ResMut<EguiContext>,
         mut sim_params: ResMut<resources::SimulationParameters>,
+        mut craft_params: ResMut<resources::SpacecraftParameters>,
         ) {
 
         egui::SidePanel::left("side_panel")
@@ -29,10 +30,13 @@ impl GUIPlugin {
 
             // Sliders
             ui.horizontal(|ui| { ui.label("RPM"); });
-            ui.add(egui::Slider::new(&mut sim_params.rpm, 0..=100).text("value"));
+            ui.add(egui::Slider::new(&mut craft_params.rpm, 0..=100).text("value"));
 
             ui.horizontal(|ui| { ui.label("'Coulomb' acceleration (y)"); });
             ui.add(egui::Slider::new(&mut sim_params.acceleration_y, -100.0..=100.0).text("value"));
+
+            ui.horizontal(|ui| { ui.label("Wire potential V_0"); });
+            ui.add(egui::Slider::new(&mut craft_params.wire_potential, 0.0..=100.0).text("value"));
 
             ui.separator();
 
@@ -47,8 +51,12 @@ impl GUIPlugin {
 
             ui.horizontal(|ui| { 
                 //ui.toggle_value(&mut sim_params.center_of_mass, "Show center of mass");
-                ui.checkbox(&mut sim_params.center_of_mass, "Show center of mass");
+                ui.checkbox(&mut sim_params.com_visibility, "Show center of mass");
             });
+
+            //if ui.add(egui::Button::new("Reset")).clicked() {
+            //   println!("Hey");
+            //}
         });
     }
 }

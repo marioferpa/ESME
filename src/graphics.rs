@@ -21,7 +21,7 @@ impl Plugin for GraphicsPlugin {
             .add_startup_system(Self::spawn_shapes)
             .add_startup_system(spawn_center_mass)
             //.add_system(toggle_center_mass)
-            .insert_resource(resources::ESail{elements: Vec::new(), resting_distance: 20.0});
+            .insert_resource(resources::SpacecraftParameters{elements: Vec::new(), resting_distance: 20.0, ..Default::default()});
     }
 }
 
@@ -67,7 +67,7 @@ impl GraphicsPlugin {
 
     fn spawn_shapes(
         mut commands: Commands,
-        mut esail: ResMut<resources::ESail>,
+        mut esail: ResMut<resources::SpacecraftParameters>,
         ) {
 
         // Satellite body
@@ -114,7 +114,7 @@ impl GraphicsPlugin {
 fn spawn_esail_element(
     x: f32, y: f32, radius: f32, mass: f32, is_deployed: bool,
     commands: &mut Commands,
-    esail: &mut ResMut<resources::ESail>,
+    esail: &mut ResMut<resources::SpacecraftParameters>,
     ) {
 
     let esail_element_shape = shapes::Circle {
