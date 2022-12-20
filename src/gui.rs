@@ -29,14 +29,14 @@ impl GUIPlugin {
             ui.heading("Options");
 
             // Sliders
-            ui.horizontal(|ui| { ui.label("RPM"); });
-            ui.add(egui::Slider::new(&mut craft_params.rpm, 0..=100).text("value"));
+            ui.horizontal(|ui| { ui.label("Spacecraft rotation"); });
+            ui.add(egui::Slider::new(&mut craft_params.rpm, 0..=100).text("rpm"));
 
             ui.horizontal(|ui| { ui.label("'Coulomb' acceleration (y)"); });
             ui.add(egui::Slider::new(&mut sim_params.acceleration_y, -100.0..=100.0).text("value"));
 
             ui.horizontal(|ui| { ui.label("Wire potential V_0"); });
-            ui.add(egui::Slider::new(&mut craft_params.wire_potential, 0.0..=100.0).text("value"));
+            ui.add(egui::Slider::new(&mut craft_params.wire_potential, 0.0..=100.0).text("V"));
 
             ui.separator();
 

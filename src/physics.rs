@@ -8,15 +8,12 @@ use std::f32::consts;
 use bevy::prelude::*;
 use crate::{ components, resources };
 
-pub const PHYSICS_TIMESTEP: f32 = 1.0/60.0; // seconds
-pub const ITERATIONS:       i32 = 11;    
-
 pub struct PhysicsPlugin;
 
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            .insert_resource(resources::SimulationParameters{timestep: PHYSICS_TIMESTEP, iterations: ITERATIONS, ..Default::default()})
+            .insert_resource(resources::SimulationParameters{..Default::default()}) // Defaults in resources.rs
             .add_system(verlet_simulation)
             .add_system(update_transform_verlets) 
             .add_system(update_center_of_mass)
@@ -30,7 +27,7 @@ fn timestep_calculation(
     sim_params: &mut ResMut<resources::SimulationParameters>,
     ) -> i32 {
 
-    // Time since last update plus leftover time from previous frame
+    // Adding time elapsed since last update and leftover time from previous frame
     let elapsed_time = time.delta_seconds() + sim_params.leftover_time; 
 
     // Number of timesteps that should be performed during this frame
@@ -78,6 +75,7 @@ fn verlet_integration(
 
     // Y AXIS: Coulomb drag
     // TBD
+    // Starting to think that the bending moment should go here too.
 
     let next_position_y = current_position_y + velocity_y + sim_params.acceleration_y * sim_params.timestep * sim_params.timestep;
 
