@@ -5,7 +5,6 @@ pub struct SimulationParameters {
     pub iterations:     i32,    // Number of constraint iterations per timestep.
     pub timestep:       f32,    // Timestep for the physics simulation, in seconds.
     pub leftover_time:  f32,    // Unused time from the previous simulation loop.
-    pub acceleration_y: f32,    // Temporary value for acceleration in the vertical axis.
     pub debug:          bool,   // Toggle for printing debug information to console.
     pub com_visibility: bool,   // Toggle for showing/hiding the center of mass.
 }
@@ -16,7 +15,6 @@ impl Default for SimulationParameters {
             iterations:     10,
             timestep:       1.0/60.0,   // In seconds (right?)
             leftover_time:  0.0,
-            acceleration_y: 0.0,
             debug:          false,
             com_visibility: false,
         }

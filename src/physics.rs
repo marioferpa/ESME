@@ -74,10 +74,11 @@ fn verlet_integration(
     let next_position_x = current_position_x + velocity_x + acceleration_x * sim_params.timestep * sim_params.timestep;
 
     // Y AXIS: Coulomb drag
-    // TBD
     // Starting to think that the bending moment should go here too.
 
-    let next_position_y = current_position_y + velocity_y + sim_params.acceleration_y * sim_params.timestep * sim_params.timestep;
+    let acceleration_y = craft_params.wire_potential; // I'm gonna make it just proportional to the voltage for now.
+
+    let next_position_y = current_position_y + velocity_y + acceleration_y * sim_params.timestep * sim_params.timestep;
 
 
     // UPDATING OBJECT POSITION
