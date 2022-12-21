@@ -43,9 +43,8 @@ fn timestep_calculation(
 /// Updates the position of a verlet object
 fn verlet_integration(
     verlet_object:  &mut components::VerletObject,
-    // Also the transform, the voltage... Should I pass them all together somehow?
     sim_params:     &mut ResMut<resources::SimulationParameters>,
-    craft_params:   &Res<resources::SpacecraftParameters>,
+    spacecraft_parameters:   &Res<resources::SpacecraftParameters>,
     ){
 
     // VELOCITIES
@@ -67,7 +66,7 @@ fn verlet_integration(
     // This should be distance to the center of mass
     let distance_to_center = (current_position_x * current_position_x + current_position_y * current_position_y).sqrt();
 
-    let angular_velocity = craft_params.rpm as f32 * consts::PI / 30.0;
+    let angular_velocity = spacecraft_parameters.rpm as f32 * consts::PI / 30.0;
 
     let acceleration_x = distance_to_center * angular_velocity * angular_velocity;
 
@@ -76,7 +75,7 @@ fn verlet_integration(
     // Y AXIS: Coulomb drag
     // Starting to think that the bending moment should go here too.
 
-    let acceleration_y = craft_params.wire_potential; // I'm gonna make it just proportional to the voltage for now.
+    let acceleration_y = spacecraft_parameters.wire_potential; // I'm gonna make it just proportional to the voltage for now.
 
     let next_position_y = current_position_y + velocity_y + acceleration_y * sim_params.timestep * sim_params.timestep;
 
@@ -97,10 +96,14 @@ fn verlet_integration(
 /// Simulation proper
 fn verlet_simulation(
     time: Res<Time>,
-    craft_params: Res<resources::SpacecraftParameters>,
+    esail_query: Query<&components::ESail>,
     mut sim_params: ResMut<resources::SimulationParameters>,
+    spacecraft_parameters: Res<resources::SpacecraftParameters>,
+    // I think I'm not using mass anywhere (shouldn't it affect inertia?)
     mut sail_query: Query<(&mut components::VerletObject, &components::Mass), With<components::SailElement>>,
     ) {
+
+    let esail = esail_query.single();
 
     // CALCULATION OF TIMESTEPS FOR THE CURRENT FRAME
 
@@ -115,13 +118,13 @@ fn verlet_simulation(
         // SIMULATION LOOP
 
         // Iterating over esail elements, in order.
-        for element in craft_params.elements.iter() {
+        for element in esail.elements.iter() {
 
             // Getting information about the current sail element
             let (mut verlet_object, _) = sail_query.get_mut(*element).expect("No sail element found");
 
             if verlet_object.is_deployed {
-                verlet_integration(&mut verlet_object, &mut sim_params, &craft_params);
+                verlet_integration(&mut verlet_object, &mut sim_params, &spacecraft_parameters);
             }
         }
 
@@ -131,18 +134,17 @@ fn verlet_simulation(
 
             if sim_params.debug { println!("New constraint iteration ---"); }
 
-            for (index, sail_element) in craft_params.elements.iter().enumerate().skip(1) {
+            // Iterating over the sail elements in order
+            for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {
 
                 // Information from current element
-                //let current_verlet_object = sail_query.get(*sail_element).expect("No previous sail element found");
                 let (current_verlet_object, _) = sail_query.get(*sail_element).expect("No previous sail element found");
 
                 let current_element_x = current_verlet_object.current_x;
                 let current_element_y = current_verlet_object.current_y;
 
                 // Information from previous element
-                let prev_sail_element = craft_params.elements[index - 1];
-                //let prev_verlet_object = sail_query.get(prev_sail_element).expect("No previous sail element found");
+                let prev_sail_element = esail.elements[index - 1];
                 let (prev_verlet_object, _) = sail_query.get(prev_sail_element).expect("No previous sail element found");
 
                 let prev_element_x = prev_verlet_object.current_x;
@@ -161,7 +163,7 @@ fn verlet_simulation(
 
                 if distance_between_elements > 0.0 {
                     // Don't get this formula really. Is it correct?
-                    difference = (craft_params.resting_distance - distance_between_elements) / distance_between_elements;
+                    difference = (spacecraft_parameters.resting_distance - distance_between_elements) / distance_between_elements;
                 }
 
                 // This shouldn't be .5 if one object is not deployed, although I believe it tends to the correct spot anyways.

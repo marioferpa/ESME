@@ -7,6 +7,11 @@ pub struct CenterOfMass;
 pub struct SailElement;
 
 #[derive(Component, Debug)]
+pub struct ESail {
+    pub elements:   Vec<Entity>,
+}
+
+#[derive(Component, Debug)]
 pub struct Mass (
     pub f32
 );

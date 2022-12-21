@@ -25,20 +25,18 @@ impl Default for SimulationParameters {
 #[derive(Resource)]
 pub struct SpacecraftParameters {
     pub rpm:                i32,
-    pub number_elements:    i32,    // Should instead choose a length and a resolution but ok
-    pub elements:           Vec<Entity>,    // Looks misplaced here. Number of elements would be alright
     pub wire_potential:     f32,
     pub resting_distance:   f32,  // In pixels for now, go metric as soon as you can.
+    pub number_of_elements: i32,    // Should instead choose a length and a resolution but ok
 }
 
 impl Default for SpacecraftParameters {
     fn default() -> SpacecraftParameters {
         SpacecraftParameters {
             rpm:                0,
-            number_elements:    20,
-            elements:           Vec::new(),
-            resting_distance:   10.0,
             wire_potential:     0.0,
+            resting_distance:   10.0,
+            number_of_elements: 20,
         }
     }
 }

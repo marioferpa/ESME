@@ -21,7 +21,8 @@ impl Plugin for GraphicsPlugin {
             .add_startup_system(spawn_cubesat)
             .add_startup_system(spawn_esail)
             .add_startup_system(spawn_center_mass)
-            .insert_resource(resources::SpacecraftParameters{elements: Vec::new(), resting_distance: 20.0, ..Default::default()});
+            // The following should be somewhere else, maybe in main?
+            .insert_resource(resources::SpacecraftParameters{resting_distance: 20.0, ..Default::default()});
     }
 }
 
@@ -71,33 +72,46 @@ fn spawn_cubesat(
 
 fn spawn_esail(
     mut commands: Commands,
-    mut craft_parameters: ResMut<resources::SpacecraftParameters>,
+    spacecraft_parameters: ResMut<resources::SpacecraftParameters>,
     ) {
 
-    for number in 1..=craft_parameters.number_elements {
+    // Here I could spawn an esail entity. And honor the name of the function in the process
 
-        let x = X_FIRST_ELEMENT + number as f32 * craft_parameters.resting_distance;
+    let mut element_vector: Vec<Entity> = Vec::new();
+
+    for number in 1..=spacecraft_parameters.number_of_elements {
+
+        let x = X_FIRST_ELEMENT + number as f32 * spacecraft_parameters.resting_distance;
 
         if number == 1 {
             // First element, not deployed
-            spawn_esail_element(x, 0.0, 5.0, SAIL_ELEMENT_MASS, false, &mut commands, &mut craft_parameters);
+            let element = spawn_esail_element(x, 0.0, 5.0, SAIL_ELEMENT_MASS, false, &mut commands);
+            element_vector.push(element);
+
         } else {
-            if number == craft_parameters.number_elements {
+            if number == spacecraft_parameters.number_of_elements {
                 // Last element, is the endmass
-                spawn_esail_element(x, 0.0, 10.0, ENDMASS_MASS, true, &mut commands, &mut craft_parameters);
+                let element = spawn_esail_element(x, 0.0, 10.0, ENDMASS_MASS, true, &mut commands);
+                element_vector.push(element);
+
             } else { 
                 // Elements in the middle
-                spawn_esail_element(x, 0.0, 5.0, SAIL_ELEMENT_MASS, true, &mut commands, &mut craft_parameters);
+                let element = spawn_esail_element(x, 0.0, 5.0, SAIL_ELEMENT_MASS, true, &mut commands);
+                element_vector.push(element);
             }
         }
     }
+
+    // Creating ESail entity and storing the elements inside.
+    commands.spawn_empty()
+        .insert(components::ESail{elements: element_vector});
+
 }
 
 fn spawn_esail_element(
     x: f32, y: f32, radius: f32, mass: f32, is_deployed: bool,
     commands: &mut Commands,
-    esail: &mut ResMut<resources::SpacecraftParameters>,
-    ) {
+    ) -> Entity {
 
     let esail_element_shape = shapes::Circle {
         radius: radius,
@@ -119,7 +133,5 @@ fn spawn_esail_element(
         .id()
     ;
 
-    // Add the entity to the ESail resource
-    esail.elements.push(sail_element);
-
+    return sail_element;
 }

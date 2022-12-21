@@ -26,7 +26,8 @@ impl GUIPlugin {
         .show(egui_ctx.ctx_mut(), |ui| {
 
             // Title
-            ui.heading("Options");
+
+            ui.label("SPACECRAFT");
 
             // Sliders
             ui.horizontal(|ui| { ui.label("Spacecraft rotation"); });
@@ -37,10 +38,11 @@ impl GUIPlugin {
 
             ui.separator();
 
+            ui.label("SIMULATION");
+
             ui.horizontal(|ui| { ui.label("Constraint iterations per timestep"); });
             ui.add(egui::Slider::new(&mut sim_params.iterations, 1..=100).text("Iterations"));
 
-            ui.separator();
 
             ui.horizontal(|ui| { 
                 ui.checkbox(&mut sim_params.debug, "Debug mode");
@@ -50,6 +52,8 @@ impl GUIPlugin {
                 //ui.toggle_value(&mut sim_params.center_of_mass, "Show center of mass");
                 ui.checkbox(&mut sim_params.com_visibility, "Show center of mass");
             });
+
+            ui.separator();
 
             //if ui.add(egui::Button::new("Reset")).clicked() {
             //   println!("Hey");
