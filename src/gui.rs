@@ -18,7 +18,7 @@ impl GUIPlugin {
     fn sidebar(
         mut egui_ctx: ResMut<EguiContext>,
         mut sim_params: ResMut<resources::SimulationParameters>,
-        mut craft_params: ResMut<resources::SpacecraftParameters>,
+        mut spacecraft_parameters: ResMut<resources::SpacecraftParameters>,
         ) {
 
         egui::SidePanel::left("side_panel")
@@ -31,10 +31,20 @@ impl GUIPlugin {
 
             // Sliders
             ui.horizontal(|ui| { ui.label("Spacecraft rotation"); });
-            ui.add(egui::Slider::new(&mut craft_params.rpm, 0..=100).text("rpm"));
+            ui.add(egui::Slider::new(&mut spacecraft_parameters.rpm, 0..=100).text("rpm"));
 
             ui.horizontal(|ui| { ui.label("Wire potential V_0"); });
-            ui.add(egui::Slider::new(&mut craft_params.wire_potential, -100.0..=100.0).text("V"));
+            ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential, -100.0..=100.0).text("V"));
+
+            //ui.horizontal(|ui| { 
+            //    ui.label("Wire length (m)");
+            //    ui.add(egui::DragValue::new(&mut spacecraft_parameters.wire_length).speed(0.1));
+            //});
+
+            //ui.horizontal(|ui| { 
+            //    ui.label("Wire resolution (units/m)");
+            //    ui.add(egui::DragValue::new(&mut spacecraft_parameters.wire_resolution).speed(0.1));
+            //});
 
             ui.separator();
 

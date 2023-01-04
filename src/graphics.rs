@@ -5,13 +5,13 @@ use crate::{ components, resources };
 
 const Z_ESAIL:                  f32 = 1.0;   // Will need to change if I move to 3D
 const Z_CENTER_MASS:            f32 = 10.0;
-const X_FIRST_ELEMENT:          f32 = 15.0;
+const X_FIRST_ELEMENT:          f32 = 35.0;
 
 //const NUMBER_OF_ESAIL_ELEMENTS: i32 = 20;
 
 const BODY_MASS:                f32 = 10.0;
 const SAIL_ELEMENT_MASS:        f32 = 0.01;
-const ENDMASS_MASS:             f32 = 0.1;  // Didn't we have a better name for this?
+const ENDMASS_MASS:             f32 = 0.1;
 
 pub struct GraphicsPlugin;
 
@@ -22,7 +22,7 @@ impl Plugin for GraphicsPlugin {
             .add_startup_system(spawn_esail)
             .add_startup_system(spawn_center_mass)
             // The following should be somewhere else, maybe in main?
-            .insert_resource(resources::SpacecraftParameters{resting_distance: 20.0, ..Default::default()});
+            .insert_resource(resources::SpacecraftParameters{..Default::default()});
     }
 }
 
@@ -75,21 +75,26 @@ fn spawn_esail(
     spacecraft_parameters: ResMut<resources::SpacecraftParameters>,
     ) {
 
-    // Here I could spawn an esail entity. And honor the name of the function in the process
-
     let mut element_vector: Vec<Entity> = Vec::new();
 
+    //let number_of_elements = (spacecraft_parameters.wire_length * spacecraft_parameters.wire_resolution) as i32;
+
+    //let distance_between_elements = (1 as f32 / spacecraft_parameters.wire_resolution) * PIXELS_PER_METER as f32;
+
     for number in 1..=spacecraft_parameters.number_of_elements {
+    //for number in 1..=number_of_elements {
 
         let x = X_FIRST_ELEMENT + number as f32 * spacecraft_parameters.resting_distance;
+        //let x = X_FIRST_ELEMENT + number as f32 * distance_between_elements;
 
         if number == 1 {
             // First element, not deployed
-            let element = spawn_esail_element(x, 0.0, 5.0, SAIL_ELEMENT_MASS, false, &mut commands);
+            let element = spawn_esail_element(X_FIRST_ELEMENT, 0.0, 5.0, SAIL_ELEMENT_MASS, false, &mut commands);
             element_vector.push(element);
 
         } else {
             if number == spacecraft_parameters.number_of_elements {
+            //if number == number_of_elements {
                 // Last element, is the endmass
                 let element = spawn_esail_element(x, 0.0, 10.0, ENDMASS_MASS, true, &mut commands);
                 element_vector.push(element);

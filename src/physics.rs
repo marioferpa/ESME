@@ -4,7 +4,6 @@
 // Problem, maybe: The simulation seems to be idle for the two first frames
 
 use std::f32::consts;
-
 use bevy::prelude::*;
 use crate::{ components, resources };
 
@@ -14,40 +13,156 @@ impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
             .insert_resource(resources::SimulationParameters{..Default::default()}) // Defaults in resources.rs
-            .add_system(verlet_simulation)
-            .add_system(update_transform_verlets) 
-            .add_system(update_center_of_mass)
+            .add_system(Self::verlet_simulation)
+            .add_system(Self::update_transform_verlets) 
+            .add_system(Self::update_center_of_mass)
             ;
     }
 }
 
-/// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.
-fn timestep_calculation(
-    time: &Res<Time>,
-    sim_params: &mut ResMut<resources::SimulationParameters>,
-    ) -> i32 {
+impl PhysicsPlugin {
 
-    // Adding time elapsed since last update and leftover time from previous frame
-    let elapsed_time = time.delta_seconds() + sim_params.leftover_time; 
+    /// Simulation proper
+    fn verlet_simulation(
+        time: Res<Time>, esail_query: Query<&components::ESail>,
+        mut sim_params: ResMut<resources::SimulationParameters>,
+        spacecraft_parameters: Res<resources::SpacecraftParameters>,
+        mut sail_query: Query<(&mut components::VerletObject, &components::Mass), With<components::SailElement>>,
+        ) {
 
-    // Number of timesteps that should be performed during this frame
-    let timesteps = (elapsed_time / sim_params.timestep).floor() as i32; 
+        let esail = esail_query.single();
 
-    // Calculating and storing leftover time, to be used in the next frame
-    let leftover_time = elapsed_time - timesteps as f32 * sim_params.timestep;
-    sim_params.leftover_time = leftover_time;
+        let timesteps = timestep_calculation(&time, &mut sim_params);
 
-    return timesteps;
+        if sim_params.debug { println!("New frame ------------------"); }
+
+        for _ in 0..timesteps { 
+
+            if sim_params.debug { println!("New timestep ---------------"); }
+
+            // VERLET INTEGRATION
+
+            for element in esail.elements.iter() {  // Iterating over esail elements, in order.
+
+                let (mut verlet_object, _) = sail_query.get_mut(*element).expect("No sail element found");
+
+                if verlet_object.is_deployed {
+                    verlet_integration(&mut sim_params, &mut verlet_object, &spacecraft_parameters);
+                }
+            }
+
+            // CONSTRAINT LOOP
+
+            for _ in 0..sim_params.iterations {
+
+                if sim_params.debug { println!("New constraint iteration ---"); }
+
+                for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {    // Iterating over the sail elements in order. Skips the first.
+
+                    // Information from current element
+                    let (current_verlet_object, _) = sail_query.get(*sail_element).expect("No previous sail element found");
+
+                    let current_element_x = current_verlet_object.current_x;
+                    let current_element_y = current_verlet_object.current_y;
+
+                    // Information from previous element
+                    let prev_sail_element = esail.elements[index - 1];
+                    let (prev_verlet_object, _) = sail_query.get(prev_sail_element).expect("No previous sail element found");
+
+                    let prev_element_x = prev_verlet_object.current_x;
+                    let prev_element_y = prev_verlet_object.current_y;
+
+                    // Calculating distance between current sail element and previous element in the line
+                    let diff_x = current_element_x - prev_element_x;
+                    let diff_y = current_element_y - prev_element_y;
+                    let distance_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
+
+                    if sim_params.debug {
+                        println!("Index: {} | Distance between elements: {}", index, distance_between_elements);
+                    }
+
+                    let mut difference = 0.0;
+
+                    if distance_between_elements > 0.0 {
+                        difference = (spacecraft_parameters.resting_distance - distance_between_elements) / distance_between_elements;
+                    }
+
+                    // This shouldn't be .5 if one object is not deployed, although I believe it tends to the correct spot anyways.
+                    let correction_x = diff_x * 0.5 * difference;
+                    let correction_y = diff_y * 0.5 * difference;
+
+                    // UPDATING POSITIONS
+                    // Yes, I'm querying again, can't find a cleaner way to do it.
+                    
+                    let (mut current_verlet_object, _) = sail_query.get_mut(*sail_element).expect("No previous sail element found");
+                    
+                    if current_verlet_object.is_deployed {
+                        current_verlet_object.current_x += correction_x;
+                        current_verlet_object.current_y += correction_y;
+                    }
+
+                    let (mut prev_verlet_object, _) = sail_query.get_mut(prev_sail_element).expect("No previous sail element found");
+                    
+                    if prev_verlet_object.is_deployed {
+                        prev_verlet_object.current_x -= correction_x;
+                        prev_verlet_object.current_y -= correction_y;
+                    }
+                }
+            }
+        }
+    }
+
+    /// Updates the transform of the verlet objects after the simulation, so that the graphics get updated.
+    fn update_transform_verlets(
+        mut sail_query: Query<(&components::VerletObject, &mut Transform)>,
+        ){
+        
+        for (verlet_object, mut transform) in sail_query.iter_mut() {
+            transform.translation.x = verlet_object.current_x;
+            transform.translation.y = verlet_object.current_y;
+
+        }
+    } 
+
+    /// Updates position and visibility of the center of mass
+    fn update_center_of_mass(
+        sim_params:     Res<resources::SimulationParameters>,
+        mass_query:     Query<(&Transform, &components::Mass), Without<components::CenterOfMass>>,
+        mut com_query:  Query<(&mut Transform, &mut Visibility), With<components::CenterOfMass>>, 
+        ){
+
+        let mut total_mass:     f32 = 0.0;
+        let mut center_mass_x:  f32 = 0.0;
+        let mut center_mass_y:  f32 = 0.0;
+
+        for (transform, object_mass) in mass_query.iter() {
+            total_mass += object_mass.0;
+            center_mass_x += transform.translation.x * object_mass.0;
+            center_mass_y += transform.translation.y * object_mass.0;
+        }
+
+        if sim_params.debug {
+            println!("Total mass: {} | Center of mass: ({},{})", total_mass, center_mass_x, center_mass_y);
+        }
+
+        let (mut com_transform, mut com_visibility) = com_query.single_mut();
+
+        com_transform.translation.x = center_mass_x;
+        com_transform.translation.y = center_mass_y;
+
+        com_visibility.is_visible = sim_params.com_visibility;
+    }
 }
+
 
 /// Updates the position of a verlet object
 fn verlet_integration(
-    verlet_object:  &mut components::VerletObject,
-    sim_params:     &mut ResMut<resources::SimulationParameters>,
-    spacecraft_parameters:   &Res<resources::SpacecraftParameters>,
+    sim_params:             &mut ResMut<resources::SimulationParameters>,
+    verlet_object:          &mut components::VerletObject,
+    spacecraft_parameters:  &Res<resources::SpacecraftParameters>,
     ){
 
-    // VELOCITIES
+    // CALCULATION OF VELOCITIES
 
     let current_position_x  = verlet_object.current_x;
     let current_position_y  = verlet_object.current_y;
@@ -63,7 +178,6 @@ fn verlet_integration(
 
     // X AXIS: Centrifugal force
 
-    // This should be distance to the center of mass
     let distance_to_center = (current_position_x * current_position_x + current_position_y * current_position_y).sqrt();
 
     let angular_velocity = spacecraft_parameters.rpm as f32 * consts::PI / 30.0;
@@ -73,12 +187,12 @@ fn verlet_integration(
     let next_position_x = current_position_x + velocity_x + acceleration_x * sim_params.timestep * sim_params.timestep;
 
     // Y AXIS: Coulomb drag
-    // Starting to think that the bending moment should go here too.
 
     let acceleration_y = spacecraft_parameters.wire_potential; // I'm gonna make it just proportional to the voltage for now.
 
     let next_position_y = current_position_y + velocity_y + acceleration_y * sim_params.timestep * sim_params.timestep;
-
+    
+    // Starting to think that the bending moment should go here too.
 
     // UPDATING OBJECT POSITION
 
@@ -93,141 +207,19 @@ fn verlet_integration(
     verlet_object.current_y = next_position_y;
 }
 
-/// Simulation proper
-fn verlet_simulation(
-    time: Res<Time>,
-    esail_query: Query<&components::ESail>,
-    mut sim_params: ResMut<resources::SimulationParameters>,
-    spacecraft_parameters: Res<resources::SpacecraftParameters>,
-    // I think I'm not using mass anywhere (shouldn't it affect inertia?)
-    mut sail_query: Query<(&mut components::VerletObject, &components::Mass), With<components::SailElement>>,
-    ) {
 
-    let esail = esail_query.single();
+/// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.
+fn timestep_calculation(
+    time: &Res<Time>,
+    sim_params: &mut ResMut<resources::SimulationParameters>,
+    ) -> i32 {
 
-    // CALCULATION OF TIMESTEPS FOR THE CURRENT FRAME
+    let elapsed_time = time.delta_seconds() + sim_params.leftover_time; // Elapsed time + leftover time from previous frame
 
-    let timesteps = timestep_calculation(&time, &mut sim_params);
+    let timesteps = (elapsed_time / sim_params.timestep).floor() as i32; // Number of timesteps for the current frame
 
-    if sim_params.debug { println!("New frame ------------------"); }
+    let leftover_time = elapsed_time - timesteps as f32 * sim_params.timestep;  // Leftover time saved for next frame
+    sim_params.leftover_time = leftover_time;
 
-    for _ in 0..timesteps { 
-
-        if sim_params.debug { println!("New timestep ---------------"); }
-
-        // SIMULATION LOOP
-
-        // Iterating over esail elements, in order.
-        for element in esail.elements.iter() {
-
-            // Getting information about the current sail element
-            let (mut verlet_object, _) = sail_query.get_mut(*element).expect("No sail element found");
-
-            if verlet_object.is_deployed {
-                verlet_integration(&mut verlet_object, &mut sim_params, &spacecraft_parameters);
-            }
-        }
-
-        // CONSTRAINT LOOP
-
-        for _ in 0..sim_params.iterations {
-
-            if sim_params.debug { println!("New constraint iteration ---"); }
-
-            // Iterating over the sail elements in order
-            for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {
-
-                // Information from current element
-                let (current_verlet_object, _) = sail_query.get(*sail_element).expect("No previous sail element found");
-
-                let current_element_x = current_verlet_object.current_x;
-                let current_element_y = current_verlet_object.current_y;
-
-                // Information from previous element
-                let prev_sail_element = esail.elements[index - 1];
-                let (prev_verlet_object, _) = sail_query.get(prev_sail_element).expect("No previous sail element found");
-
-                let prev_element_x = prev_verlet_object.current_x;
-                let prev_element_y = prev_verlet_object.current_y;
-
-                // Calculating distance between current sail element and previous element in the line
-                let diff_x = current_element_x - prev_element_x;
-                let diff_y = current_element_y - prev_element_y;
-                let distance_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
-
-                if sim_params.debug {
-                    println!("Index: {} | Distance between elements: {}", index, distance_between_elements);
-                }
-
-                let mut difference = 0.0;
-
-                if distance_between_elements > 0.0 {
-                    // Don't get this formula really. Is it correct?
-                    difference = (spacecraft_parameters.resting_distance - distance_between_elements) / distance_between_elements;
-                }
-
-                // This shouldn't be .5 if one object is not deployed, although I believe it tends to the correct spot anyways.
-                let correction_x = diff_x * 0.5 * difference;
-                let correction_y = diff_y * 0.5 * difference;
-
-                // UPDATING POSITIONS
-                // Here's where, I think, I'll have to get the queries again.
-                
-                //let mut current_verlet_object = sail_query.get_mut(*sail_element).expect("No previous sail element found");
-                let (mut current_verlet_object, _) = sail_query.get_mut(*sail_element).expect("No previous sail element found");
-                
-                if current_verlet_object.is_deployed {
-                    current_verlet_object.current_x += correction_x;
-                    current_verlet_object.current_y += correction_y;
-                }
-
-                let (mut prev_verlet_object, _) = sail_query.get_mut(prev_sail_element).expect("No previous sail element found");
-                
-                if prev_verlet_object.is_deployed {
-                    prev_verlet_object.current_x -= correction_x;
-                    prev_verlet_object.current_y -= correction_y;
-                }
-            }
-        }
-    }
-}
-
-fn update_transform_verlets(
-    mut sail_query: Query<(&components::VerletObject, &mut Transform)>,
-    ){
-    
-    for (verlet_object, mut transform) in sail_query.iter_mut() {
-        transform.translation.x = verlet_object.current_x;
-        transform.translation.y = verlet_object.current_y;
-    }
-} 
-
-/// Updates position and visibility of the center of mass
-fn update_center_of_mass(
-    sim_params:     Res<resources::SimulationParameters>,
-    mass_query:     Query<(&Transform, &components::Mass), Without<components::CenterOfMass>>,
-    mut com_query:  Query<(&mut Transform, &mut Visibility), With<components::CenterOfMass>>, 
-    ){
-
-    let mut total_mass:     f32 = 0.0;
-    let mut center_mass_x:  f32 = 0.0;
-    let mut center_mass_y:  f32 = 0.0;
-
-    for (transform, object_mass) in mass_query.iter() {
-        total_mass += object_mass.0;
-        center_mass_x += transform.translation.x * object_mass.0;
-        center_mass_y += transform.translation.y * object_mass.0;
-    }
-
-    if sim_params.debug {
-        println!("Total mass: {} | Center of mass: ({},{})", total_mass, center_mass_x, center_mass_y);
-    }
-
-    //let mut com_transform = com_query.single_mut();
-    let (mut com_transform, mut com_visibility) = com_query.single_mut();
-
-    com_transform.translation.x = center_mass_x;
-    com_transform.translation.y = center_mass_y;
-
-    com_visibility.is_visible = sim_params.com_visibility;
+    return timesteps;
 }
