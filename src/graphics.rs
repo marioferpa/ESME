@@ -3,15 +3,16 @@ use bevy_prototype_lyon::prelude::*;
 
 use crate::{ components, resources };
 
-const Z_ESAIL:                  f32 = 1.0;   // Will need to change if I move to 3D
-const Z_CENTER_MASS:            f32 = 10.0;
-const X_FIRST_ELEMENT:          f32 = 35.0;
+const X_FIRST_ELEMENT:          f32 = 0.1;  // meters (?)
 
-//const NUMBER_OF_ESAIL_ELEMENTS: i32 = 20;
+const Z_ESAIL:                  f32 = 1.0;  // Will need to change if I move to 3D
+const Z_CENTER_MASS:            f32 = 10.0;
 
 const BODY_MASS:                f32 = 10.0;
 const SAIL_ELEMENT_MASS:        f32 = 0.01;
 const ENDMASS_MASS:             f32 = 0.1;
+
+const BODY_RADIUS:              f32 = 0.1;  // meters
 
 pub struct GraphicsPlugin;
 
@@ -32,7 +33,6 @@ fn spawn_center_mass(
 
     let center_mass_shape = shapes::Circle {
         radius: 10.0,
-        //radius: 0.0,
         ..shapes::Circle::default() // Editing the transform later.
     };
 
@@ -50,11 +50,12 @@ fn spawn_center_mass(
 
 fn spawn_cubesat(
     mut commands: Commands,
+    simulation_parameters: Res<resources::SimulationParameters>,
     ) {
 
     let sat_shape = shapes::RegularPolygon {
         sides: 4,
-        feature: shapes::RegularPolygonFeature::Radius(50.0),
+        feature: shapes::RegularPolygonFeature::Radius(BODY_RADIUS * simulation_parameters.pixels_per_meter as f32 / 0.707),
         ..shapes::RegularPolygon::default()
     };
 
@@ -72,50 +73,50 @@ fn spawn_cubesat(
 
 fn spawn_esail(
     mut commands: Commands,
+    simulation_parameters: Res<resources::SimulationParameters>,
     spacecraft_parameters: ResMut<resources::SpacecraftParameters>,
     ) {
 
     let mut element_vector: Vec<Entity> = Vec::new();
 
-    //let number_of_elements = (spacecraft_parameters.wire_length * spacecraft_parameters.wire_resolution) as i32;
+    let number_of_elements = (spacecraft_parameters.wire_length * spacecraft_parameters.wire_resolution) as i32;
 
-    //let distance_between_elements = (1 as f32 / spacecraft_parameters.wire_resolution) * PIXELS_PER_METER as f32;
+    let distance_between_elements = (1.0 / spacecraft_parameters.wire_resolution) * simulation_parameters.pixels_per_meter as f32;
 
-    for number in 1..=spacecraft_parameters.number_of_elements {
-    //for number in 1..=number_of_elements {
+    for number in 0..=number_of_elements-1 {
 
-        let x = X_FIRST_ELEMENT + number as f32 * spacecraft_parameters.resting_distance;
-        //let x = X_FIRST_ELEMENT + number as f32 * distance_between_elements;
+        let x = X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f32 + number as f32 * distance_between_elements;
+        //println!("x: {} pixels", x);
 
-        if number == 1 {
-            // First element, not deployed
-            let element = spawn_esail_element(X_FIRST_ELEMENT, 0.0, 5.0, SAIL_ELEMENT_MASS, false, &mut commands);
-            element_vector.push(element);
+        // The first element stays undeployed and is unaffected by forces
+        let is_deployed = match number {
+            0 => false,
+            _ => true,
+        };
 
+        // Endmass has different mass and size
+        let (mass, radius) = if number == number_of_elements - 1 {
+            (ENDMASS_MASS, 10.0)
         } else {
-            if number == spacecraft_parameters.number_of_elements {
-            //if number == number_of_elements {
-                // Last element, is the endmass
-                let element = spawn_esail_element(x, 0.0, 10.0, ENDMASS_MASS, true, &mut commands);
-                element_vector.push(element);
+            (SAIL_ELEMENT_MASS, 5.0)
+        };
 
-            } else { 
-                // Elements in the middle
-                let element = spawn_esail_element(x, 0.0, 5.0, SAIL_ELEMENT_MASS, true, &mut commands);
-                element_vector.push(element);
-            }
-        }
+        //println!("Mass: {}, radius: {}", mass, radius);
+
+        let element = spawn_esail_element(&mut commands, x, 0.0, radius, mass, is_deployed);
+        element_vector.push(element);
+
     }
 
     // Creating ESail entity and storing the elements inside.
     commands.spawn_empty()
-        .insert(components::ESail{elements: element_vector});
+        .insert(components::ESail{elements: element_vector, resting_distance: distance_between_elements});
 
 }
 
 fn spawn_esail_element(
-    x: f32, y: f32, radius: f32, mass: f32, is_deployed: bool,
     commands: &mut Commands,
+    x: f32, y: f32, radius: f32, mass: f32, is_deployed: bool,
     ) -> Entity {
 
     let esail_element_shape = shapes::Circle {

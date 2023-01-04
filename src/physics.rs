@@ -12,7 +12,7 @@ pub struct PhysicsPlugin;
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            .insert_resource(resources::SimulationParameters{..Default::default()}) // Defaults in resources.rs
+            .insert_resource(resources::SimulationParameters{..Default::default()})
             .add_system(Self::verlet_simulation)
             .add_system(Self::update_transform_verlets) 
             .add_system(Self::update_center_of_mass)
@@ -84,7 +84,8 @@ impl PhysicsPlugin {
                     let mut difference = 0.0;
 
                     if distance_between_elements > 0.0 {
-                        difference = (spacecraft_parameters.resting_distance - distance_between_elements) / distance_between_elements;
+                        //difference = (spacecraft_parameters.resting_distance - distance_between_elements) / distance_between_elements;
+                        difference = (esail.resting_distance - distance_between_elements) / distance_between_elements;
                     }
 
                     // This shouldn't be .5 if one object is not deployed, although I believe it tends to the correct spot anyways.
