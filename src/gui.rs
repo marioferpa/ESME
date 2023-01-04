@@ -34,7 +34,7 @@ impl GUIPlugin {
             ui.add(egui::Slider::new(&mut spacecraft_parameters.rpm, 0..=100).text("rpm"));
 
             ui.horizontal(|ui| { ui.label("Wire potential V_0"); });
-            ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential, -100.0..=100.0).text("V"));
+            ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential_V, -100.0..=100.0).text("V"));
 
             //ui.horizontal(|ui| { 
             //    ui.label("Wire length (m)");

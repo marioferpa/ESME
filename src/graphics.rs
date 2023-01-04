@@ -79,7 +79,7 @@ fn spawn_esail(
 
     let mut element_vector: Vec<Entity> = Vec::new();
 
-    let number_of_elements = (spacecraft_parameters.wire_length * spacecraft_parameters.wire_resolution) as i32;
+    let number_of_elements = (spacecraft_parameters.wire_length_m * spacecraft_parameters.wire_resolution) as i32;
 
     let distance_between_elements = (1.0 / spacecraft_parameters.wire_resolution) * simulation_parameters.pixels_per_meter as f32;
 

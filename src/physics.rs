@@ -14,8 +14,8 @@ impl Plugin for PhysicsPlugin {
         app
             .insert_resource(resources::SimulationParameters{..Default::default()})
             .add_system(Self::verlet_simulation)
-            .add_system(Self::update_transform_verlets) 
             .add_system(Self::update_center_of_mass)
+            .add_system(Self::update_transform_verlets) 
             ;
     }
 }
@@ -189,7 +189,7 @@ fn verlet_integration(
 
     // Y AXIS: Coulomb drag
 
-    let acceleration_y = spacecraft_parameters.wire_potential; // I'm gonna make it just proportional to the voltage for now.
+    let acceleration_y = spacecraft_parameters.wire_potential_V; // I'm gonna make it just proportional to the voltage for now.
 
     let next_position_y = current_position_y + velocity_y + acceleration_y * sim_params.timestep * sim_params.timestep;
     

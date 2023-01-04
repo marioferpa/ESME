@@ -24,20 +24,21 @@ impl Default for SimulationParameters {
 }
 
 #[derive(Resource)]
+#[allow(non_snake_case)]
 pub struct SpacecraftParameters {
     pub rpm:                i32,
-    pub wire_length:        f32,    // meters
+    pub wire_length_m:      f32,    // meters
     pub wire_resolution:    f32,    // divisions per meter
-    pub wire_potential:     f32,
+    pub wire_potential_V:  f32,
 }
 
 impl Default for SpacecraftParameters {
     fn default() -> SpacecraftParameters {
         SpacecraftParameters {
             rpm:                0,
-            wire_length:        1.0,    // meters
+            wire_length_m:      1.0,    // meters
             wire_resolution:    25.0,   // divisions per meter
-            wire_potential:     0.0,
+            wire_potential_V:   0.0,
         }
     }
 }
