@@ -18,9 +18,9 @@ pub struct Mass (
 );
 
 #[derive(Component)]
-pub struct ElectricalConductor (
-    pub f32
-);
+pub struct ElectricallyCharged {
+    pub potential:  f32,    // volts
+}
 
 
 // I could call this SailElement and make everything simpler

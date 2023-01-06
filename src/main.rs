@@ -3,11 +3,12 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 use bevy_egui::EguiPlugin;
+use bevy_inspector_egui::WorldInspectorPlugin;
 
 mod components;
 mod resources;
-mod graphics;
-use graphics::GraphicsPlugin;
+mod elements;
+use elements::ElementsPlugin;
 mod physics;
 use physics::PhysicsPlugin;
 mod gui;
@@ -18,11 +19,13 @@ fn main() {
         .insert_resource(Msaa { samples: 4 })   // "Multi-Sample Anti-Aliasing"
         .add_plugins(DefaultPlugins)
         .add_plugin(ShapePlugin)
-        .add_plugin(GraphicsPlugin)
+        .add_plugin(ElementsPlugin)
         .add_plugin(PhysicsPlugin)
         .add_plugin(EguiPlugin)
+        .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(GUIPlugin)
         .add_startup_system(camera_system)
+        .insert_resource(resources::SpacecraftParameters{..Default::default()})
         .run();
 }
 

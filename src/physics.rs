@@ -7,6 +7,18 @@ use std::f32::consts;
 use bevy::prelude::*;
 use crate::{ components, resources };
 
+// Values for Coulomb interaction
+
+//const K:            f32 = 3.09;         // Don't know what it is    
+//const M_PROTON:     f32 = 1.672e-27;    // (kg) Is the scientific notation alright in Rust? Wow, love it
+//const N_0:          f32 = 7.3;          // (cm^-3, careful) Undirstubed solar wind electron density
+//// Is v missing from the paper?
+//const EPSILON_0:    f32 = 8.854e-12;    // (Fm^-1) Vacuum permitivity
+//const T_E:          f32 = 12.0;         // (eV) Solar wind electron temperature at 1AU
+//const Q_E:          f32 = 1.602e-19;    // (C) Electron charge
+
+
+
 pub struct PhysicsPlugin;
 
 impl Plugin for PhysicsPlugin {

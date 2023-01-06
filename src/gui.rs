@@ -36,16 +36,6 @@ impl GUIPlugin {
             ui.horizontal(|ui| { ui.label("Wire potential V_0"); });
             ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential_V, -100.0..=100.0).text("V"));
 
-            //ui.horizontal(|ui| { 
-            //    ui.label("Wire length (m)");
-            //    ui.add(egui::DragValue::new(&mut spacecraft_parameters.wire_length).speed(0.1));
-            //});
-
-            //ui.horizontal(|ui| { 
-            //    ui.label("Wire resolution (units/m)");
-            //    ui.add(egui::DragValue::new(&mut spacecraft_parameters.wire_resolution).speed(0.1));
-            //});
-
             ui.separator();
 
             ui.label("SIMULATION");

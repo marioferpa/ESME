@@ -28,6 +28,7 @@ impl Default for SimulationParameters {
 pub struct SpacecraftParameters {
     pub rpm:                i32,
     pub wire_length_m:      f32,    // meters
+    pub wire_radius_m:      f32,    // meters
     pub wire_resolution:    f32,    // divisions per meter
     pub wire_potential_V:  f32,
 }
@@ -37,6 +38,7 @@ impl Default for SpacecraftParameters {
         SpacecraftParameters {
             rpm:                0,
             wire_length_m:      1.0,    // meters
+            wire_radius_m:      0.01,   // meters
             wire_resolution:    25.0,   // divisions per meter
             wire_potential_V:   0.0,
         }
