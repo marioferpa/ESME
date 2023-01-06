@@ -14,16 +14,15 @@ const ENDMASS_MASS:             f32 = 0.1;
 
 const BODY_RADIUS:              f32 = 0.1;  // meters
 
-pub struct GraphicsPlugin;
+pub struct ElementsPlugin;
 
-impl Plugin for GraphicsPlugin {
+impl Plugin for ElementsPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_startup_system(spawn_cubesat)
             .add_startup_system(spawn_esail)
             .add_startup_system(spawn_center_mass)
-            // The following should be somewhere else, maybe in main?
-            .insert_resource(resources::SpacecraftParameters{..Default::default()});
+            ;
     }
 }
 
@@ -79,8 +78,8 @@ fn spawn_esail(
 
     let mut element_vector: Vec<Entity> = Vec::new();
 
+    // User defines length of sail and resolution, elements are calculated from those.
     let number_of_elements = (spacecraft_parameters.wire_length_m * spacecraft_parameters.wire_resolution) as i32;
-
     let distance_between_elements = (1.0 / spacecraft_parameters.wire_resolution) * simulation_parameters.pixels_per_meter as f32;
 
     for number in 0..=number_of_elements-1 {
@@ -136,6 +135,8 @@ fn spawn_esail_element(
         .insert(components::SailElement) 
         .insert(components::Mass(mass))
         .insert(components::VerletObject{previous_x: x, previous_y: y, current_x: x, current_y: y, is_deployed: is_deployed})
+        // NEW!!
+        .insert(components::ElectricallyCharged{potential: 0.0})
         .id()
     ;
 
