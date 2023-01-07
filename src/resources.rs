@@ -30,7 +30,7 @@ pub struct SpacecraftParameters {
     pub wire_length_m:      f32,    // meters
     pub wire_radius_m:      f32,    // meters
     pub wire_resolution:    f32,    // divisions per meter
-    pub wire_potential_V:  f32,
+    pub wire_potential_V:   f32,
 }
 
 impl Default for SpacecraftParameters {

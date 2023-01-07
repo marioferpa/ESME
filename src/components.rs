@@ -22,7 +22,6 @@ pub struct ElectricallyCharged {
     pub potential:  f32,    // volts
 }
 
-
 // I could call this SailElement and make everything simpler
 #[derive(Component, Debug)]
 pub struct VerletObject {

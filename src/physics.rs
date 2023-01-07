@@ -28,11 +28,24 @@ impl Plugin for PhysicsPlugin {
             .add_system(Self::verlet_simulation)
             .add_system(Self::update_center_of_mass)
             .add_system(Self::update_transform_verlets) 
+            .add_system(Self::update_esail_voltage)
             ;
     }
 }
 
 impl PhysicsPlugin {
+
+    /// Updates the potential of every conductor to whatever the gui is showing
+    fn update_esail_voltage(
+        spacecraft_parameters: Res<resources::SpacecraftParameters>,
+        mut electrical_query: Query<&mut components::ElectricallyCharged>,
+        ) {
+
+        for mut electrical_element in electrical_query.iter_mut() {
+            electrical_element.potential = spacecraft_parameters.wire_potential_V;
+            //println!("{}", spacecraft_parameters.wire_potential_V);
+        }
+    }
 
     /// Simulation proper
     fn verlet_simulation(
@@ -46,13 +59,14 @@ impl PhysicsPlugin {
 
         let timesteps = timestep_calculation(&time, &mut sim_params);
 
-        if sim_params.debug { println!("New frame ------------------"); }
+        //if sim_params.debug { println!("New frame ------------------"); }
 
         for _ in 0..timesteps { 
 
-            if sim_params.debug { println!("New timestep ---------------"); }
+          //  if sim_params.debug { println!("New timestep ---------------"); }
 
             // VERLET INTEGRATION
+            // Forces are calculated and applied for each esail element
 
             for element in esail.elements.iter() {  // Iterating over esail elements, in order.
 
@@ -64,12 +78,14 @@ impl PhysicsPlugin {
             }
 
             // CONSTRAINT LOOP
+            // Final position is corrected taking into account the constraints of the system
 
             for _ in 0..sim_params.iterations {
 
-                if sim_params.debug { println!("New constraint iteration ---"); }
+                //if sim_params.debug { println!("New constraint iteration ---"); }
 
                 for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {    // Iterating over the sail elements in order. Skips the first.
+                                                                                            // Needed if I'm already checking for deployment?
 
                     // Information from current element
                     let (current_verlet_object, _) = sail_query.get(*sail_element).expect("No previous sail element found");
@@ -89,9 +105,9 @@ impl PhysicsPlugin {
                     let diff_y = current_element_y - prev_element_y;
                     let distance_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
 
-                    if sim_params.debug {
-                        println!("Index: {} | Distance between elements: {}", index, distance_between_elements);
-                    }
+                    //if sim_params.debug {
+                    //    println!("Index: {} | Distance between elements: {}", index, distance_between_elements);
+                    //}
 
                     let mut difference = 0.0;
 
