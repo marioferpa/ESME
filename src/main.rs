@@ -6,7 +6,7 @@ use bevy_egui::EguiPlugin;
 //use bevy_inspector_egui::WorldInspectorPlugin;
 
 mod components;
-mod resources;
+mod parameters;
 mod elements;
 use elements::ElementsPlugin;
 mod physics;
@@ -25,7 +25,7 @@ fn main() {
         //.add_plugin(WorldInspectorPlugin::new())
         .add_plugin(GUIPlugin)
         .add_startup_system(camera_system)
-        .insert_resource(resources::SpacecraftParameters{..Default::default()})
+        .insert_resource(parameters::SpacecraftParameters{..Default::default()})
         .run();
 }
 

@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+const M_PROTON:     f32 = 1.672e-27;    // (kg) Is the scientific notation alright in Rust? Wow, love it
+
 #[derive(Resource)]
 pub struct SimulationParameters {
     pub iterations:         i32,    // Number of constraint iterations per timestep.
@@ -44,3 +46,20 @@ impl Default for SpacecraftParameters {
         }
     }
 }
+
+#[derive(Resource)]
+#[allow(non_snake_case)]
+pub struct SolarWindParameters {
+    pub N_0:    f32,          // (cm^-3, careful) Undisturbed solar wind electron density
+    pub speed:  f32,
+}
+
+impl Default for SolarWindParameters {
+    fn default() -> SolarWindParameters {
+        SolarWindParameters {
+            N_0:    7.3,    // cm^-3, careful
+            speed:  4.0e5,  // m/s (from google, can't find it in the paper)
+        }
+    }
+}
+

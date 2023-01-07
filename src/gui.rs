@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContext};
 
-use crate::{ resources };
+use crate::{ parameters };
 
 pub struct GUIPlugin;
 
@@ -17,8 +17,8 @@ impl GUIPlugin {
 
     fn sidebar(
         mut egui_ctx: ResMut<EguiContext>,
-        mut sim_params: ResMut<resources::SimulationParameters>,
-        mut spacecraft_parameters: ResMut<resources::SpacecraftParameters>,
+        mut sim_params: ResMut<parameters::SimulationParameters>,
+        mut spacecraft_parameters: ResMut<parameters::SpacecraftParameters>,
         ) {
 
         egui::SidePanel::left("side_panel")

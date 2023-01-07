@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 
-use crate::{ components, resources };
+use crate::{ components, parameters };
 
 const X_FIRST_ELEMENT:          f32 = 0.1;  // meters (?)
 
@@ -49,7 +49,7 @@ fn spawn_center_mass(
 
 fn spawn_cubesat(
     mut commands: Commands,
-    simulation_parameters: Res<resources::SimulationParameters>,
+    simulation_parameters: Res<parameters::SimulationParameters>,
     ) {
 
     let sat_shape = shapes::RegularPolygon {
@@ -72,8 +72,8 @@ fn spawn_cubesat(
 
 fn spawn_esail(
     mut commands: Commands,
-    simulation_parameters: Res<resources::SimulationParameters>,
-    spacecraft_parameters: ResMut<resources::SpacecraftParameters>,
+    simulation_parameters: Res<parameters::SimulationParameters>,
+    spacecraft_parameters: ResMut<parameters::SpacecraftParameters>,
     ) {
 
     let mut element_vector: Vec<Entity> = Vec::new();

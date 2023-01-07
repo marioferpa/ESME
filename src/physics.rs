@@ -5,7 +5,7 @@
 
 use std::f32::consts;
 use bevy::prelude::*;
-use crate::{ components, resources };
+use crate::{ components, parameters };
 
 // Values for Coulomb interaction
 
@@ -24,7 +24,7 @@ pub struct PhysicsPlugin;
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            .insert_resource(resources::SimulationParameters{..Default::default()})
+            .insert_resource(parameters::SimulationParameters{..Default::default()})
             .add_system(Self::verlet_simulation)
             .add_system(Self::update_center_of_mass)
             .add_system(Self::update_transform_verlets) 
@@ -37,7 +37,7 @@ impl PhysicsPlugin {
 
     /// Updates the potential of every conductor to whatever the gui is showing
     fn update_esail_voltage(
-        spacecraft_parameters: Res<resources::SpacecraftParameters>,
+        spacecraft_parameters: Res<parameters::SpacecraftParameters>,
         mut electrical_query: Query<&mut components::ElectricallyCharged>,
         ) {
 
@@ -50,8 +50,8 @@ impl PhysicsPlugin {
     /// Simulation proper
     fn verlet_simulation(
         time: Res<Time>, esail_query: Query<&components::ESail>,
-        mut sim_params: ResMut<resources::SimulationParameters>,
-        spacecraft_parameters: Res<resources::SpacecraftParameters>,
+        mut sim_params: ResMut<parameters::SimulationParameters>,
+        spacecraft_parameters: Res<parameters::SpacecraftParameters>,
         mut sail_query: Query<(&mut components::VerletObject, &components::Mass), With<components::SailElement>>,
         ) {
 
@@ -155,7 +155,7 @@ impl PhysicsPlugin {
 
     /// Updates position and visibility of the center of mass
     fn update_center_of_mass(
-        sim_params:     Res<resources::SimulationParameters>,
+        sim_params:     Res<parameters::SimulationParameters>,
         mass_query:     Query<(&Transform, &components::Mass), Without<components::CenterOfMass>>,
         mut com_query:  Query<(&mut Transform, &mut Visibility), With<components::CenterOfMass>>, 
         ){
@@ -186,9 +186,9 @@ impl PhysicsPlugin {
 
 /// Updates the position of a verlet object
 fn verlet_integration(
-    sim_params:             &mut ResMut<resources::SimulationParameters>,
+    sim_params:             &mut ResMut<parameters::SimulationParameters>,
     verlet_object:          &mut components::VerletObject,
-    spacecraft_parameters:  &Res<resources::SpacecraftParameters>,
+    spacecraft_parameters:  &Res<parameters::SpacecraftParameters>,
     ){
 
     // CALCULATION OF VELOCITIES
@@ -240,7 +240,7 @@ fn verlet_integration(
 /// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.
 fn timestep_calculation(
     time: &Res<Time>,
-    sim_params: &mut ResMut<resources::SimulationParameters>,
+    sim_params: &mut ResMut<parameters::SimulationParameters>,
     ) -> i32 {
 
     let elapsed_time = time.delta_seconds() + sim_params.leftover_time; // Elapsed time + leftover time from previous frame
