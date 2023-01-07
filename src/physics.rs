@@ -3,6 +3,7 @@
 
 // Problem, maybe: The simulation seems to be idle for the two first frames
 
+use std::num;
 use std::f32::consts;
 use bevy::prelude::*;
 use crate::{ components, parameters };
@@ -10,12 +11,7 @@ use crate::{ components, parameters };
 // Values for Coulomb interaction
 
 //const K:            f32 = 3.09;         // Don't know what it is    
-//const M_PROTON:     f32 = 1.672e-27;    // (kg) Is the scientific notation alright in Rust? Wow, love it
-//const N_0:          f32 = 7.3;          // (cm^-3, careful) Undirstubed solar wind electron density
-//// Is v missing from the paper?
-//const EPSILON_0:    f32 = 8.854e-12;    // (Fm^-1) Vacuum permitivity
 //const T_E:          f32 = 12.0;         // (eV) Solar wind electron temperature at 1AU
-//const Q_E:          f32 = 1.602e-19;    // (C) Electron charge
 
 
 
@@ -52,6 +48,7 @@ impl PhysicsPlugin {
         time: Res<Time>, esail_query: Query<&components::ESail>,
         mut sim_params: ResMut<parameters::SimulationParameters>,
         spacecraft_parameters: Res<parameters::SpacecraftParameters>,
+        solar_wind_parameters: Res<parameters::SolarWindParameters>,
         mut sail_query: Query<(&mut components::VerletObject, &components::Mass), With<components::SailElement>>,
         ) {
 
@@ -73,7 +70,8 @@ impl PhysicsPlugin {
                 let (mut verlet_object, _) = sail_query.get_mut(*element).expect("No sail element found");
 
                 if verlet_object.is_deployed {
-                    verlet_integration(&mut sim_params, &mut verlet_object, &spacecraft_parameters);
+                    //verlet_integration(&mut sim_params, &mut verlet_object, &spacecraft_parameters);
+                    verlet_integration(&mut sim_params, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
                 }
             }
 
@@ -189,6 +187,7 @@ fn verlet_integration(
     sim_params:             &mut ResMut<parameters::SimulationParameters>,
     verlet_object:          &mut components::VerletObject,
     spacecraft_parameters:  &Res<parameters::SpacecraftParameters>,
+    solar_wind_parameters:  &Res<parameters::SolarWindParameters>,
     ){
 
     // CALCULATION OF VELOCITIES
@@ -218,6 +217,8 @@ fn verlet_integration(
     // Y AXIS: Coulomb drag
 
     let acceleration_y = spacecraft_parameters.wire_potential_V; // I'm gonna make it just proportional to the voltage for now.
+                                                                 //
+    let coulomb_force = coulomb_force(spacecraft_parameters.wire_potential_V, &solar_wind_parameters);
 
     let next_position_y = current_position_y + velocity_y + acceleration_y * sim_params.timestep * sim_params.timestep;
     
@@ -236,6 +237,28 @@ fn verlet_integration(
     verlet_object.current_y = next_position_y;
 }
 
+// TESTING
+// From janhunen2007, equation 8. Corroborate all the results
+fn coulomb_force(
+    wire_potential_V: f32,
+    solar_wind: &Res<parameters::SolarWindParameters>, 
+    ) -> f32 {
+
+    let r_w: f32 = 0.1e-6;   // made it up, also should be part of a resource
+
+    // First: r_0, distance at which the potential vanishes
+    let r0_numerator:   f32 = parameters::EPSILON_0 * solar_wind.T_e;
+    let r0_denominator: f32 = solar_wind.n_0 * parameters::Q_E * parameters::Q_E; 
+
+    let r_0 =  2.0 * (r0_numerator / r0_denominator).sqrt();
+
+    let exp_numerator = parameters::M_PROTON * solar_wind.velocity * solar_wind.velocity * (r_0 / r_w).ln();
+    let exp_denominator = parameters::Q_E * wire_potential_V; 
+
+    let rs_denominator = ((exp_numerator / exp_denominator).exp() - 1.0).sqrt();
+
+    return r_0 / denominator;
+}
 
 /// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.
 fn timestep_calculation(

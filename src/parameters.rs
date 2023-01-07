@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
-const M_PROTON:     f32 = 1.672e-27;    // (kg) Is the scientific notation alright in Rust? Wow, love it
+pub const M_PROTON:     f32 = 1.672e-27;    // (kg) Is the scientific notation alright in Rust? Wow, love it
+pub const EPSILON_0:    f32 = 8.854e-12;    // (Fm^-1) Vacuum permitivity
+pub const Q_E:          f32 = 1.602e-19;    // (C) Electron charge
 
 #[derive(Resource)]
 pub struct SimulationParameters {
@@ -50,15 +52,17 @@ impl Default for SpacecraftParameters {
 #[derive(Resource)]
 #[allow(non_snake_case)]
 pub struct SolarWindParameters {
-    pub N_0:    f32,          // (cm^-3, careful) Undisturbed solar wind electron density
-    pub speed:  f32,
+    pub n_0:        f32,    // (cm^-3, careful) Undisturbed solar wind electron density
+    pub velocity:   f32,
+    pub T_e:        f32,    // (eV) Solar wind electron temperature at 1AU
 }
 
 impl Default for SolarWindParameters {
     fn default() -> SolarWindParameters {
         SolarWindParameters {
-            N_0:    7.3,    // cm^-3, careful
-            speed:  4.0e5,  // m/s (from google, can't find it in the paper)
+            n_0:        7.3,    // cm^-3, careful
+            velocity:   4.0e5,  // m/s (from google, can't find it in the paper)
+            T_e:        12.0,   // eV
         }
     }
 }

@@ -26,6 +26,7 @@ fn main() {
         .add_plugin(GUIPlugin)
         .add_startup_system(camera_system)
         .insert_resource(parameters::SpacecraftParameters{..Default::default()})
+        .insert_resource(parameters::SolarWindParameters{..Default::default()})
         .run();
 }
 
