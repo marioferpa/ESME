@@ -3,6 +3,7 @@ use bevy::prelude::*;
 // UOM package, for physical units
 use uom::si::f32::*;
 use uom::si::energy::electronvolt;
+use uom::si::length::micrometer;
 
 // Maybe a constants.rs could contain these
 pub const M_PROTON:     f32 = 1.672e-27;    // (kg) Is the scientific notation alright in Rust? Wow, love it
@@ -38,6 +39,7 @@ pub struct SpacecraftParameters {
     pub rpm:                i32,
     pub wire_length_m:      f32,    // meters
     pub wire_radius_m:      f32,    // meters
+    pub wire_radius:        Length,    // meters
     pub wire_resolution:    f32,    // divisions per meter
     pub wire_potential_V:   f32,
 }
@@ -48,6 +50,7 @@ impl Default for SpacecraftParameters {
             rpm:                0,
             wire_length_m:      1.0,    // meters
             wire_radius_m:      0.01,   // meters
+            wire_radius:        Length::new::<micrometer>(10.0),
             wire_resolution:    25.0,   // divisions per meter
             wire_potential_V:   0.0,
         }

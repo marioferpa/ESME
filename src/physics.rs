@@ -7,6 +7,9 @@ use std::f32::consts;
 use bevy::prelude::*;
 use crate::{ components, parameters };
 
+use uom::si::length::meter;
+use uom::fmt::DisplayStyle::Description;
+
 // Values for Coulomb interaction
 
 //const K:            f32 = 3.09;         // Don't know what it is    
@@ -245,31 +248,34 @@ fn coulomb_force(
     spacecraft: &Res<parameters::SpacecraftParameters>,
     ) -> f32 {
 
-    let r_w = spacecraft.wire_radius_m;
+    let r_w = spacecraft.wire_radius;
+    println!("r_w (m): {}", r_w.into_format_args(meter, Description));
 
     // First: r_0, distance at which the potential vanishes
-    let r0_numerator:   f32 = parameters::EPSILON_0 * solar_wind.T_e;
-    let r0_denominator: f32 = solar_wind.n_0 * parameters::Q_E * parameters::Q_E; 
+    //let r0_numerator:   f32 = parameters::EPSILON_0 * solar_wind.T_e;
+    //let r0_denominator: f32 = solar_wind.n_0 * parameters::Q_E * parameters::Q_E; 
 
-    let r_0 =  2.0 * (r0_numerator / r0_denominator).sqrt();
-    println!("r_o (m): {}", r_0);
+    //let r_0 =  2.0 * (r0_numerator / r0_denominator).sqrt();
+    //println!("r_o (m): {}", r_0);
 
-    // Second: r_s, stopping distance of protons
-    let exp_numerator = parameters::M_PROTON * solar_wind.velocity * solar_wind.velocity * (r_0 / r_w).ln();
-    let exp_denominator = parameters::Q_E * spacecraft.wire_potential_V; 
+    //// Second: r_s, stopping distance of protons
+    //let exp_numerator = parameters::M_PROTON * solar_wind.velocity * solar_wind.velocity * (r_0 / r_w).ln();
+    //let exp_denominator = parameters::Q_E * spacecraft.wire_potential_V; 
 
-    let r_s_denominator = ((exp_numerator / exp_denominator).exp() - 1.0).sqrt();
+    //let r_s_denominator = ((exp_numerator / exp_denominator).exp() - 1.0).sqrt();
 
-    let r_s = r_0 / r_s_denominator;
-    println!("{}", r_s);
+    //let r_s = r_0 / r_s_denominator;
+    //println!("{}", r_s);
 
-    // Third: force per unit length
-    let K = 3.09;   // Empirical, from Monte Carlo sims, I need to calculate this myself somehow.
+    //// Third: force per unit length
+    //let K = 3.09;   // Empirical, from Monte Carlo sims, I need to calculate this myself somehow.
 
-    let force_per_length = r_s * K * parameters::M_PROTON * solar_wind.n_0 * solar_wind.velocity * solar_wind.velocity;
-    println!("{}", force_per_length);
+    //let force_per_length = r_s * K * parameters::M_PROTON * solar_wind.n_0 * solar_wind.velocity * solar_wind.velocity;
+    //println!("{}", force_per_length);
 
-    return force_per_length;
+    //return force_per_length;
+
+    return 0.0;
 }
 
 /// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.
