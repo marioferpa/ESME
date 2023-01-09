@@ -10,3 +10,4 @@ bevy = "0.9"
 bevy_egui = "0.18"				# For the interface
 bevy-inspector-egui = "0.15"
 bevy_prototype_lyon = "0.7.1"	# For drawing shapes
+uom = "0.33.0"

@@ -1,5 +1,10 @@
 use bevy::prelude::*;
 
+// UOM package, for physical units
+use uom::si::f32::*;
+use uom::si::energy::electronvolt;
+
+// Maybe a constants.rs could contain these
 pub const M_PROTON:     f32 = 1.672e-27;    // (kg) Is the scientific notation alright in Rust? Wow, love it
 pub const EPSILON_0:    f32 = 8.854e-12;    // (Fm^-1) Vacuum permitivity
 pub const Q_E:          f32 = 1.602e-19;    // (C) Electron charge
@@ -55,6 +60,7 @@ pub struct SolarWindParameters {
     pub n_0:        f32,    // (cm^-3, careful) Undisturbed solar wind electron density
     pub velocity:   f32,
     pub T_e:        f32,    // (eV) Solar wind electron temperature at 1AU
+    pub test:       Energy,
 }
 
 impl Default for SolarWindParameters {
@@ -63,6 +69,7 @@ impl Default for SolarWindParameters {
             n_0:        7.3,    // cm^-3, careful
             velocity:   4.0e5,  // m/s (from google, can't find it in the paper)
             T_e:        12.0,   // eV
+            test:       Energy::new::<electronvolt>(12.0),
         }
     }
 }

@@ -3,7 +3,6 @@
 
 // Problem, maybe: The simulation seems to be idle for the two first frames
 
-use std::num;
 use std::f32::consts;
 use bevy::prelude::*;
 use crate::{ components, parameters };
@@ -21,10 +20,10 @@ impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
             .insert_resource(parameters::SimulationParameters{..Default::default()})
-            .add_system(Self::verlet_simulation)
-            .add_system(Self::update_center_of_mass)
-            .add_system(Self::update_transform_verlets) 
-            .add_system(Self::update_esail_voltage)
+            .add_system(Self::update_esail_voltage)         // "Charges" the sail with up to the chosen potential
+            .add_system(Self::verlet_simulation)            // Calculates new positions
+            .add_system(Self::update_transform_verlets)     // Updates the position of the graphics
+            .add_system(Self::update_center_of_mass)        // Updates position of the center of mass
             ;
     }
 }
@@ -199,7 +198,7 @@ fn verlet_integration(
     let previous_position_y = verlet_object.previous_y;
 
     let velocity_x = current_position_x - previous_position_x;
-    let velocity_y = current_position_y - previous_position_y;
+    let velocity_y /* wait what */ = current_position_y - previous_position_y;
 
 
     // FORCES
@@ -217,8 +216,9 @@ fn verlet_integration(
     // Y AXIS: Coulomb drag
 
     let acceleration_y = spacecraft_parameters.wire_potential_V; // I'm gonna make it just proportional to the voltage for now.
-                                                                 //
-    let coulomb_force = coulomb_force(spacecraft_parameters.wire_potential_V, &solar_wind_parameters);
+
+    // Not used yet
+    let coulomb_force = coulomb_force(&solar_wind_parameters, &spacecraft_parameters);
 
     let next_position_y = current_position_y + velocity_y + acceleration_y * sim_params.timestep * sim_params.timestep;
     
@@ -238,26 +238,38 @@ fn verlet_integration(
 }
 
 // TESTING
-// From janhunen2007, equation 8. Corroborate all the results
+// From janhunen2007, equation 8. Corroborate all the results. And recheck the equations too.
+#[allow(non_snake_case)]
 fn coulomb_force(
-    wire_potential_V: f32,
     solar_wind: &Res<parameters::SolarWindParameters>, 
+    spacecraft: &Res<parameters::SpacecraftParameters>,
     ) -> f32 {
 
-    let r_w: f32 = 0.1e-6;   // made it up, also should be part of a resource
+    let r_w = spacecraft.wire_radius_m;
 
     // First: r_0, distance at which the potential vanishes
     let r0_numerator:   f32 = parameters::EPSILON_0 * solar_wind.T_e;
     let r0_denominator: f32 = solar_wind.n_0 * parameters::Q_E * parameters::Q_E; 
 
     let r_0 =  2.0 * (r0_numerator / r0_denominator).sqrt();
+    println!("r_o (m): {}", r_0);
 
+    // Second: r_s, stopping distance of protons
     let exp_numerator = parameters::M_PROTON * solar_wind.velocity * solar_wind.velocity * (r_0 / r_w).ln();
-    let exp_denominator = parameters::Q_E * wire_potential_V; 
+    let exp_denominator = parameters::Q_E * spacecraft.wire_potential_V; 
 
-    let rs_denominator = ((exp_numerator / exp_denominator).exp() - 1.0).sqrt();
+    let r_s_denominator = ((exp_numerator / exp_denominator).exp() - 1.0).sqrt();
 
-    return r_0 / denominator;
+    let r_s = r_0 / r_s_denominator;
+    println!("{}", r_s);
+
+    // Third: force per unit length
+    let K = 3.09;   // Empirical, from Monte Carlo sims, I need to calculate this myself somehow.
+
+    let force_per_length = r_s * K * parameters::M_PROTON * solar_wind.n_0 * solar_wind.velocity * solar_wind.velocity;
+    println!("{}", force_per_length);
+
+    return force_per_length;
 }
 
 /// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.

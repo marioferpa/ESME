@@ -14,6 +14,8 @@ use physics::PhysicsPlugin;
 mod gui;
 use gui::GUIPlugin;
 
+extern crate uom;
+
 fn main() {
     App::new()
         .insert_resource(Msaa { samples: 4 })   // "Multi-Sample Anti-Aliasing"
