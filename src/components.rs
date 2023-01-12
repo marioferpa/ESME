@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use uom::si::f32::*;    // Should I use f64?
+
 #[derive(Component)]
 pub struct CenterOfMass;
 
@@ -19,7 +21,8 @@ pub struct Mass (
 
 #[derive(Component)]
 pub struct ElectricallyCharged {
-    pub potential:  f32,    // volts
+    //pub potential:  f32,    // volts
+    pub potential:  ElectricPotential,
 }
 
 // I could call this SailElement and make everything simpler

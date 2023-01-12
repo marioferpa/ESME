@@ -1,14 +1,20 @@
 use bevy::prelude::*;
 
 // UOM package, for physical units
-use uom::si::f32::*;
-use uom::si::energy::electronvolt;
+use uom::si::f32::*;    // Should I use f64?
 use uom::si::length::micrometer;
+use uom::si::energy::electronvolt;
+use uom::lib::marker::PhantomData;
+use uom::si::electric_potential::volt;
+use uom::si::velocity::meter_per_second;
+use uom::si::electric_permittivity::farad_per_meter; 
+use uom::si::volumetric_number_density::per_cubic_centimeter;
 
 // Maybe a constants.rs could contain these
-pub const M_PROTON:     f32 = 1.672e-27;    // (kg) Is the scientific notation alright in Rust? Wow, love it
-pub const EPSILON_0:    f32 = 8.854e-12;    // (Fm^-1) Vacuum permitivity
-pub const Q_E:          f32 = 1.602e-19;    // (C) Electron charge
+pub const M_PROTON: Mass = Mass {dimension: PhantomData, units: PhantomData, value: 1.672e-27};
+pub const Q_E: ElectricCharge = ElectricCharge {dimension: PhantomData, units: PhantomData, value: 1.602e-19};  // Is this in Coulombs, you sure?
+pub const EPSILON_0: ElectricPermittivity = ElectricPermittivity {dimension: PhantomData, units: PhantomData, value: 8.854e-12};
+
 
 #[derive(Resource)]
 pub struct SimulationParameters {
@@ -41,7 +47,8 @@ pub struct SpacecraftParameters {
     pub wire_radius_m:      f32,    // meters
     pub wire_radius:        Length,    // meters
     pub wire_resolution:    f32,    // divisions per meter
-    pub wire_potential_V:   f32,
+    //pub wire_potential_V:   f32,
+    pub wire_potential:     ElectricPotential,
 }
 
 impl Default for SpacecraftParameters {
@@ -52,7 +59,8 @@ impl Default for SpacecraftParameters {
             wire_radius_m:      0.01,   // meters
             wire_radius:        Length::new::<micrometer>(10.0),
             wire_resolution:    25.0,   // divisions per meter
-            wire_potential_V:   0.0,
+            //wire_potential_V:   0.0,
+            wire_potential:     ElectricPotential::new::<volt>(0.0),
         }
     }
 }
@@ -60,19 +68,18 @@ impl Default for SpacecraftParameters {
 #[derive(Resource)]
 #[allow(non_snake_case)]
 pub struct SolarWindParameters {
-    pub n_0:        f32,    // (cm^-3, careful) Undisturbed solar wind electron density
-    pub velocity:   f32,
-    pub T_e:        f32,    // (eV) Solar wind electron temperature at 1AU
-    pub test:       Energy,
+    pub n_0:        VolumetricNumberDensity,
+    pub velocity:   Velocity, 
+    pub T_e:        Energy,  // Solar wind electron temperature at 1AU
+
 }
 
 impl Default for SolarWindParameters {
     fn default() -> SolarWindParameters {
         SolarWindParameters {
-            n_0:        7.3,    // cm^-3, careful
-            velocity:   4.0e5,  // m/s (from google, can't find it in the paper)
-            T_e:        12.0,   // eV
-            test:       Energy::new::<electronvolt>(12.0),
+            n_0:        VolumetricNumberDensity::new::<per_cubic_centimeter>(7.3),
+            velocity:   Velocity::new::<meter_per_second>(4.0e5), //(from google, can't find it in the paper)
+            T_e:        Energy::new::<electronvolt>(12.0),
         }
     }
 }

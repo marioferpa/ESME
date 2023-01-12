@@ -1,6 +1,9 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 
+use uom::si::f32::ElectricPotential;
+use uom::si::electric_potential::volt;
+
 use crate::{ components, parameters };
 
 const X_FIRST_ELEMENT:          f32 = 0.1;  // meters (?)
@@ -136,7 +139,8 @@ fn spawn_esail_element(
         .insert(components::Mass(mass))
         .insert(components::VerletObject{previous_x: x, previous_y: y, current_x: x, current_y: y, is_deployed: is_deployed})
         // NEW!!
-        .insert(components::ElectricallyCharged{potential: 0.0})
+        //.insert(components::ElectricallyCharged{potential: 0.0})
+        .insert(components::ElectricallyCharged{potential: ElectricPotential::new::<volt>(0.0)})
         .id()
     ;
 

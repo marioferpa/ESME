@@ -7,9 +7,6 @@ use std::f32::consts;
 use bevy::prelude::*;
 use crate::{ components, parameters };
 
-use uom::si::length::meter;
-use uom::fmt::DisplayStyle::Description;
-
 // Values for Coulomb interaction
 
 //const K:            f32 = 3.09;         // Don't know what it is    
@@ -40,7 +37,7 @@ impl PhysicsPlugin {
         ) {
 
         for mut electrical_element in electrical_query.iter_mut() {
-            electrical_element.potential = spacecraft_parameters.wire_potential_V;
+            electrical_element.potential = spacecraft_parameters.wire_potential;
             //println!("{}", spacecraft_parameters.wire_potential_V);
         }
     }
@@ -218,7 +215,7 @@ fn verlet_integration(
 
     // Y AXIS: Coulomb drag
 
-    let acceleration_y = spacecraft_parameters.wire_potential_V; // I'm gonna make it just proportional to the voltage for now.
+    let acceleration_y = spacecraft_parameters.wire_potential.value; // I'm gonna make it just proportional to the voltage for now.
 
     // Not used yet
     let coulomb_force = coulomb_force(&solar_wind_parameters, &spacecraft_parameters);
@@ -244,23 +241,27 @@ fn verlet_integration(
 // From janhunen2007, equation 8. Corroborate all the results. And recheck the equations too.
 #[allow(non_snake_case)]
 fn coulomb_force(
-    solar_wind: &Res<parameters::SolarWindParameters>, 
-    spacecraft: &Res<parameters::SpacecraftParameters>,
+    solar_wind:         &Res<parameters::SolarWindParameters>, 
+    spacecraft:         &Res<parameters::SpacecraftParameters>,
     ) -> f32 {
 
-    let r_w = spacecraft.wire_radius;
-    println!("r_w (m): {}", r_w.into_format_args(meter, Description));
+    //let r_w = spacecraft.wire_radius;
+    //println!("r_w (m): {}", r_w.into_format_args(meter, Description));
 
+    //let epsilon_0 = physical_constants.epsilon_0;
+    //println!("epsilon_0: {}", epsilon_0.into_format_args(farad_per_meter, Description));
+    
     // First: r_0, distance at which the potential vanishes
-    //let r0_numerator:   f32 = parameters::EPSILON_0 * solar_wind.T_e;
-    //let r0_denominator: f32 = solar_wind.n_0 * parameters::Q_E * parameters::Q_E; 
+    let r0_numerator =  parameters::EPSILON_0 * solar_wind.T_e;
 
-    //let r_0 =  2.0 * (r0_numerator / r0_denominator).sqrt();
-    //println!("r_o (m): {}", r_0);
+    let r0_denominator = solar_wind.n_0 * parameters::Q_E * parameters::Q_E; 
 
-    //// Second: r_s, stopping distance of protons
-    //let exp_numerator = parameters::M_PROTON * solar_wind.velocity * solar_wind.velocity * (r_0 / r_w).ln();
-    //let exp_denominator = parameters::Q_E * spacecraft.wire_potential_V; 
+    let r_0 =  2.0 * (r0_numerator / r0_denominator).sqrt();
+    //println!("r_o (m): {}", r_0.value);
+
+    // Second: r_s, stopping distance of protons
+    let exp_numerator = parameters::M_PROTON * solar_wind.velocity * solar_wind.velocity * (r_0 / spacecraft.wire_radius).ln();
+    let exp_denominator = parameters::Q_E * spacecraft.wire_potential; 
 
     //let r_s_denominator = ((exp_numerator / exp_denominator).exp() - 1.0).sqrt();
 
