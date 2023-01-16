@@ -15,8 +15,8 @@ pub struct ESail {
 
 #[derive(Component, Debug)]
 pub struct Mass (
-    pub f32
-    //pub Mass,
+    //pub f32
+    pub quantities::Mass,
 );
 
 #[derive(Component)]

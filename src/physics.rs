@@ -7,11 +7,8 @@ use std::f32::consts;
 use bevy::prelude::*;
 use crate::{ components, parameters };
 
-// Values for Coulomb interaction
-
-//const K:            f32 = 3.09;         // Don't know what it is    
-//const T_E:          f32 = 12.0;         // (eV) Solar wind electron temperature at 1AU
-
+use uom::si::f32 as quantities;    // Should I use f64?
+use uom::si::mass::kilogram;
 
 
 pub struct PhysicsPlugin;
@@ -157,14 +154,16 @@ impl PhysicsPlugin {
         mut com_query:  Query<(&mut Transform, &mut Visibility), With<components::CenterOfMass>>, 
         ){
 
-        let mut total_mass:     f32 = 0.0;
+        //let mut total_mass = quantities::Mass::new::<kilogram>(0.0);
+        let mut total_mass:     f32 = 0.0;  // In this particular case I don't think I should use physical units.
+                                            // Transform will be in pixels, and mass units are cancelled out.
         let mut center_mass_x:  f32 = 0.0;
         let mut center_mass_y:  f32 = 0.0;
 
         for (transform, object_mass) in mass_query.iter() {
-            total_mass += object_mass.0;
-            center_mass_x += transform.translation.x * object_mass.0;
-            center_mass_y += transform.translation.y * object_mass.0;
+            total_mass    += object_mass.0.value; 
+            center_mass_x += transform.translation.x * object_mass.0.value;
+            center_mass_y += transform.translation.y * object_mass.0.value;
         }
 
         if sim_params.debug {

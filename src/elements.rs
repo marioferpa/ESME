@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
+use uom::si::f32 as quantities;
 
-use uom::si::f32::ElectricPotential;
+//use uom::si::f32::ElectricPotential;
+use uom::lib::marker::PhantomData;
 use uom::si::electric_potential::volt;
 
 use crate::{ components, parameters };
@@ -11,9 +13,12 @@ const X_FIRST_ELEMENT:          f32 = 0.1;  // meters (?)
 const Z_ESAIL:                  f32 = 1.0;  // Will need to change if I move to 3D
 const Z_CENTER_MASS:            f32 = 10.0;
 
-const BODY_MASS:                f32 = 10.0;
-const SAIL_ELEMENT_MASS:        f32 = 0.01;
-const ENDMASS_MASS:             f32 = 0.1;
+//const BODY_MASS:                f32 = 10.0;
+const BODY_MASS:         quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 10.0};  // You sure these are in kg?
+const SAIL_ELEMENT_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.01};
+const ENDMASS_MASS:      quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.1};
+//const SAIL_ELEMENT_MASS:        f32 = 0.01;
+//const ENDMASS_MASS:             f32 = 0.1;
 
 const BODY_RADIUS:              f32 = 0.1;  // meters
 
@@ -118,7 +123,8 @@ fn spawn_esail(
 
 fn spawn_esail_element(
     commands: &mut Commands,
-    x: f32, y: f32, radius: f32, mass: f32, is_deployed: bool,
+    //x: f32, y: f32, radius: f32, mass: f32, is_deployed: bool,
+    x: f32, y: f32, radius: f32, mass: quantities::Mass, is_deployed: bool,
     ) -> Entity {
 
     let esail_element_shape = shapes::Circle {
@@ -140,7 +146,7 @@ fn spawn_esail_element(
         .insert(components::VerletObject{previous_x: x, previous_y: y, current_x: x, current_y: y, is_deployed: is_deployed})
         // NEW!!
         //.insert(components::ElectricallyCharged{potential: 0.0})
-        .insert(components::ElectricallyCharged{potential: ElectricPotential::new::<volt>(0.0)})
+        .insert(components::ElectricallyCharged{potential: quantities::ElectricPotential::new::<volt>(0.0)})
         .id()
     ;
 
