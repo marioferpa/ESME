@@ -16,9 +16,13 @@ use gui::GUIPlugin;
 
 extern crate uom;
 
+const background_color: Color = Color::rgb(0.0, 0.0, 0.0);
+
 fn main() {
     App::new()
         .insert_resource(Msaa { samples: 4 })   // "Multi-Sample Anti-Aliasing"
+        //.insert_resource(ClearColor(Color::rgb(0.0, 0.0, 0.0)))
+        .insert_resource(ClearColor(background_color))
         .add_plugins(DefaultPlugins)
         .add_plugin(ShapePlugin)
         .add_plugin(ElementsPlugin)
