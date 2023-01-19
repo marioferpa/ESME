@@ -5,7 +5,7 @@
 
 use std::f32::consts;
 use bevy::prelude::*;
-use crate::{ components, parameters };
+use crate::{ components, resources };
 
 use uom::si::f32 as quantities;    // Should I use f64?
 use uom::si::mass::kilogram;
@@ -16,7 +16,7 @@ pub struct PhysicsPlugin;
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            .insert_resource(parameters::SimulationParameters{..Default::default()})
+            .insert_resource(resources::SimulationParameters{..Default::default()})
             .add_system(Self::update_esail_voltage)         // "Charges" the sail with up to the chosen potential
             .add_system(Self::verlet_simulation)            // Calculates new positions
             .add_system(Self::update_transform_verlets)     // Updates the position of the graphics
@@ -29,7 +29,7 @@ impl PhysicsPlugin {
 
     /// Updates the potential of every conductor to whatever the gui is showing
     fn update_esail_voltage(
-        spacecraft_parameters: Res<parameters::SpacecraftParameters>,
+        spacecraft_parameters: Res<resources::SpacecraftParameters>,
         mut electrical_query: Query<&mut components::ElectricallyCharged>,
         ) {
 
@@ -42,9 +42,9 @@ impl PhysicsPlugin {
     /// Simulation proper
     fn verlet_simulation(
         time: Res<Time>, esail_query: Query<&components::ESail>,
-        mut sim_params: ResMut<parameters::SimulationParameters>,
-        spacecraft_parameters: Res<parameters::SpacecraftParameters>,
-        solar_wind_parameters: Res<parameters::SolarWindParameters>,
+        mut sim_params: ResMut<resources::SimulationParameters>,
+        spacecraft_parameters: Res<resources::SpacecraftParameters>,
+        solar_wind_parameters: Res<resources::SolarWindParameters>,
         mut sail_query: Query<(&mut components::VerletObject, &components::Mass), With<components::SailElement>>,
         ) {
 
@@ -149,7 +149,7 @@ impl PhysicsPlugin {
 
     /// Updates position and visibility of the center of mass
     fn update_center_of_mass(
-        sim_params:     Res<parameters::SimulationParameters>,
+        sim_params:     Res<resources::SimulationParameters>,
         mass_query:     Query<(&Transform, &components::Mass), Without<components::CenterOfMass>>,
         mut com_query:  Query<(&mut Transform, &mut Visibility), With<components::CenterOfMass>>, 
         ){
@@ -182,10 +182,10 @@ impl PhysicsPlugin {
 
 /// Updates the position of a verlet object
 fn verlet_integration(
-    sim_params:             &mut ResMut<parameters::SimulationParameters>,
+    sim_params:             &mut ResMut<resources::SimulationParameters>,
     verlet_object:          &mut components::VerletObject,
-    spacecraft_parameters:  &Res<parameters::SpacecraftParameters>,
-    solar_wind_parameters:  &Res<parameters::SolarWindParameters>,
+    spacecraft_parameters:  &Res<resources::SpacecraftParameters>,
+    solar_wind_parameters:  &Res<resources::SolarWindParameters>,
     ){
 
     // CALCULATION OF VELOCITIES
@@ -240,8 +240,8 @@ fn verlet_integration(
 // From janhunen2007, equation 8. Corroborate all the results. And recheck the equations too.
 #[allow(non_snake_case)]
 fn coulomb_force(
-    solar_wind:         &Res<parameters::SolarWindParameters>, 
-    spacecraft:         &Res<parameters::SpacecraftParameters>,
+    solar_wind:         &Res<resources::SolarWindParameters>, 
+    spacecraft:         &Res<resources::SpacecraftParameters>,
     ) -> f32 {
 
     //let r_w = spacecraft.wire_radius;
@@ -251,16 +251,16 @@ fn coulomb_force(
     //println!("epsilon_0: {}", epsilon_0.into_format_args(farad_per_meter, Description));
     
     // First: r_0, distance at which the potential vanishes
-    let r0_numerator =  parameters::EPSILON_0 * solar_wind.T_e;
+    let r0_numerator =  resources::EPSILON_0 * solar_wind.T_e;
 
-    let r0_denominator = solar_wind.n_0 * parameters::Q_E * parameters::Q_E; 
+    let r0_denominator = solar_wind.n_0 * resources::Q_E * resources::Q_E; 
 
     let r_0 =  2.0 * (r0_numerator / r0_denominator).sqrt();
     //println!("r_o (m): {}", r_0.value);
 
     // Second: r_s, stopping distance of protons
-    let exp_numerator = parameters::M_PROTON * solar_wind.velocity * solar_wind.velocity * (r_0 / spacecraft.wire_radius).ln();
-    let exp_denominator = parameters::Q_E * spacecraft.wire_potential; 
+    let exp_numerator = resources::M_PROTON * solar_wind.velocity * solar_wind.velocity * (r_0 / spacecraft.wire_radius).ln();
+    let exp_denominator = resources::Q_E * spacecraft.wire_potential; 
 
     //let r_s_denominator = ((exp_numerator / exp_denominator).exp() - 1.0).sqrt();
 
@@ -270,7 +270,7 @@ fn coulomb_force(
     //// Third: force per unit length
     //let K = 3.09;   // Empirical, from Monte Carlo sims, I need to calculate this myself somehow.
 
-    //let force_per_length = r_s * K * parameters::M_PROTON * solar_wind.n_0 * solar_wind.velocity * solar_wind.velocity;
+    //let force_per_length = r_s * K * resources::M_PROTON * solar_wind.n_0 * solar_wind.velocity * solar_wind.velocity;
     //println!("{}", force_per_length);
 
     //return force_per_length;
@@ -281,7 +281,7 @@ fn coulomb_force(
 /// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.
 fn timestep_calculation(
     time: &Res<Time>,
-    sim_params: &mut ResMut<parameters::SimulationParameters>,
+    sim_params: &mut ResMut<resources::SimulationParameters>,
     ) -> i32 {
 
     let elapsed_time = time.delta_seconds() + sim_params.leftover_time; // Elapsed time + leftover time from previous frame

@@ -11,11 +11,11 @@ pub struct SailElement;
 pub struct ESail {
     pub elements:           Vec<Entity>,
     pub resting_distance:   f32,    // meters
+    //pub resting_distance:   quantities::Length,
 }
 
 #[derive(Component, Debug)]
 pub struct Mass (
-    //pub f32
     pub quantities::Mass,
 );
 
@@ -27,7 +27,7 @@ pub struct ElectricallyCharged {
 // I could call this SailElement and make everything simpler
 #[derive(Component, Debug)]
 pub struct VerletObject {
-    pub previous_x: f32,
+    pub previous_x: f32,    // Wondering if this should stay in pixels or become physical meters
     pub previous_y: f32,
     pub current_x:  f32,
     pub current_y:  f32,

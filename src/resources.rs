@@ -3,11 +3,13 @@ use bevy::prelude::*;
 // UOM package, for physical units
 //use uom::si::f32::*;    // Should I use f64?
 use uom::si::f32 as quantities;    // Should I use f64?
+use uom::si::length::meter;
 use uom::si::length::micrometer;
 use uom::si::energy::electronvolt;
 use uom::lib::marker::PhantomData;
 use uom::si::electric_potential::volt;
 use uom::si::velocity::meter_per_second;
+use uom::si::linear_number_density::per_meter;
 use uom::si::electric_permittivity::farad_per_meter; 
 use uom::si::volumetric_number_density::per_cubic_centimeter;
 
@@ -44,10 +46,10 @@ impl Default for SimulationParameters {
 #[allow(non_snake_case)]
 pub struct SpacecraftParameters {
     pub rpm:                i32,
-    pub wire_length_m:      f32,    // meters
-    pub wire_radius_m:      f32,    // meters
+    pub wire_length:        quantities::Length,
     pub wire_radius:        quantities::Length, 
-    pub wire_resolution:    f32,    // divisions per meter
+    //pub wire_resolution:    f32,    // divisions per meter
+    pub wire_resolution:    quantities::LinearNumberDensity,
     pub wire_potential:     quantities::ElectricPotential,
 }
 
@@ -55,10 +57,11 @@ impl Default for SpacecraftParameters {
     fn default() -> SpacecraftParameters {
         SpacecraftParameters {
             rpm:                0,
-            wire_length_m:      1.0,    // meters
-            wire_radius_m:      0.01,   // meters
+            //wire_length:        1.0,    // meters
+            wire_length:        quantities::Length::new::<meter>(1.0),
             wire_radius:        quantities::Length::new::<micrometer>(10.0),
-            wire_resolution:    25.0,   // divisions per meter
+            //wire_resolution:    25.0,   // divisions per meter
+            wire_resolution:    quantities::LinearNumberDensity::new::<per_meter>(25.0),
             wire_potential:     quantities::ElectricPotential::new::<volt>(0.0),
         }
     }

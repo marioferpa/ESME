@@ -6,7 +6,7 @@ use uom::si::f32 as quantities;
 use uom::lib::marker::PhantomData;
 use uom::si::electric_potential::volt;
 
-use crate::{ components, parameters };
+use crate::{ components, resources };
 
 const X_FIRST_ELEMENT:          f32 = 0.1;  // meters (?)
 
@@ -57,7 +57,7 @@ fn spawn_center_mass(
 
 fn spawn_cubesat(
     mut commands: Commands,
-    simulation_parameters: Res<parameters::SimulationParameters>,
+    simulation_parameters: Res<resources::SimulationParameters>,
     ) {
 
     let sat_shape = shapes::RegularPolygon {
@@ -80,18 +80,21 @@ fn spawn_cubesat(
 
 fn spawn_esail(
     mut commands: Commands,
-    simulation_parameters: Res<parameters::SimulationParameters>,
-    spacecraft_parameters: ResMut<parameters::SpacecraftParameters>,
+    simulation_parameters: Res<resources::SimulationParameters>,
+    spacecraft_parameters: ResMut<resources::SpacecraftParameters>,
     ) {
 
     let mut element_vector: Vec<Entity> = Vec::new();
 
     // User defines length of sail and resolution, elements are calculated from those.
-    let number_of_elements = (spacecraft_parameters.wire_length_m * spacecraft_parameters.wire_resolution) as i32;
-    let distance_between_elements = (1.0 / spacecraft_parameters.wire_resolution) * simulation_parameters.pixels_per_meter as f32;
+    //let number_of_elements = (spacecraft_parameters.wire_length * spacecraft_parameters.wire_resolution) as i32;
+    let number_of_elements = (spacecraft_parameters.wire_length * spacecraft_parameters.wire_resolution);
+    let distance_between_elements = (1.0 / spacecraft_parameters.wire_resolution.value) * simulation_parameters.pixels_per_meter as f32;   // Pixels
 
-    for number in 0..=number_of_elements-1 {
+    // x is in pixels here, I think that is correct.
 
+    for number in 0..= number_of_elements.value as i32 - 1 {
+ 
         let x = X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f32 + number as f32 * distance_between_elements;
         //println!("x: {} pixels", x);
 
@@ -102,7 +105,7 @@ fn spawn_esail(
         };
 
         // Endmass has different mass and size
-        let (mass, radius) = if number == number_of_elements - 1 {
+        let (mass, radius) = if number == number_of_elements.value as i32 - 1 {
             (ENDMASS_MASS, 10.0)
         } else {
             (SAIL_ELEMENT_MASS, 5.0)
