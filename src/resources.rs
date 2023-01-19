@@ -52,8 +52,7 @@ impl Default for SpacecraftParameters {
             wire_length:        quantities::Length::new::<length::meter>(1.0),
             wire_radius:        quantities::Length::new::<length::micrometer>(10.0),
             wire_resolution:    quantities::LinearNumberDensity::new::<linear_number_density::per_meter>(25.0),
-            //wire_potential:     quantities::ElectricPotential::new::<volt>(0.0),
-            wire_potential:     quantities::ElectricPotential::new::<electric_potential::kilovolt>(10.0),
+            wire_potential:     quantities::ElectricPotential::new::<electric_potential::kilovolt>(0.0),
         }
     }
 }

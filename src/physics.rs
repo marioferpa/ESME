@@ -208,7 +208,7 @@ fn verlet_integration(
 
     // Y AXIS: Coulomb drag
 
-    let acceleration_y = spacecraft_parameters.wire_potential.value; // I'm gonna make it just proportional to the voltage for now.
+    let acceleration_y = spacecraft_parameters.wire_potential.value * 0.01; // I'm gonna make it just proportional to the voltage for now.
 
     // Not used yet
     let _coulomb_force = coulomb_force(&solar_wind_parameters, &spacecraft_parameters);

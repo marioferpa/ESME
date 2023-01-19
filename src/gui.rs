@@ -35,7 +35,7 @@ impl GUIPlugin {
 
             ui.horizontal(|ui| { ui.label("Wire potential V_0"); });
             //ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential, -100.0..=100.0).text("V"));
-            ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential.value, -100.0..=100.0).text("V"));
+            ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential.value, -10.0e3..=10.0e3).text("V (want kV)"));
 
             ui.separator();
 
