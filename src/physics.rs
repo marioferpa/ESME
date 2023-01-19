@@ -206,11 +206,12 @@ fn verlet_integration(
 
     let distance_to_center = (current_position_x * current_position_x + current_position_y * current_position_y).sqrt();
 
-    let angular_velocity = spacecraft_parameters.rpm as f32 * consts::PI / 30.0;
+    //let angular_velocity = spacecraft_parameters.rpm as f32 * consts::PI / 30.0;
+    let angular_velocity = spacecraft_parameters.rpm * consts::PI / 30.0;
 
     let acceleration_x = distance_to_center * angular_velocity * angular_velocity;
 
-    let next_position_x = current_position_x + velocity_x + acceleration_x * sim_params.timestep * sim_params.timestep;
+    let next_position_x = current_position_x + velocity_x + acceleration_x.value * sim_params.timestep * sim_params.timestep;
 
     // Y AXIS: Coulomb drag
 

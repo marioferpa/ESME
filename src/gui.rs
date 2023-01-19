@@ -31,7 +31,7 @@ impl GUIPlugin {
 
             // Sliders
             ui.horizontal(|ui| { ui.label("Spacecraft rotation"); });
-            ui.add(egui::Slider::new(&mut spacecraft_parameters.rpm, 0..=100).text("rpm"));
+            ui.add(egui::Slider::new(&mut spacecraft_parameters.rpm.value, 0.0..=100.0).text("rpm"));
 
             ui.horizontal(|ui| { ui.label("Wire potential V_0"); });
             //ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential, -100.0..=100.0).text("V"));

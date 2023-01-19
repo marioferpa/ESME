@@ -12,6 +12,7 @@ use uom::si::velocity::meter_per_second;
 use uom::si::linear_number_density::per_meter;
 use uom::si::electric_permittivity::farad_per_meter; 
 use uom::si::volumetric_number_density::per_cubic_centimeter;
+use uom::si::frequency::cycle_per_minute;
 
 // Maybe a constants.rs could contain these
 pub const M_PROTON:  quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 1.672e-27};
@@ -45,10 +46,10 @@ impl Default for SimulationParameters {
 #[derive(Resource)]
 #[allow(non_snake_case)]
 pub struct SpacecraftParameters {
-    pub rpm:                i32,
+    //pub rpm:                i32,    // Should this be cycle_per_minute?
+    pub rpm:                quantities::Frequency,
     pub wire_length:        quantities::Length,
     pub wire_radius:        quantities::Length, 
-    //pub wire_resolution:    f32,    // divisions per meter
     pub wire_resolution:    quantities::LinearNumberDensity,
     pub wire_potential:     quantities::ElectricPotential,
 }
@@ -56,11 +57,10 @@ pub struct SpacecraftParameters {
 impl Default for SpacecraftParameters {
     fn default() -> SpacecraftParameters {
         SpacecraftParameters {
-            rpm:                0,
-            //wire_length:        1.0,    // meters
+            //rpm:                0,
+            rpm:                quantities::Frequency::new::<cycle_per_minute>(0.0),
             wire_length:        quantities::Length::new::<meter>(1.0),
             wire_radius:        quantities::Length::new::<micrometer>(10.0),
-            //wire_resolution:    25.0,   // divisions per meter
             wire_resolution:    quantities::LinearNumberDensity::new::<per_meter>(25.0),
             wire_potential:     quantities::ElectricPotential::new::<volt>(0.0),
         }
