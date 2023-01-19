@@ -1,26 +1,23 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
-use uom::si::f32 as quantities;
+use uom::si::f64 as quantities;
 
-//use uom::si::f32::ElectricPotential;
+//use uom::si::f64::ElectricPotential;
 use uom::lib::marker::PhantomData;
 use uom::si::electric_potential::volt;
 
 use crate::{ components, resources };
 
-const X_FIRST_ELEMENT:          f32 = 0.1;  // meters (?)
+const X_FIRST_ELEMENT:          f64 = 0.1;  // meters (more like pixels?)
 
-const Z_ESAIL:                  f32 = 1.0;  // Will need to change if I move to 3D
-const Z_CENTER_MASS:            f32 = 10.0;
+const Z_ESAIL:                  f64 = 1.0;  // Will need to change if I move to 3D
+const Z_CENTER_MASS:            f64 = 10.0;
 
-//const BODY_MASS:                f32 = 10.0;
 const BODY_MASS:         quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 10.0};  // You sure these are in kg?
 const SAIL_ELEMENT_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.01};
 const ENDMASS_MASS:      quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.1};
-//const SAIL_ELEMENT_MASS:        f32 = 0.01;
-//const ENDMASS_MASS:             f32 = 0.1;
 
-const BODY_RADIUS:              f32 = 0.1;  // meters
+const BODY_RADIUS:              f64 = 0.1;  // meters
 
 pub struct ElementsPlugin;
 
@@ -49,7 +46,7 @@ fn spawn_center_mass(
                 fill_mode: FillMode::color(Color::YELLOW),
                 outline_mode: StrokeMode::new(Color::BLACK, 1.0),
             },
-            Transform::from_xyz(0.0, 0.0, Z_CENTER_MASS),
+            Transform::from_xyz(0.0, 0.0, Z_CENTER_MASS as f32),
         ))
         .insert(components::CenterOfMass)
         ;
@@ -62,7 +59,7 @@ fn spawn_cubesat(
 
     let sat_shape = shapes::RegularPolygon {
         sides: 4,
-        feature: shapes::RegularPolygonFeature::Radius(BODY_RADIUS * simulation_parameters.pixels_per_meter as f32 / 0.707),
+        feature: shapes::RegularPolygonFeature::Radius( (BODY_RADIUS * simulation_parameters.pixels_per_meter as f64 / 0.707) as f32),
         ..shapes::RegularPolygon::default()
     };
 
@@ -87,15 +84,14 @@ fn spawn_esail(
     let mut element_vector: Vec<Entity> = Vec::new();
 
     // User defines length of sail and resolution, elements are calculated from those.
-    //let number_of_elements = (spacecraft_parameters.wire_length * spacecraft_parameters.wire_resolution) as i32;
-    let number_of_elements = (spacecraft_parameters.wire_length * spacecraft_parameters.wire_resolution);
-    let distance_between_elements = (1.0 / spacecraft_parameters.wire_resolution.value) * simulation_parameters.pixels_per_meter as f32;   // Pixels
+    let number_of_elements = spacecraft_parameters.wire_length * spacecraft_parameters.wire_resolution;
+    let distance_between_elements = (1.0 / spacecraft_parameters.wire_resolution.value) * simulation_parameters.pixels_per_meter as f64;   // Pixels
 
     // x is in pixels here, I think that is correct.
 
     for number in 0..= number_of_elements.value as i32 - 1 {
  
-        let x = X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f32 + number as f32 * distance_between_elements;
+        let x = X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64 + number as f64 * distance_between_elements;
         //println!("x: {} pixels", x);
 
         // The first element stays undeployed and is unaffected by forces
@@ -126,8 +122,8 @@ fn spawn_esail(
 
 fn spawn_esail_element(
     commands: &mut Commands,
-    //x: f32, y: f32, radius: f32, mass: f32, is_deployed: bool,
-    x: f32, y: f32, radius: f32, mass: quantities::Mass, is_deployed: bool,
+    //x: f64, y: f64, radius: f64, mass: f64, is_deployed: bool,
+    x: f64, y: f64, radius: f32, mass: quantities::Mass, is_deployed: bool,
     ) -> Entity {
 
     let esail_element_shape = shapes::Circle {
@@ -142,7 +138,7 @@ fn spawn_esail_element(
                 fill_mode: FillMode::color(Color::WHITE),
                 outline_mode: StrokeMode::new(Color::GRAY, 1.0),
             },
-            Transform::from_xyz(x, y, Z_ESAIL),
+            Transform::from_xyz(x as f32, y as f32, Z_ESAIL as f32),
         ))
         .insert(components::SailElement) 
         .insert(components::Mass(mass))

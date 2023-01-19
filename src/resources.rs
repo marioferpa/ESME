@@ -2,7 +2,8 @@ use bevy::prelude::*;
 
 // UOM package, for physical units
 //use uom::si::f32::*;    // Should I use f64?
-use uom::si::f32 as quantities;    // Should I use f64?
+//use uom::si::f32 as quantities;    // Should I use f64?
+use uom::si::f64 as quantities;
 use uom::si::length::meter;
 use uom::si::length::micrometer;
 use uom::si::energy::electronvolt;
@@ -10,21 +11,20 @@ use uom::lib::marker::PhantomData;
 use uom::si::electric_potential::volt;
 use uom::si::velocity::meter_per_second;
 use uom::si::linear_number_density::per_meter;
-use uom::si::electric_permittivity::farad_per_meter; 
 use uom::si::volumetric_number_density::per_cubic_centimeter;
 use uom::si::frequency::cycle_per_minute;
 
 // Maybe a constants.rs could contain these
 pub const M_PROTON:  quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 1.672e-27};
-pub const Q_E:       quantities::ElectricCharge = quantities::ElectricCharge {dimension: PhantomData, units: PhantomData, value: 1.602e-19};  // Is this in Coulombs, you sure?
+pub const Q_E:       quantities::ElectricCharge = quantities::ElectricCharge {dimension: PhantomData, units: PhantomData, value: 1.602_176_634_E-19};  // Is this in Coulombs, you sure?
 pub const EPSILON_0: quantities::ElectricPermittivity = quantities::ElectricPermittivity {dimension: PhantomData, units: PhantomData, value: 8.854e-12};
 
 
 #[derive(Resource)]
 pub struct SimulationParameters {
     pub iterations:         i32,    // Number of constraint iterations per timestep.
-    pub timestep:           f32,    // Timestep for the physics simulation, in seconds.
-    pub leftover_time:      f32,    // Unused time from the previous simulation loop.
+    pub timestep:           f64,    // Timestep for the physics simulation, in seconds.
+    pub leftover_time:      f64,    // Unused time from the previous simulation loop.
     pub debug:              bool,   // Toggle for printing debug information to console.
     pub com_visibility:     bool,   // Toggle for showing/hiding the center of mass.
     pub pixels_per_meter:   i32,
@@ -46,7 +46,6 @@ impl Default for SimulationParameters {
 #[derive(Resource)]
 #[allow(non_snake_case)]
 pub struct SpacecraftParameters {
-    //pub rpm:                i32,    // Should this be cycle_per_minute?
     pub rpm:                quantities::Frequency,
     pub wire_length:        quantities::Length,
     pub wire_radius:        quantities::Length, 
@@ -57,12 +56,12 @@ pub struct SpacecraftParameters {
 impl Default for SpacecraftParameters {
     fn default() -> SpacecraftParameters {
         SpacecraftParameters {
-            //rpm:                0,
             rpm:                quantities::Frequency::new::<cycle_per_minute>(0.0),
             wire_length:        quantities::Length::new::<meter>(1.0),
             wire_radius:        quantities::Length::new::<micrometer>(10.0),
             wire_resolution:    quantities::LinearNumberDensity::new::<per_meter>(25.0),
-            wire_potential:     quantities::ElectricPotential::new::<volt>(0.0),
+            //wire_potential:     quantities::ElectricPotential::new::<volt>(0.0),
+            wire_potential:     quantities::ElectricPotential::new::<volt>(10.0),
         }
     }
 }
@@ -70,10 +69,9 @@ impl Default for SpacecraftParameters {
 #[derive(Resource)]
 #[allow(non_snake_case)]
 pub struct SolarWindParameters {
-    pub n_0:        quantities::VolumetricNumberDensity,
+    pub n_0:        quantities::VolumetricNumberDensity,    // Undisturbed solar wind electron density
     pub velocity:   quantities::Velocity, 
     pub T_e:        quantities::Energy,  // Solar wind electron temperature at 1AU
-
 }
 
 impl Default for SolarWindParameters {
@@ -85,4 +83,3 @@ impl Default for SolarWindParameters {
         }
     }
 }
-

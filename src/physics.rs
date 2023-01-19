@@ -3,13 +3,9 @@
 
 // Problem, maybe: The simulation seems to be idle for the two first frames
 
-use std::f32::consts;
+use std::f64::consts;
 use bevy::prelude::*;
 use crate::{ components, resources };
-
-use uom::si::f32 as quantities;    // Should I use f64?
-use uom::si::mass::kilogram;
-
 
 pub struct PhysicsPlugin;
 
@@ -29,67 +25,67 @@ impl PhysicsPlugin {
 
     /// Updates the potential of every conductor to whatever the gui is showing
     fn update_esail_voltage(
-        spacecraft_parameters: Res<resources::SpacecraftParameters>,
-        mut electrical_query: Query<&mut components::ElectricallyCharged>,
+        spacecraft_parameters:  Res<resources::SpacecraftParameters>,
+        mut electrical_query:   Query<&mut components::ElectricallyCharged>,
         ) {
 
         for mut electrical_element in electrical_query.iter_mut() {
             electrical_element.potential = spacecraft_parameters.wire_potential;
-            //println!("{}", spacecraft_parameters.wire_potential_V);
         }
     }
 
     /// Simulation proper
     fn verlet_simulation(
-        time: Res<Time>, esail_query: Query<&components::ESail>,
-        mut sim_params: ResMut<resources::SimulationParameters>,
-        spacecraft_parameters: Res<resources::SpacecraftParameters>,
-        solar_wind_parameters: Res<resources::SolarWindParameters>,
-        mut sail_query: Query<(&mut components::VerletObject, &components::Mass), With<components::SailElement>>,
+        time:                   Res<Time>, 
+        esail_query:            Query<&components::ESail>,
+        mut sim_params:         ResMut<resources::SimulationParameters>,
+        spacecraft_parameters:  Res<resources::SpacecraftParameters>,
+        solar_wind_parameters:  Res<resources::SolarWindParameters>,
+        mut verlet_query:       Query<(&mut components::VerletObject, &components::Mass), With<components::SailElement>>,
         ) {
 
         let esail = esail_query.single();
 
         let timesteps = timestep_calculation(&time, &mut sim_params);
 
-        //if sim_params.debug { println!("New frame ------------------"); }
+        if sim_params.debug { println!("New frame ------------------"); }
 
         for _ in 0..timesteps { 
 
-          //  if sim_params.debug { println!("New timestep ---------------"); }
+            if sim_params.debug { println!("New timestep ---------------"); }
 
             // VERLET INTEGRATION
             // Forces are calculated and applied for each esail element
 
             for element in esail.elements.iter() {  // Iterating over esail elements, in order.
 
-                let (mut verlet_object, _) = sail_query.get_mut(*element).expect("No sail element found");
+                let (mut verlet_object, _) = verlet_query.get_mut(*element).expect("No sail element found");
 
                 if verlet_object.is_deployed {
-                    //verlet_integration(&mut sim_params, &mut verlet_object, &spacecraft_parameters);
                     verlet_integration(&mut sim_params, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
                 }
             }
 
             // CONSTRAINT LOOP
-            // Final position is corrected taking into account the constraints of the system
+            // Final position is corrected taking into account the constraints of the system.
+            // All operations in pixels, I believe.
 
             for _ in 0..sim_params.iterations {
 
-                //if sim_params.debug { println!("New constraint iteration ---"); }
+                if sim_params.debug { println!("New constraint iteration ---"); }
 
                 for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {    // Iterating over the sail elements in order. Skips the first.
                                                                                             // Needed if I'm already checking for deployment?
 
                     // Information from current element
-                    let (current_verlet_object, _) = sail_query.get(*sail_element).expect("No previous sail element found");
+                    let (current_verlet_object, _) = verlet_query.get(*sail_element).expect("No previous sail element found");
 
                     let current_element_x = current_verlet_object.current_x;
                     let current_element_y = current_verlet_object.current_y;
 
                     // Information from previous element
                     let prev_sail_element = esail.elements[index - 1];
-                    let (prev_verlet_object, _) = sail_query.get(prev_sail_element).expect("No previous sail element found");
+                    let (prev_verlet_object, _) = verlet_query.get(prev_sail_element).expect("No previous sail element found");
 
                     let prev_element_x = prev_verlet_object.current_x;
                     let prev_element_y = prev_verlet_object.current_y;
@@ -99,14 +95,13 @@ impl PhysicsPlugin {
                     let diff_y = current_element_y - prev_element_y;
                     let distance_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
 
-                    //if sim_params.debug {
-                    //    println!("Index: {} | Distance between elements: {}", index, distance_between_elements);
-                    //}
+                    if sim_params.debug {
+                        println!("Index: {} | Distance between elements: {}", index, distance_between_elements);
+                    }
 
                     let mut difference = 0.0;
 
                     if distance_between_elements > 0.0 {
-                        //difference = (spacecraft_parameters.resting_distance - distance_between_elements) / distance_between_elements;
                         difference = (esail.resting_distance - distance_between_elements) / distance_between_elements;
                     }
 
@@ -115,16 +110,16 @@ impl PhysicsPlugin {
                     let correction_y = diff_y * 0.5 * difference;
 
                     // UPDATING POSITIONS
-                    // Yes, I'm querying again, can't find a cleaner way to do it.
+                    // Yes, I'm querying both again, can't find a cleaner way to do it.
                     
-                    let (mut current_verlet_object, _) = sail_query.get_mut(*sail_element).expect("No previous sail element found");
+                    let (mut current_verlet_object, _) = verlet_query.get_mut(*sail_element).expect("No previous sail element found");
                     
                     if current_verlet_object.is_deployed {
                         current_verlet_object.current_x += correction_x;
                         current_verlet_object.current_y += correction_y;
                     }
 
-                    let (mut prev_verlet_object, _) = sail_query.get_mut(prev_sail_element).expect("No previous sail element found");
+                    let (mut prev_verlet_object, _) = verlet_query.get_mut(prev_sail_element).expect("No previous sail element found");
                     
                     if prev_verlet_object.is_deployed {
                         prev_verlet_object.current_x -= correction_x;
@@ -137,13 +132,12 @@ impl PhysicsPlugin {
 
     /// Updates the transform of the verlet objects after the simulation, so that the graphics get updated.
     fn update_transform_verlets(
-        mut sail_query: Query<(&components::VerletObject, &mut Transform)>,
+        mut verlet_query: Query<(&components::VerletObject, &mut Transform)>,
         ){
         
-        for (verlet_object, mut transform) in sail_query.iter_mut() {
-            transform.translation.x = verlet_object.current_x;
-            transform.translation.y = verlet_object.current_y;
-
+        for (verlet_object, mut transform) in verlet_query.iter_mut() {
+            transform.translation.x = verlet_object.current_x as f32;
+            transform.translation.y = verlet_object.current_y as f32;
         }
     } 
 
@@ -154,16 +148,15 @@ impl PhysicsPlugin {
         mut com_query:  Query<(&mut Transform, &mut Visibility), With<components::CenterOfMass>>, 
         ){
 
-        //let mut total_mass = quantities::Mass::new::<kilogram>(0.0);
         let mut total_mass:     f32 = 0.0;  // In this particular case I don't think I should use physical units.
                                             // Transform will be in pixels, and mass units are cancelled out.
         let mut center_mass_x:  f32 = 0.0;
         let mut center_mass_y:  f32 = 0.0;
 
         for (transform, object_mass) in mass_query.iter() {
-            total_mass    += object_mass.0.value; 
-            center_mass_x += transform.translation.x * object_mass.0.value;
-            center_mass_y += transform.translation.y * object_mass.0.value;
+            total_mass    += object_mass.0.value as f32; 
+            center_mass_x += transform.translation.x * object_mass.0.value as f32;
+            center_mass_y += transform.translation.y * object_mass.0.value as f32;
         }
 
         if sim_params.debug {
@@ -218,7 +211,7 @@ fn verlet_integration(
     let acceleration_y = spacecraft_parameters.wire_potential.value; // I'm gonna make it just proportional to the voltage for now.
 
     // Not used yet
-    let coulomb_force = coulomb_force(&solar_wind_parameters, &spacecraft_parameters);
+    let _coulomb_force = coulomb_force(&solar_wind_parameters, &spacecraft_parameters);
 
     let next_position_y = current_position_y + velocity_y + acceleration_y * sim_params.timestep * sim_params.timestep;
     
@@ -239,7 +232,7 @@ fn verlet_integration(
 
 // TESTING
 // From janhunen2007, equation 8. Corroborate all the results. And recheck the equations too.
-#[allow(non_snake_case)]
+//#[allow(non_snake_case)]
 fn coulomb_force(
     solar_wind:         &Res<resources::SolarWindParameters>, 
     spacecraft:         &Res<resources::SpacecraftParameters>,
@@ -248,20 +241,25 @@ fn coulomb_force(
     //let r_w = spacecraft.wire_radius;
     //println!("r_w (m): {}", r_w.into_format_args(meter, Description));
 
-    //let epsilon_0 = physical_constants.epsilon_0;
-    //println!("epsilon_0: {}", epsilon_0.into_format_args(farad_per_meter, Description));
-    
     // First: r_0, distance at which the potential vanishes
     let r0_numerator =  resources::EPSILON_0 * solar_wind.T_e;
+    //println!("r0_numerator (?): {}", r0_numerator.value);
 
     let r0_denominator = solar_wind.n_0 * resources::Q_E * resources::Q_E; 
+    //println!("r0_denominator (?): {}", r0_denominator.value);
 
-    let r_0 =  2.0 * (r0_numerator / r0_denominator).sqrt();
-    //println!("r_o (m): {}", r_0.value);
+    let r_0 =  2.0 * (r0_numerator / r0_denominator).sqrt();    // Checked until here with WolframAlpha, units work perfectly
+                                                                // 19.062231 m
+    //println!("r_0 (m): {}", r_0.value);
 
     // Second: r_s, stopping distance of protons
     let exp_numerator = resources::M_PROTON * solar_wind.velocity * solar_wind.velocity * (r_0 / spacecraft.wire_radius).ln();
+    //println!("exp_numerator (?): {}", exp_numerator.value);
+
     let exp_denominator = resources::Q_E * spacecraft.wire_potential; 
+
+    let exp = (exp_numerator / exp_denominator).exp();  // This is inf. Maybe f64 would help?
+    println!("exp (?): {}", exp.value - 1.0);
 
     //let r_s_denominator = ((exp_numerator / exp_denominator).exp() - 1.0).sqrt();
 
@@ -285,11 +283,11 @@ fn timestep_calculation(
     sim_params: &mut ResMut<resources::SimulationParameters>,
     ) -> i32 {
 
-    let elapsed_time = time.delta_seconds() + sim_params.leftover_time; // Elapsed time + leftover time from previous frame
+    let elapsed_time = time.delta_seconds() as f64 + sim_params.leftover_time; // Elapsed time + leftover time from previous frame
 
     let timesteps = (elapsed_time / sim_params.timestep).floor() as i32; // Number of timesteps for the current frame
 
-    let leftover_time = elapsed_time - timesteps as f32 * sim_params.timestep;  // Leftover time saved for next frame
+    let leftover_time = elapsed_time - timesteps as f64 * sim_params.timestep;  // Leftover time saved for next frame
     sim_params.leftover_time = leftover_time;
 
     return timesteps;
