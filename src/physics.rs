@@ -260,12 +260,13 @@ fn coulomb_force(
 
     let exp = (exp_numerator / exp_denominator).exp();  // This is inf. Maybe f64 would help? It doesn't 
                                                         // Infinite for low voltages! With kilovolts it's fine.
-    println!("exp (?): {}", exp.value);
+    //println!("exp (?): {}", exp.value);
 
-    //let r_s_denominator = ((exp_numerator / exp_denominator).exp() - 1.0).sqrt();
+    let rs_denominator = (exp.value - 1.0).sqrt();
+    //println!("rs_denominator (?): {}", rs_denominator);
 
-    //let r_s = r_0 / r_s_denominator;
-    //println!("{}", r_s);
+    let r_s = r_0 / rs_denominator;
+    println!("r_s (m?): {}", r_s.value);
 
     //// Third: force per unit length
     //let K = 3.09;   // Empirical, from Monte Carlo sims, I need to calculate this myself somehow.
