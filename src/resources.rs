@@ -1,18 +1,10 @@
 use bevy::prelude::*;
 
 // UOM package, for physical units
-//use uom::si::f32::*;    // Should I use f64?
-//use uom::si::f32 as quantities;    // Should I use f64?
 use uom::si::f64 as quantities;
-use uom::si::length::meter;
-use uom::si::length::micrometer;
-use uom::si::energy::electronvolt;
+use uom::si::*;
+
 use uom::lib::marker::PhantomData;
-use uom::si::electric_potential::volt;
-use uom::si::velocity::meter_per_second;
-use uom::si::linear_number_density::per_meter;
-use uom::si::volumetric_number_density::per_cubic_centimeter;
-use uom::si::frequency::cycle_per_minute;
 
 // Maybe a constants.rs could contain these
 pub const M_PROTON:  quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 1.672e-27};
@@ -56,12 +48,12 @@ pub struct SpacecraftParameters {
 impl Default for SpacecraftParameters {
     fn default() -> SpacecraftParameters {
         SpacecraftParameters {
-            rpm:                quantities::Frequency::new::<cycle_per_minute>(0.0),
-            wire_length:        quantities::Length::new::<meter>(1.0),
-            wire_radius:        quantities::Length::new::<micrometer>(10.0),
-            wire_resolution:    quantities::LinearNumberDensity::new::<per_meter>(25.0),
+            rpm:                quantities::Frequency::new::<frequency::cycle_per_minute>(0.0),
+            wire_length:        quantities::Length::new::<length::meter>(1.0),
+            wire_radius:        quantities::Length::new::<length::micrometer>(10.0),
+            wire_resolution:    quantities::LinearNumberDensity::new::<linear_number_density::per_meter>(25.0),
             //wire_potential:     quantities::ElectricPotential::new::<volt>(0.0),
-            wire_potential:     quantities::ElectricPotential::new::<volt>(10.0),
+            wire_potential:     quantities::ElectricPotential::new::<electric_potential::kilovolt>(10.0),
         }
     }
 }
@@ -77,9 +69,9 @@ pub struct SolarWindParameters {
 impl Default for SolarWindParameters {
     fn default() -> SolarWindParameters {
         SolarWindParameters {
-            n_0:        quantities::VolumetricNumberDensity::new::<per_cubic_centimeter>(7.3),
-            velocity:   quantities::Velocity::new::<meter_per_second>(4.0e5), //(from google, can't find it in the paper)
-            T_e:        quantities::Energy::new::<electronvolt>(12.0),
+            n_0:        quantities::VolumetricNumberDensity::new::<volumetric_number_density::per_cubic_centimeter>(7.3),
+            velocity:   quantities::Velocity::new::<velocity::meter_per_second>(4.0e5), //(from google, can't find it in the paper)
+            T_e:        quantities::Energy::new::<energy::electronvolt>(12.0),
         }
     }
 }

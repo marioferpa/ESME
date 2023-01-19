@@ -258,8 +258,9 @@ fn coulomb_force(
 
     let exp_denominator = resources::Q_E * spacecraft.wire_potential; 
 
-    let exp = (exp_numerator / exp_denominator).exp();  // This is inf. Maybe f64 would help?
-    println!("exp (?): {}", exp.value - 1.0);
+    let exp = (exp_numerator / exp_denominator).exp();  // This is inf. Maybe f64 would help? It doesn't 
+                                                        // Infinite for low voltages! With kilovolts it's fine.
+    println!("exp (?): {}", exp.value);
 
     //let r_s_denominator = ((exp_numerator / exp_denominator).exp() - 1.0).sqrt();
 
