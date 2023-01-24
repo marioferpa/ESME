@@ -5,7 +5,7 @@ use crate::{ resources };
 
 use uom::si::*;
 
-const MAX_VOLTAGE: f64 = 10.0e5;
+const MAX_VOLTAGE: f64 = 30.0e3;    // Volts
 
 pub struct GUIPlugin;
 
@@ -36,7 +36,8 @@ impl GUIPlugin {
             ui.add(egui::Slider::new(&mut spacecraft_parameters.rpm.value, 0.0..=100.0).text("rpm"));
 
             ui.horizontal(|ui| { ui.label("Wire potential V_0"); });
-            ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential.value, -MAX_VOLTAGE..=MAX_VOLTAGE).text("V (want kV)"));
+            //ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential.value, -MAX_VOLTAGE..=MAX_VOLTAGE).text("V (want kV)"));
+            ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential.value, 0.0..=MAX_VOLTAGE).text("V (want kV)"));
 
             ui.separator();
 

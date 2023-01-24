@@ -192,6 +192,7 @@ fn verlet_integration(
     let previous_position_x = verlet_object.previous_x;
     let previous_position_y = verlet_object.previous_y;
 
+    // Maybe I shouldn't call these velocities, even if they are proportional to that.
     let velocity_x = current_position_x - previous_position_x;
     let velocity_y /* wait what */ = current_position_y - previous_position_y;
 
@@ -213,8 +214,13 @@ fn verlet_integration(
 
     //let acceleration_y = spacecraft_parameters.wire_potential.value * 0.01; // I'm gonna make it just proportional to the voltage for now.
 
-    let segment_mass = quantities::Mass::new::<mass::kilogram>(0.01);   // Update this!!
-    let acceleration_y = coulomb_force_per_segment(&solar_wind_parameters, &spacecraft_parameters) / segment_mass;
+    //let segment_mass = quantities::Mass::new::<mass::kilogram>(0.01);   // Update this!!
+
+    // Test
+    println!("Segment mass: {:?}", spacecraft_parameters.segment_mass());
+
+    //let acceleration_y = coulomb_force_per_segment(&solar_wind_parameters, &spacecraft_parameters) / segment_mass;
+    let acceleration_y = coulomb_force_per_segment(&solar_wind_parameters, &spacecraft_parameters) / spacecraft_parameters.segment_mass();
 
     //let next_position_y = current_position_y + velocity_y + acceleration_y * sim_params.timestep * sim_params.timestep;
     let next_position_y = current_position_y + velocity_y + acceleration_y.value * sim_params.timestep * sim_params.timestep;

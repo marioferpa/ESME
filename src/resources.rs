@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use std::f64::consts;
 
 // UOM package, for physical units
 use uom::si::f64 as quantities;
@@ -41,8 +42,9 @@ pub struct SpacecraftParameters {
     pub rpm:                quantities::Frequency,
     pub wire_length:        quantities::Length,
     pub wire_radius:        quantities::Length, 
-    pub wire_resolution:    quantities::LinearNumberDensity,
+    pub wire_density:       quantities::MassDensity,
     pub wire_potential:     quantities::ElectricPotential,
+    pub wire_resolution:    quantities::LinearNumberDensity,
 }
 
 impl Default for SpacecraftParameters {
@@ -51,8 +53,9 @@ impl Default for SpacecraftParameters {
             rpm:                quantities::Frequency::new::<frequency::cycle_per_minute>(0.0),
             wire_length:        quantities::Length::new::<length::meter>(1.0),
             wire_radius:        quantities::Length::new::<length::micrometer>(10.0),
-            wire_resolution:    quantities::LinearNumberDensity::new::<linear_number_density::per_meter>(25.0),
+            wire_density:       quantities::MassDensity::new::<mass_density::gram_per_cubic_centimeter>(2.7),
             wire_potential:     quantities::ElectricPotential::new::<electric_potential::kilovolt>(0.0),
+            wire_resolution:    quantities::LinearNumberDensity::new::<linear_number_density::per_meter>(25.0),
         }
     }
 }
@@ -62,6 +65,11 @@ impl SpacecraftParameters {
         // This is too hacky for my tastes, but dividing 1.0 over self.wire_resolution gave me errors
         let segment_length: f64 = 1.0 / self.wire_resolution.value;
         return quantities::Length::new::<length::meter>(segment_length);
+    }
+
+    pub fn segment_mass(&self) -> quantities::Mass {
+        let segment_volume = consts::PI * self.wire_radius * self.wire_radius * self.segment_length();
+        return segment_volume * self.wire_density;
     }
 }
 
