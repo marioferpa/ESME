@@ -214,8 +214,9 @@ fn verlet_integration(
 
     let acceleration_y = force_per_segment / spacecraft_parameters.segment_mass();
 
-    //println!("{}: {:?}", "Force per segment", force_per_segment);    
-    println!("{}: {:?}", "Total force", force_per_segment * spacecraft_parameters.wire_resolution.value * spacecraft_parameters.wire_length);    
+    println!("{}: {:?}", "Force per segment", force_per_segment);    
+    println!("{}: {:?}", "Total force", force_per_segment * spacecraft_parameters.wire_resolution.value * spacecraft_parameters.wire_length.value);
+    println!("-------------------------");
 
     //let next_position_y = current_position_y + velocity_y + acceleration_y * sim_params.timestep * sim_params.timestep;
     let next_position_y = current_position_y + velocity_y + acceleration_y.value * sim_params.timestep * sim_params.timestep;
@@ -262,7 +263,7 @@ fn coulomb_force_per_segment(
     let force_per_unit_length = r_s * K * resources::M_PROTON * solar_wind.n_0 * solar_wind.velocity * solar_wind.velocity;
 
     //println!("{}: {:?}", "Force per  ̶m̶e̶t̶e̶r̶ per segment", force_per_unit_length * spacecraft.segment_length());    
-    println!("{}: {:?}", "Force per  ̶meter", force_per_unit_length);    
+    println!("{}: {:?}", "Force per meter", force_per_unit_length); 
 
     return force_per_unit_length * spacecraft.segment_length();
 }
