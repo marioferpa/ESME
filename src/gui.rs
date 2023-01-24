@@ -3,6 +3,10 @@ use bevy_egui::{egui, EguiContext};
 
 use crate::{ resources };
 
+use uom::si::*;
+
+const MAX_VOLTAGE: f64 = 10.0e5;
+
 pub struct GUIPlugin;
 
 impl Plugin for GUIPlugin {
@@ -17,25 +21,36 @@ impl GUIPlugin {
 
     fn sidebar(
         mut egui_ctx: ResMut<EguiContext>,
-        mut sim_params: ResMut<resources::SimulationParameters>,
-        mut spacecraft_parameters: ResMut<resources::SpacecraftParameters>,
+        mut sim_params:             ResMut<resources::SimulationParameters>,
+        mut solar_wind:             ResMut<resources::SolarWindParameters>, 
+        mut spacecraft_parameters:  ResMut<resources::SpacecraftParameters>,
         ) {
 
         egui::SidePanel::left("side_panel")
         .default_width(200.0)
         .show(egui_ctx.ctx_mut(), |ui| {
 
-            // Title
-
             ui.label("SPACECRAFT");
 
-            // Sliders
             ui.horizontal(|ui| { ui.label("Spacecraft rotation"); });
             ui.add(egui::Slider::new(&mut spacecraft_parameters.rpm.value, 0.0..=100.0).text("rpm"));
 
             ui.horizontal(|ui| { ui.label("Wire potential V_0"); });
-            //ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential, -100.0..=100.0).text("V"));
-            ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential.value, -10.0e3..=10.0e3).text("V (want kV)"));
+            ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential.value, -MAX_VOLTAGE..=MAX_VOLTAGE).text("V (want kV)"));
+
+            ui.separator();
+
+            ui.label("SOLAR WIND");
+            ui.horizontal(|ui| {
+                ui.label("Electron temperature (eV)");
+                // This works, shows it in the correct units, but why can't I mutate it now? 
+                ui.add(egui::DragValue::new(&mut solar_wind.T_e.get::<energy::electronvolt>()));
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("Solar wind velocity(km/s)");
+                ui.add(egui::DragValue::new(&mut solar_wind.velocity.get::<velocity::kilometer_per_second>()));
+            });
 
             ui.separator();
 

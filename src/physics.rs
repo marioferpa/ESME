@@ -7,6 +7,9 @@ use std::f64::consts;
 use bevy::prelude::*;
 use crate::{ components, resources };
 
+use uom::si::*;
+use uom::si::f64 as quantities;
+
 pub struct PhysicsPlugin;
 
 impl Plugin for PhysicsPlugin {
@@ -208,12 +211,14 @@ fn verlet_integration(
 
     // Y AXIS: Coulomb drag
 
-    let acceleration_y = spacecraft_parameters.wire_potential.value * 0.01; // I'm gonna make it just proportional to the voltage for now.
+    //let acceleration_y = spacecraft_parameters.wire_potential.value * 0.01; // I'm gonna make it just proportional to the voltage for now.
 
-    // Not used yet
-    let _coulomb_force = coulomb_force(&solar_wind_parameters, &spacecraft_parameters);
+    let segment_mass = quantities::Mass::new::<mass::kilogram>(0.01);   // Update this!!
+    let acceleration_y = coulomb_force_per_segment(&solar_wind_parameters, &spacecraft_parameters) / segment_mass;
 
-    let next_position_y = current_position_y + velocity_y + acceleration_y * sim_params.timestep * sim_params.timestep;
+    //let next_position_y = current_position_y + velocity_y + acceleration_y * sim_params.timestep * sim_params.timestep;
+    let next_position_y = current_position_y + velocity_y + acceleration_y.value * sim_params.timestep * sim_params.timestep;
+    println!("{}", next_position_y);
     
     // Starting to think that the bending moment should go here too.
 
@@ -232,51 +237,35 @@ fn verlet_integration(
 
 // TESTING
 // From janhunen2007, equation 8. Corroborate all the results. And recheck the equations too.
-//#[allow(non_snake_case)]
-fn coulomb_force(
+#[allow(non_snake_case)]
+fn coulomb_force_per_segment(
     solar_wind:         &Res<resources::SolarWindParameters>, 
     spacecraft:         &Res<resources::SpacecraftParameters>,
-    ) -> f32 {
-
-    //let r_w = spacecraft.wire_radius;
-    //println!("r_w (m): {}", r_w.into_format_args(meter, Description));
+    ) -> uom::si::f64::Force {
 
     // First: r_0, distance at which the potential vanishes
-    let r0_numerator =  resources::EPSILON_0 * solar_wind.T_e;
-    //println!("r0_numerator (?): {}", r0_numerator.value);
-
-    let r0_denominator = solar_wind.n_0 * resources::Q_E * resources::Q_E; 
-    //println!("r0_denominator (?): {}", r0_denominator.value);
-
-    let r_0 =  2.0 * (r0_numerator / r0_denominator).sqrt();    // Checked until here with WolframAlpha, units work perfectly
-                                                                // 19.062231 m
-    //println!("r_0 (m): {}", r_0.value);
+    let r0_numerator    = resources::EPSILON_0 * solar_wind.T_e;
+    let r0_denominator  = solar_wind.n_0 * resources::Q_E * resources::Q_E; 
+    let r_0             = 2.0 * (r0_numerator / r0_denominator).sqrt();    
 
     // Second: r_s, stopping distance of protons
-    let exp_numerator = resources::M_PROTON * solar_wind.velocity * solar_wind.velocity * (r_0 / spacecraft.wire_radius).ln();
-    //println!("exp_numerator (?): {}", exp_numerator.value);
-
+    let exp_numerator   = resources::M_PROTON * solar_wind.velocity * solar_wind.velocity * (r_0 / spacecraft.wire_radius).ln();
     let exp_denominator = resources::Q_E * spacecraft.wire_potential; 
+    let exp             = (exp_numerator / exp_denominator).exp();  
+    let rs_denominator  = (exp.value - 1.0).sqrt();
+    let r_s             = r_0 / rs_denominator;
 
-    let exp = (exp_numerator / exp_denominator).exp();  // This is inf. Maybe f64 would help? It doesn't 
-                                                        // Infinite for low voltages! With kilovolts it's fine.
-    //println!("exp (?): {}", exp.value);
+    // Third: force per unit length
+    let K = 3.09;   // Empirical, from Monte Carlo sims, I need to calculate this myself somehow.
 
-    let rs_denominator = (exp.value - 1.0).sqrt();
-    //println!("rs_denominator (?): {}", rs_denominator);
+    let force_per_unit_length = r_s * K * resources::M_PROTON * solar_wind.n_0 * solar_wind.velocity * solar_wind.velocity;
 
-    let r_s = r_0 / rs_denominator;
-    println!("r_s (m?): {}", r_s.value);
+    //let one_meter = quantities::Length::new::<length::meter>(1.0);
 
-    //// Third: force per unit length
-    //let K = 3.09;   // Empirical, from Monte Carlo sims, I need to calculate this myself somehow.
+    //println!("{}: {:?}", "Force per meter", force_per_unit_length * one_meter);    // I think it's Pekka-compatible!!!
+    println!("{}: {:?}", "Force per meter", force_per_unit_length * spacecraft.segment_length());    
 
-    //let force_per_length = r_s * K * resources::M_PROTON * solar_wind.n_0 * solar_wind.velocity * solar_wind.velocity;
-    //println!("{}", force_per_length);
-
-    //return force_per_length;
-
-    return 0.0;
+    return force_per_unit_length * spacecraft.segment_length();
 }
 
 /// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.
