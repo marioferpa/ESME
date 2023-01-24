@@ -8,7 +8,6 @@ use bevy::prelude::*;
 use crate::{ components, resources };
 
 use uom::si::*;
-use uom::si::f64 as quantities;
 
 pub struct PhysicsPlugin;
 
@@ -203,28 +202,24 @@ fn verlet_integration(
 
     let distance_to_center = (current_position_x * current_position_x + current_position_y * current_position_y).sqrt();
 
-    //let angular_velocity = spacecraft_parameters.rpm as f32 * consts::PI / 30.0;
-    let angular_velocity = spacecraft_parameters.rpm * consts::PI / 30.0;
+    let angular_velocity = spacecraft_parameters.rpm * consts::PI / 30.0;   // What was this 30.0 for?
 
     let acceleration_x = distance_to_center * angular_velocity * angular_velocity;
 
     let next_position_x = current_position_x + velocity_x + acceleration_x.value * sim_params.timestep * sim_params.timestep;
 
     // Y AXIS: Coulomb drag
+    
+    let force_per_segment = coulomb_force_per_segment(&solar_wind_parameters, &spacecraft_parameters);
 
-    //let acceleration_y = spacecraft_parameters.wire_potential.value * 0.01; // I'm gonna make it just proportional to the voltage for now.
+    let acceleration_y = force_per_segment / spacecraft_parameters.segment_mass();
 
-    //let segment_mass = quantities::Mass::new::<mass::kilogram>(0.01);   // Update this!!
-
-    // Test
-    println!("Segment mass: {:?}", spacecraft_parameters.segment_mass());
-
-    //let acceleration_y = coulomb_force_per_segment(&solar_wind_parameters, &spacecraft_parameters) / segment_mass;
-    let acceleration_y = coulomb_force_per_segment(&solar_wind_parameters, &spacecraft_parameters) / spacecraft_parameters.segment_mass();
+    //println!("{}: {:?}", "Force per segment", force_per_segment);    
+    println!("{}: {:?}", "Total force", force_per_segment * spacecraft_parameters.wire_resolution.value * spacecraft_parameters.wire_length);    
 
     //let next_position_y = current_position_y + velocity_y + acceleration_y * sim_params.timestep * sim_params.timestep;
     let next_position_y = current_position_y + velocity_y + acceleration_y.value * sim_params.timestep * sim_params.timestep;
-    println!("{}", next_position_y);
+    //println!("{}", next_position_y);
     
     // Starting to think that the bending moment should go here too.
 
@@ -266,10 +261,8 @@ fn coulomb_force_per_segment(
 
     let force_per_unit_length = r_s * K * resources::M_PROTON * solar_wind.n_0 * solar_wind.velocity * solar_wind.velocity;
 
-    //let one_meter = quantities::Length::new::<length::meter>(1.0);
-
-    //println!("{}: {:?}", "Force per meter", force_per_unit_length * one_meter);    // I think it's Pekka-compatible!!!
-    println!("{}: {:?}", "Force per meter", force_per_unit_length * spacecraft.segment_length());    
+    //println!("{}: {:?}", "Force per  ̶m̶e̶t̶e̶r̶ per segment", force_per_unit_length * spacecraft.segment_length());    
+    println!("{}: {:?}", "Force per  ̶meter", force_per_unit_length);    
 
     return force_per_unit_length * spacecraft.segment_length();
 }

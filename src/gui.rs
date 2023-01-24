@@ -5,7 +5,8 @@ use crate::{ resources };
 
 use uom::si::*;
 
-const MAX_VOLTAGE: f64 = 30.0e3;    // Volts
+const MAX_VOLTAGE:  f64 = 30.0e3;   // Volts
+const MAX_RPM:      f64 = 5.0;        // rpm
 
 pub struct GUIPlugin;
 
@@ -33,12 +34,16 @@ impl GUIPlugin {
             ui.label("SPACECRAFT");
 
             ui.horizontal(|ui| { ui.label("Spacecraft rotation"); });
-            ui.add(egui::Slider::new(&mut spacecraft_parameters.rpm.value, 0.0..=100.0).text("rpm"));
+            ui.add(egui::Slider::new(&mut spacecraft_parameters.rpm.value, 0.0..=MAX_RPM).text("rpm"));
 
             ui.horizontal(|ui| { ui.label("Wire potential V_0"); });
             //ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential.value, -MAX_VOLTAGE..=MAX_VOLTAGE).text("V (want kV)"));
             ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential.value, 0.0..=MAX_VOLTAGE).text("V (want kV)"));
 
+            ui.horizontal(|ui| {
+                ui.label("Deployed wire length (m)");
+                ui.add(egui::DragValue::new(&mut spacecraft_parameters.wire_length.get::<length::meter>()));
+            });
             ui.separator();
 
             ui.label("SOLAR WIND");
