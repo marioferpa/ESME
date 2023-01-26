@@ -141,6 +141,8 @@ impl PhysicsPlugin {
             transform.translation.x = verlet_object.current_x as f32;
             transform.translation.y = verlet_object.current_y as f32;
         }
+
+        // Should this update the rotation of the segments too?
     } 
 
     /// Updates position and visibility of the center of mass
@@ -218,7 +220,6 @@ fn verlet_integration(
     println!("{}: {:?}", "Total force", force_per_segment * spacecraft_parameters.wire_resolution.value * spacecraft_parameters.wire_length.value);
     println!("-------------------------");
 
-    //let next_position_y = current_position_y + velocity_y + acceleration_y * sim_params.timestep * sim_params.timestep;
     let next_position_y = current_position_y + velocity_y + acceleration_y.value * sim_params.timestep * sim_params.timestep;
     //println!("{}", next_position_y);
     
@@ -237,7 +238,6 @@ fn verlet_integration(
     verlet_object.current_y = next_position_y;
 }
 
-// TESTING
 // From janhunen2007, equation 8. Corroborate all the results. And recheck the equations too.
 #[allow(non_snake_case)]
 fn coulomb_force_per_segment(

@@ -78,7 +78,7 @@ fn spawn_cubesat(
 fn spawn_esail(
     mut commands: Commands,
     simulation_parameters: Res<resources::SimulationParameters>,
-    spacecraft_parameters: ResMut<resources::SpacecraftParameters>,
+    spacecraft_parameters: Res<resources::SpacecraftParameters>,
     ) {
 
     let mut element_vector: Vec<Entity> = Vec::new();
@@ -107,9 +107,9 @@ fn spawn_esail(
             (SAIL_ELEMENT_MASS, 5.0)
         };
 
-        //println!("Mass: {}, radius: {}", mass, radius);
+        let segment_length_pixels = spacecraft_parameters.segment_length().value as f32 * simulation_parameters.pixels_per_meter as f32;
 
-        let element = spawn_esail_element(&mut commands, x, 0.0, radius, mass, is_deployed);
+        let element = spawn_esail_element(&mut commands, segment_length_pixels, x, 0.0, radius, mass, is_deployed);
         element_vector.push(element);
 
     }
@@ -122,7 +122,7 @@ fn spawn_esail(
 
 fn spawn_esail_element(
     commands: &mut Commands,
-    //x: f64, y: f64, radius: f64, mass: f64, is_deployed: bool,
+    segment_length_pixels: f32,
     x: f64, y: f64, radius: f32, mass: quantities::Mass, is_deployed: bool,
     ) -> Entity {
 
@@ -130,6 +130,15 @@ fn spawn_esail_element(
         radius: radius,
         ..shapes::Circle::default() // Editing the transform later.
     };
+
+    // Maybe it's easier to draw lines between the points, instead of turning circles into rectangles.
+    // A bit unrealistic since the rectangles that I will be operating on will be centered around the circles, but who cares.
+    
+    //let esail_element_shape = shapes::Rectangle {  
+    //    extents: Vec2::new(segment_length_pixels, 1.0),
+    //    //origin: RectangleOrigin::Center
+    //    ..shapes::Rectangle::default()
+    //};
 
     let sail_element = commands
         .spawn(GeometryBuilder::build_as(
@@ -143,9 +152,7 @@ fn spawn_esail_element(
         .insert(components::SailElement) 
         .insert(components::Mass(mass))
         .insert(components::VerletObject{previous_x: x, previous_y: y, current_x: x, current_y: y, is_deployed: is_deployed})
-        // NEW!!
-        //.insert(components::ElectricallyCharged{potential: 0.0})
-        .insert(components::ElectricallyCharged{potential: quantities::ElectricPotential::new::<volt>(0.0)})
+        .insert(components::ElectricallyCharged{potential: quantities::ElectricPotential::new::<volt>(0.0)})    // This should be a default of the component
         .id()
     ;
 
