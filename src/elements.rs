@@ -85,13 +85,13 @@ fn spawn_esail(
 
     // User defines length of sail and resolution, elements are calculated from those.
     let number_of_elements = spacecraft_parameters.wire_length * spacecraft_parameters.wire_resolution;
-    let distance_between_elements = (1.0 / spacecraft_parameters.wire_resolution.value) * simulation_parameters.pixels_per_meter as f64;   // Pixels
+    let pixels_between_elements = (1.0 / spacecraft_parameters.wire_resolution.value) * simulation_parameters.pixels_per_meter as f64;   // Pixels
 
     // x is in pixels here, I think that is correct.
 
     for number in 0..= number_of_elements.value as i32 - 1 {
  
-        let x = X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64 + number as f64 * distance_between_elements;
+        let x = X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64 + number as f64 * pixels_between_elements;
         //println!("x: {} pixels", x);
 
         // The first element stays undeployed and is unaffected by forces
@@ -116,7 +116,7 @@ fn spawn_esail(
 
     // Creating ESail entity and storing the elements inside.
     commands.spawn_empty()
-        .insert(components::ESail{elements: element_vector, resting_distance: distance_between_elements});
+        .insert(components::ESail{elements: element_vector});
 
 }
 

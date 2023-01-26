@@ -10,8 +10,6 @@ pub struct SailElement;
 #[derive(Component, Debug)]
 pub struct ESail {
     pub elements:           Vec<Entity>,
-    pub resting_distance:   f64,    // meters
-    //pub resting_distance:   quantities::Length,
 }
 
 #[derive(Component, Debug)]

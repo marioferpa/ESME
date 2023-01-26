@@ -14,7 +14,6 @@ pub struct PhysicsPlugin;
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            //.insert_resource(resources::SimulationParameters{..Default::default()})
             .add_system(Self::update_esail_voltage)         // "Charges" the sail with up to the chosen potential
             .add_system(Self::verlet_simulation)            // Calculates new positions
             .add_system(Self::update_transform_verlets)     // Updates the position of the graphics
@@ -40,7 +39,7 @@ impl PhysicsPlugin {
     fn verlet_simulation(
         time:                   Res<Time>, 
         esail_query:            Query<&components::ESail>,
-        mut sim_params:         ResMut<resources::SimulationParameters>,
+        mut simulation_parameters:         ResMut<resources::SimulationParameters>,
         spacecraft_parameters:  Res<resources::SpacecraftParameters>,
         solar_wind_parameters:  Res<resources::SolarWindParameters>,
         mut verlet_query:       Query<(&mut components::VerletObject, &components::Mass), With<components::SailElement>>,
@@ -48,13 +47,13 @@ impl PhysicsPlugin {
 
         let esail = esail_query.single();
 
-        let timesteps = timestep_calculation(&time, &mut sim_params);
+        let timesteps = timestep_calculation(&time, &mut simulation_parameters);
 
-        if sim_params.debug { println!("New frame ------------------"); }
+        if simulation_parameters.debug { println!("New frame ------------------"); }
 
         for _ in 0..timesteps { 
 
-            if sim_params.debug { println!("New timestep ---------------"); }
+            if simulation_parameters.debug { println!("New timestep ---------------"); }
 
             // VERLET INTEGRATION
             // Forces are calculated and applied for each esail element
@@ -64,7 +63,7 @@ impl PhysicsPlugin {
                 let (mut verlet_object, _) = verlet_query.get_mut(*element).expect("No sail element found");
 
                 if verlet_object.is_deployed {
-                    verlet_integration(&mut sim_params, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
+                    verlet_integration(&mut simulation_parameters, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
                 }
             }
 
@@ -72,9 +71,9 @@ impl PhysicsPlugin {
             // Final position is corrected taking into account the constraints of the system.
             // All operations in pixels, I believe.
 
-            for _ in 0..sim_params.iterations {
+            for _ in 0..simulation_parameters.iterations {
 
-                if sim_params.debug { println!("New constraint iteration ---"); }
+                if simulation_parameters.debug { println!("New constraint iteration ---"); }
 
                 for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {    // Iterating over the sail elements in order. Skips the first.
                                                                                             // Needed if I'm already checking for deployment?
@@ -92,19 +91,22 @@ impl PhysicsPlugin {
                     let prev_element_x = prev_verlet_object.current_x;
                     let prev_element_y = prev_verlet_object.current_y;
 
-                    // Calculating distance between current sail element and previous element in the line
+                    // Calculating distance between current sail element and previous element in the line (in pixels, right?)
                     let diff_x = current_element_x - prev_element_x;
                     let diff_y = current_element_y - prev_element_y;
-                    let distance_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
+                    //let distance_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
+                    let pixels_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
 
-                    if sim_params.debug {
-                        println!("Index: {} | Distance between elements: {}", index, distance_between_elements);
+                    if simulation_parameters.debug {
+                        println!("Index: {} | Distance between elements: {}", index, pixels_between_elements);
                     }
 
                     let mut difference = 0.0;
 
-                    if distance_between_elements > 0.0 {
-                        difference = (esail.resting_distance - distance_between_elements) / distance_between_elements;
+                    let desired_pixels_between_elements = spacecraft_parameters.segment_length().value * simulation_parameters.pixels_per_meter as f64;
+
+                    if pixels_between_elements > 0.0 {
+                        difference = (desired_pixels_between_elements - pixels_between_elements) / pixels_between_elements;
                     }
 
                     // This shouldn't be .5 if one object is not deployed, although I believe it tends to the correct spot anyways.
@@ -147,7 +149,7 @@ impl PhysicsPlugin {
 
     /// Updates position and visibility of the center of mass
     fn update_center_of_mass(
-        sim_params:     Res<resources::SimulationParameters>,
+        simulation_parameters:     Res<resources::SimulationParameters>,
         mass_query:     Query<(&Transform, &components::Mass), Without<components::CenterOfMass>>,
         mut com_query:  Query<(&mut Transform, &mut Visibility), With<components::CenterOfMass>>, 
         ){
@@ -163,7 +165,7 @@ impl PhysicsPlugin {
             center_mass_y += transform.translation.y * object_mass.0.value as f32;
         }
 
-        if sim_params.debug {
+        if simulation_parameters.debug {
             println!("Total mass: {} | Center of mass: ({},{})", total_mass, center_mass_x, center_mass_y);
         }
 
@@ -172,14 +174,14 @@ impl PhysicsPlugin {
         com_transform.translation.x = center_mass_x;
         com_transform.translation.y = center_mass_y;
 
-        com_visibility.is_visible = sim_params.com_visibility;
+        com_visibility.is_visible = simulation_parameters.com_visibility;
     }
 }
 
 
 /// Updates the position of a verlet object
 fn verlet_integration(
-    sim_params:             &mut ResMut<resources::SimulationParameters>,
+    simulation_parameters:             &mut ResMut<resources::SimulationParameters>,
     verlet_object:          &mut components::VerletObject,
     spacecraft_parameters:  &Res<resources::SpacecraftParameters>,
     solar_wind_parameters:  &Res<resources::SolarWindParameters>,
@@ -208,7 +210,7 @@ fn verlet_integration(
 
     let acceleration_x = distance_to_center * angular_velocity * angular_velocity;
 
-    let next_position_x = current_position_x + velocity_x + acceleration_x.value * sim_params.timestep * sim_params.timestep;
+    let next_position_x = current_position_x + velocity_x + acceleration_x.value * simulation_parameters.timestep * simulation_parameters.timestep;
 
     // Y AXIS: Coulomb drag
     
@@ -220,7 +222,7 @@ fn verlet_integration(
     println!("{}: {:?}", "Total force", force_per_segment * spacecraft_parameters.wire_resolution.value * spacecraft_parameters.wire_length.value);
     println!("-------------------------");
 
-    let next_position_y = current_position_y + velocity_y + acceleration_y.value * sim_params.timestep * sim_params.timestep;
+    let next_position_y = current_position_y + velocity_y + acceleration_y.value * simulation_parameters.timestep * simulation_parameters.timestep;
     //println!("{}", next_position_y);
     
     // Starting to think that the bending moment should go here too.
@@ -271,15 +273,15 @@ fn coulomb_force_per_segment(
 /// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.
 fn timestep_calculation(
     time: &Res<Time>,
-    sim_params: &mut ResMut<resources::SimulationParameters>,
+    simulation_parameters: &mut ResMut<resources::SimulationParameters>,
     ) -> i32 {
 
-    let elapsed_time = time.delta_seconds() as f64 + sim_params.leftover_time; // Elapsed time + leftover time from previous frame
+    let elapsed_time = time.delta_seconds() as f64 + simulation_parameters.leftover_time; // Elapsed time + leftover time from previous frame
 
-    let timesteps = (elapsed_time / sim_params.timestep).floor() as i32; // Number of timesteps for the current frame
+    let timesteps = (elapsed_time / simulation_parameters.timestep).floor() as i32; // Number of timesteps for the current frame
 
-    let leftover_time = elapsed_time - timesteps as f64 * sim_params.timestep;  // Leftover time saved for next frame
-    sim_params.leftover_time = leftover_time;
+    let leftover_time = elapsed_time - timesteps as f64 * simulation_parameters.timestep;  // Leftover time saved for next frame
+    simulation_parameters.leftover_time = leftover_time;
 
     return timesteps;
 }
