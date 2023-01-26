@@ -122,7 +122,7 @@ fn spawn_esail(
 
 fn spawn_esail_element(
     commands: &mut Commands,
-    segment_length_pixels: f32,
+    _segment_length_pixels: f32,
     x: f64, y: f64, radius: f32, mass: quantities::Mass, is_deployed: bool,
     ) -> Entity {
 

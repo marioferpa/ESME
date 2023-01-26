@@ -33,6 +33,7 @@ fn main() {
         .add_startup_system(camera_system)
         .insert_resource(resources::SpacecraftParameters{..Default::default()})
         .insert_resource(resources::SolarWindParameters{..Default::default()})
+        .insert_resource(resources::SimulationParameters{..Default::default()})
         .run();
 }
 

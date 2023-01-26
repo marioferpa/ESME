@@ -14,7 +14,7 @@ pub struct PhysicsPlugin;
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            .insert_resource(resources::SimulationParameters{..Default::default()})
+            //.insert_resource(resources::SimulationParameters{..Default::default()})
             .add_system(Self::update_esail_voltage)         // "Charges" the sail with up to the chosen potential
             .add_system(Self::verlet_simulation)            // Calculates new positions
             .add_system(Self::update_transform_verlets)     // Updates the position of the graphics
