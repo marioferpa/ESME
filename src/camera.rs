@@ -2,28 +2,7 @@ use bevy::prelude::*;
 use bevy::input::mouse::MouseMotion;
 use bevy::input::mouse::MouseWheel;
 
-use crate::{ resources };
-
-
-// From the Bevy cheatbook
-/// Tags an entity as capable of panning and orbiting.
-#[derive(Component)]
-struct PanOrbitCamera {
-    /// The "focus point" to orbit around. It is automatically updated when panning the camera
-    pub focus: Vec3,
-    pub radius: f32,
-    pub upside_down: bool,
-}
-
-impl Default for PanOrbitCamera {
-    fn default() -> Self {
-        PanOrbitCamera {
-            focus: Vec3::ZERO,
-            radius: 5.0,
-            upside_down: false,
-        }
-    }
-}
+use crate::{ components, resources };
 
 fn get_primary_window_size(windows: &Res<Windows>) -> Vec2 {
     let window = windows.get_primary().unwrap();
@@ -37,7 +16,7 @@ fn pan_orbit_camera(
     mut ev_motion: EventReader<MouseMotion>,
     mut ev_scroll: EventReader<MouseWheel>,
     input_mouse: Res<Input<MouseButton>>,
-    mut query: Query<(&mut PanOrbitCamera, &mut Transform, &Projection)>,
+    mut query: Query<(&mut components::PanOrbitCamera, &mut Transform, &Projection)>,
 ) {
     // change input mapping for orbit and panning here
     let orbit_button = MouseButton::Right;
@@ -145,7 +124,7 @@ impl CameraPlugin {
             commands.spawn((
                 //Camera3dBundle { transform: Transform::from_xyz(-500.0, 100.0, 500.0).looking_at(Vec3::ZERO, Vec3::Y), ..default() },
                 Camera3dBundle { transform: Transform::from_translation(translation).looking_at(Vec3::ZERO, Vec3::Y), ..default() },
-                PanOrbitCamera { radius, ..Default::default() },
+                components::PanOrbitCamera { radius, ..Default::default() },
                 ));
         } else {
             // 2D camera
