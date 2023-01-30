@@ -19,7 +19,8 @@ fn spawn_camera(
 
     if simulation_parameters.three_dimensions {
         // 3D camera (test)
-        commands.spawn(Camera3dBundle { transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y), ..default() });
+        // I think quaternions can be used
+        commands.spawn(Camera3dBundle { transform: Transform::from_xyz(-500.0, 100.0, 500.0).looking_at(Vec3::ZERO, Vec3::Y), ..default() });
     } else {
         // 2D camera
         commands.spawn(Camera2dBundle::default());
