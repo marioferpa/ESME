@@ -175,7 +175,7 @@ fn spawn_3d_esail_element(
     ) -> Entity {
 
     let sail_element = commands.spawn(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Cube { size: radius })),
+            mesh: meshes.add(Mesh::from(shape::UVSphere { radius: radius, ..default() })),
             material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
             transform: Transform::from_xyz(x as f32, y as f32, 0.0),
             ..default()
