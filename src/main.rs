@@ -13,6 +13,8 @@ mod physics;
 use physics::PhysicsPlugin;
 mod gui;
 use gui::GUIPlugin;
+mod camera;
+use camera::CameraPlugin;
 
 extern crate uom;
 
@@ -30,13 +32,9 @@ fn main() {
         .add_plugin(EguiPlugin)
         //.add_plugin(WorldInspectorPlugin::new())
         .add_plugin(GUIPlugin)
-        .add_startup_system(camera_system)
+        .add_plugin(CameraPlugin)
         .insert_resource(resources::SpacecraftParameters{..Default::default()})
         .insert_resource(resources::SolarWindParameters{..Default::default()})
         .insert_resource(resources::SimulationParameters{..Default::default()})
         .run();
-}
-
-fn camera_system(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
 }

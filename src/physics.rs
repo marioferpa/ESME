@@ -94,11 +94,10 @@ impl PhysicsPlugin {
                     // Calculating distance between current sail element and previous element in the line (in pixels, right?)
                     let diff_x = current_element_x - prev_element_x;
                     let diff_y = current_element_y - prev_element_y;
-                    //let distance_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
                     let pixels_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
 
                     if simulation_parameters.debug {
-                        println!("Index: {} | Distance between elements: {}", index, pixels_between_elements);
+                        println!("Index: {} | Distance between elements (px): {}", index, pixels_between_elements);
                     }
 
                     let mut difference = 0.0;

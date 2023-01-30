@@ -2,7 +2,6 @@ use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 use uom::si::f64 as quantities;
 
-//use uom::si::f64::ElectricPotential;
 use uom::lib::marker::PhantomData;
 use uom::si::electric_potential::volt;
 
@@ -14,8 +13,8 @@ const Z_ESAIL:                  f64 = 1.0;  // Will need to change if I move to 
 const Z_CENTER_MASS:            f64 = 10.0;
 
 const BODY_MASS:         quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 10.0};  // You sure these are in kg?
-const SAIL_ELEMENT_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.01};
-const ENDMASS_MASS:      quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.1};
+const SAIL_ELEMENT_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.01}; // Isn't this defined somewhere else from aluminiums density?
+const ENDMASS_MASS:      quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.05};
 
 const BODY_RADIUS:              f64 = 0.1;  // meters
 
@@ -24,6 +23,7 @@ pub struct ElementsPlugin;
 impl Plugin for ElementsPlugin {
     fn build(&self, app: &mut App) {
         app
+            .add_startup_system(spawn_3D_cube)
             .add_startup_system(spawn_cubesat)
             .add_startup_system(spawn_esail)
             .add_startup_system(spawn_center_mass)
@@ -52,6 +52,34 @@ fn spawn_center_mass(
         ;
 }
 
+// Test
+fn spawn_3D_cube(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    ) {
+
+    // cube
+    commands.spawn(PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+        material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+        transform: Transform::from_xyz(0.0, 0.5, 0.0),
+        ..default()
+    });
+
+    // light
+    commands.spawn(PointLightBundle {
+        point_light: PointLight {
+            intensity: 1500.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_xyz(4.0, 8.0, 4.0),
+        ..default()
+    });
+
+}
+
 fn spawn_cubesat(
     mut commands: Commands,
     simulation_parameters: Res<resources::SimulationParameters>,
@@ -71,6 +99,7 @@ fn spawn_cubesat(
                 outline_mode: StrokeMode::new(Color::BLACK, 1.0),
             },
             Transform::default(),
+            //Transform::from_xyz(0.0, 0.0, 0.0),
         ))
         .insert(components::Mass(BODY_MASS));
 }
@@ -149,7 +178,8 @@ fn spawn_esail_element(
             },
             Transform::from_xyz(x as f32, y as f32, Z_ESAIL as f32),
         ))
-        .insert(components::SailElement) 
+        //.insert(components::SailElement) 
+        .insert(components::SailElement{is_deployed: is_deployed}) 
         .insert(components::Mass(mass))
         .insert(components::VerletObject{previous_x: x, previous_y: y, current_x: x, current_y: y, is_deployed: is_deployed})
         .insert(components::ElectricallyCharged{potential: quantities::ElectricPotential::new::<volt>(0.0)})    // This should be a default of the component
