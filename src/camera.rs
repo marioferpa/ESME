@@ -8,6 +8,8 @@ pub fn get_primary_window_size(windows: &Res<Windows>) -> Vec2 {
     window
 }
 
+// Idea for the coordinates: https://rustrepo.com/repo/urholaukkarinen-egui-gizmo
+
 // -------------------------- Camera plugin ---------------------------------------
 
 pub struct CameraPlugin;
@@ -34,7 +36,6 @@ impl CameraPlugin {
             // 3D camera (test)
             // I think quaternions can be used
             commands.spawn((
-                //Camera3dBundle { transform: Transform::from_xyz(-500.0, 100.0, 500.0).looking_at(Vec3::ZERO, Vec3::Y), ..default() },
                 Camera3dBundle { transform: Transform::from_translation(translation).looking_at(Vec3::ZERO, Vec3::Y), ..default() },
                 components::PanOrbitCamera { radius, ..Default::default() },
                 ));

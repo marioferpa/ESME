@@ -31,8 +31,18 @@ impl Plugin for GraphicsPlugin {
     }
 }
 
+// Maybe this could go together with the camera
+fn spawn_light( mut commands: Commands) {
+    commands.spawn(DirectionalLightBundle {
+        ..default()
+    });
+}
+
 fn spawn_center_mass(
     mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    simulation_parameters: Res<resources::SimulationParameters>,
     ){
 
     let center_mass_shape = shapes::Circle {
@@ -40,33 +50,27 @@ fn spawn_center_mass(
         ..shapes::Circle::default() // Editing the transform later.
     };
 
-    commands.spawn(GeometryBuilder::build_as(
+    let com_entity = if simulation_parameters.three_dimensions {
+
+        commands.spawn(PbrBundle {
+            mesh: meshes.add(Mesh::from(shape::UVSphere { radius: 10.0, ..default() })),
+            material: materials.add(Color::rgb(1.0, 1.0, 0.0).into()),
+            transform: Transform::from_xyz(0.0, 0.0, 0.0),
+            ..default()
+        }).id()
+
+    } else {
+        commands.spawn(GeometryBuilder::build_as(
             &center_mass_shape,
             DrawMode::Outlined {
                 fill_mode: FillMode::color(Color::YELLOW),
                 outline_mode: StrokeMode::new(Color::BLACK, 1.0),
             },
             Transform::from_xyz(0.0, 0.0, Z_CENTER_MASS as f32),
-        ))
-        .insert(components::CenterOfMass)
-        ;
-}
+        )).id()
+    };
 
-// Maybe this could go together with the camera
-fn spawn_light( mut commands: Commands) {
-    //commands.spawn( PointLightBundle {
-    //    point_light: PointLight {
-    //        intensity: 25000.0,
-    //        shadows_enabled: true,
-    //        ..default()
-    //    },
-    //    transform: Transform::from_xyz(-20.0, -8.0, 10.0),
-    //    ..default()
-    //});
-
-    commands.spawn(DirectionalLightBundle {
-        ..default()
-    });
+    commands.entity(com_entity).insert(components::CenterOfMass);
 }
 
 fn spawn_cubesat(
@@ -78,7 +82,7 @@ fn spawn_cubesat(
 
     let cubesat_size = BODY_RADIUS * simulation_parameters.pixels_per_meter as f64 / 0.707;
 
-    let  cubesat_entity = if simulation_parameters.three_dimensions {
+    let cubesat_entity = if simulation_parameters.three_dimensions {
         // cube
         commands.spawn(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Cube { size: cubesat_size as f32})),
