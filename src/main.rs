@@ -7,8 +7,8 @@ use bevy_egui::EguiPlugin;
 
 mod components;
 mod resources;
-mod elements;
-use elements::ElementsPlugin;
+mod graphics;
+use graphics::GraphicsPlugin;
 mod physics;
 use physics::PhysicsPlugin;
 mod gui;
@@ -27,7 +27,7 @@ fn main() {
         .insert_resource(ClearColor(BACKGROUND_COLOR))
         .add_plugins(DefaultPlugins)
         .add_plugin(ShapePlugin)
-        .add_plugin(ElementsPlugin)
+        .add_plugin(GraphicsPlugin)
         .add_plugin(PhysicsPlugin)
         .add_plugin(EguiPlugin)
         //.add_plugin(WorldInspectorPlugin::new())
