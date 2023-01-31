@@ -9,7 +9,7 @@ use crate::{ components, resources };
 
 use uom::si::*;
 
-pub struct PhysicsPlugin;
+pub struct PhysicsPlugin;   // Plugins are structs, therefore they can hold data!
 
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
@@ -213,7 +213,8 @@ fn verlet_integration(
 
     // Y AXIS: Coulomb drag
     
-    let force_per_segment = coulomb_force_per_segment(&solar_wind_parameters, &spacecraft_parameters);
+    //let force_per_segment = coulomb_force_per_segment(&solar_wind_parameters, &spacecraft_parameters);
+    let force_per_segment = coulomb_force_per_meter(&solar_wind_parameters, &spacecraft_parameters) * spacecraft_parameters.segment_length();
 
     let acceleration_y = force_per_segment / spacecraft_parameters.segment_mass();
 
@@ -241,10 +242,10 @@ fn verlet_integration(
 
 // From janhunen2007, equation 8. Corroborate all the results. And recheck the equations too.
 #[allow(non_snake_case)]
-fn coulomb_force_per_segment(
+fn coulomb_force_per_meter( 
     solar_wind:         &Res<resources::SolarWindParameters>, 
     spacecraft:         &Res<resources::SpacecraftParameters>,
-    ) -> uom::si::f64::Force {
+    ) -> uom::si::f64::RadiantExposure {    // Radiant exposure is [mass][time]⁻²
 
     // First: r_0, distance at which the potential vanishes
     let r0_numerator    = resources::EPSILON_0 * solar_wind.T_e;
@@ -263,10 +264,9 @@ fn coulomb_force_per_segment(
 
     let force_per_unit_length = r_s * K * resources::M_PROTON * solar_wind.n_0 * solar_wind.velocity * solar_wind.velocity;
 
-    //println!("{}: {:?}", "Force per  ̶m̶e̶t̶e̶r̶ per segment", force_per_unit_length * spacecraft.segment_length());    
     println!("{}: {:?}", "Force per meter", force_per_unit_length); 
 
-    return force_per_unit_length * spacecraft.segment_length();
+    return force_per_unit_length;
 }
 
 /// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.
