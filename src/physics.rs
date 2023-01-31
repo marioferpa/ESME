@@ -180,7 +180,7 @@ impl PhysicsPlugin {
 
 /// Updates the position of a verlet object
 fn verlet_integration(
-    simulation_parameters:             &mut ResMut<resources::SimulationParameters>,
+    simulation_parameters:  &mut ResMut<resources::SimulationParameters>,
     verlet_object:          &mut components::VerletObject,
     spacecraft_parameters:  &Res<resources::SpacecraftParameters>,
     solar_wind_parameters:  &Res<resources::SolarWindParameters>,

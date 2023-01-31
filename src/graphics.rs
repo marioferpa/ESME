@@ -18,6 +18,8 @@ const ENDMASS_MASS:      quantities::Mass = quantities::Mass {dimension: Phantom
 
 const BODY_RADIUS:              f64 = 0.1;  // meters
 
+const ARROW_LENGTH: f32 = 200.0;  // pixels?
+
 pub struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
@@ -27,15 +29,59 @@ impl Plugin for GraphicsPlugin {
             .add_startup_system(spawn_cubesat)
             .add_startup_system(spawn_esail)
             .add_startup_system(spawn_center_mass)
+            .add_startup_system(spawn_axes)
             ;
     }
 }
+
 
 // Maybe this could go together with the camera
 fn spawn_light( mut commands: Commands) {
     commands.spawn(DirectionalLightBundle {
         ..default()
     });
+}
+
+// TEST
+fn spawn_axes (
+    mut commands:   Commands,
+    mut meshes:     ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    ) {
+
+    let red     = Color::rgb(1.0, 0.0, 0.0);
+    let green   = Color::rgb(0.0, 1.0, 0.0);
+    let blue    = Color::rgb(0.0, 0.0, 1.0);
+
+    let green_arrow = spawn_arrow(&mut commands, &mut meshes, &mut materials, green, ARROW_LENGTH);
+    //green_arrow.rotate_x(1.5);
+
+    // What if I spawn it with the function and then rotate it
+}
+
+fn spawn_arrow (
+    mut commands:   &mut Commands,
+    mut meshes:     &mut ResMut<Assets<Mesh>>,
+    mut materials:  &mut ResMut<Assets<StandardMaterial>>,
+    color: Color, length: f32, 
+    ) -> Entity {
+
+    let origin = Vec3::new(0.0, 0.0, 0.0);
+
+    commands.spawn(PbrBundle {
+        mesh: meshes.add(Mesh::from(shape::Capsule { 
+            radius: 1.0, 
+            depth:  length,
+            ..default() })),
+        material: materials.add(color.into()),
+        transform: Transform {
+            translation: origin,
+            //rotation: Quat::from_axis_angle(Vec3::new(1.0, 0.0, 0.0), 0.0), // Angle in radians!!
+            ..default()
+        },
+        ..default()
+    }).id()
+
 }
 
 fn spawn_center_mass(
