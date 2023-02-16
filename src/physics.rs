@@ -173,8 +173,6 @@ impl PhysicsPlugin {
         com_transform.translation.x = center_mass_x;
         com_transform.translation.y = center_mass_y;
 
-        // Should this go in graphics? I believe so.
-        com_visibility.is_visible = simulation_parameters.com_visibility;
     }
 }
 

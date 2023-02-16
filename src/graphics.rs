@@ -25,22 +25,35 @@ pub struct GraphicsPlugin;
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_startup_system(spawn_light)
+            .add_startup_system(Self::spawn_light)
             .add_startup_system(spawn_cubesat)
             .add_startup_system(spawn_esail)
             .add_startup_system(spawn_center_mass)
             .add_startup_system(spawn_axes)
+            .add_system(Self::gizmo_visibility)
             ;
     }
 }
 
+impl GraphicsPlugin {
+    // Maybe this could go together with the camera
+    fn spawn_light( mut commands: Commands) {
+        commands.spawn(DirectionalLightBundle {
+            ..default()
+        });
+    }
 
-// Maybe this could go together with the camera
-fn spawn_light( mut commands: Commands) {
-    commands.spawn(DirectionalLightBundle {
-        ..default()
-    });
+    fn gizmo_visibility (
+        mut com_query:          Query<&mut Visibility, With<components::CenterOfMass>>, 
+        //mut axes_query:         Query<&mut Visibility, With<components::CenterOfMass>>,   // Need the axes to be an entity now
+        simulation_parameters:  Res<resources::SimulationParameters>,
+        ) {
+
+        let mut com_visibility = com_query.single_mut();
+        com_visibility.is_visible = simulation_parameters.com_visibility;
+    }
 }
+
 
 fn spawn_axes (
     mut commands:   Commands,

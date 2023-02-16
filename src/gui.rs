@@ -70,8 +70,11 @@ impl GUIPlugin {
             });
 
             ui.horizontal(|ui| { 
-                //ui.toggle_value(&mut sim_params.center_of_mass, "Show center of mass");
                 ui.checkbox(&mut sim_params.com_visibility, "Show center of mass");
+            });
+
+            ui.horizontal(|ui| { 
+                ui.checkbox(&mut sim_params.axes_visibility, "Show axes");
             });
 
             ui.separator();

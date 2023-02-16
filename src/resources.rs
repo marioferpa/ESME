@@ -20,8 +20,8 @@ pub struct SimulationParameters {
     pub leftover_time:      f64,    // Unused time from the previous simulation loop.
     pub debug:              bool,   // Toggle for printing debug information to console.
     pub com_visibility:     bool,   // Toggle for showing/hiding the center of mass.
+    pub axes_visibility:    bool,
     pub pixels_per_meter:   i32,
-    //pub three_dimensions:   bool,
 }
 
 impl Default for SimulationParameters {
@@ -32,8 +32,8 @@ impl Default for SimulationParameters {
             leftover_time:      0.0,
             debug:              false,
             com_visibility:     false,
+            axes_visibility:    true,
             pixels_per_meter:   500,
-            //three_dimensions:   true,
         }
     }
 }

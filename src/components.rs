@@ -4,6 +4,9 @@ use uom::si::f64 as quantities;  // Should I use f64?
 #[derive(Component)]
 pub struct CenterOfMass;
 
+#[derive(Component)]
+pub struct Axes;
+
 #[derive(Component, Debug)]
 pub struct SailElement {
     pub is_deployed:    bool,   // Not used. Makes more sense than in VerletObject,
