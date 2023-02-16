@@ -36,7 +36,9 @@ impl Plugin for GraphicsPlugin {
 }
 
 impl GraphicsPlugin {
-    // Maybe this could go together with the camera
+
+    //fn rotate_sat(){}
+
     fn spawn_light( mut commands: Commands) {
         commands.spawn(DirectionalLightBundle {
             ..default()
@@ -166,7 +168,10 @@ fn spawn_cubesat(
             ..default()
         }).id();
 
-    commands.entity(cubesat_entity).insert(components::Mass(BODY_MASS));
+    commands.entity(cubesat_entity)
+        .insert(components::SatelliteBody)
+        .insert(components::Mass(BODY_MASS))
+        ;
 }
 
 fn spawn_esail(
@@ -206,7 +211,7 @@ fn spawn_esail(
 
         //let element = spawn_esail_element(&mut commands, segment_length_pixels, x, 0.0, radius, mass, is_deployed);
 
-        let element = spawn_3d_esail_element(&mut commands, &mut meshes, &mut materials, segment_length_pixels, x, 0.0, radius, mass, is_deployed);
+        let element = spawn_esail_element(&mut commands, &mut meshes, &mut materials, segment_length_pixels, x, 0.0, 0.0, radius, mass, is_deployed);
 
         element_vector.push(element);
 
@@ -218,12 +223,12 @@ fn spawn_esail(
 
 }
 
-fn spawn_3d_esail_element(
+fn spawn_esail_element(
     commands:   &mut Commands,
     meshes:     &mut ResMut<Assets<Mesh>>,
     materials:  &mut ResMut<Assets<StandardMaterial>>,
     _segment_length_pixels: f32,
-    x: f64, y: f64, radius: f32, mass: quantities::Mass, is_deployed: bool,
+    x: f64, y: f64, z: f64, radius: f32, mass: quantities::Mass, is_deployed: bool,
     ) -> Entity {
 
     let sail_element = commands.spawn(PbrBundle {
@@ -236,43 +241,7 @@ fn spawn_3d_esail_element(
     commands.entity(sail_element)
         .insert(components::SailElement{is_deployed: is_deployed})
         .insert(components::Mass(mass))
-        .insert(components::VerletObject{previous_x: x, previous_y: y, current_x: x, current_y: y, is_deployed: is_deployed})
-        .insert(components::ElectricallyCharged{potential: quantities::ElectricPotential::new::<volt>(0.0)})    // This should be a default of the component
-        ;
-
-    return sail_element;
-}
-
-fn spawn_esail_element(
-    commands: &mut Commands,
-    _segment_length_pixels: f32,
-    x: f64, y: f64, radius: f32, mass: quantities::Mass, is_deployed: bool,
-    ) -> Entity {
-
-    let esail_element_shape = shapes::Circle {
-        radius: radius,
-        ..shapes::Circle::default() // Editing the transform later.
-    };
-
-    // Maybe it's easier to draw lines between the points, instead of turning circles into rectangles.
-    // A bit unrealistic since the rectangles that I will be operating on will be centered around the circles, but who cares.
-    
-    let sail_element = commands
-        .spawn(GeometryBuilder::build_as(
-            &esail_element_shape,
-            DrawMode::Outlined {
-                fill_mode: FillMode::color(Color::WHITE),
-                outline_mode: StrokeMode::new(Color::GRAY, 1.0),
-            },
-            Transform::from_xyz(x as f32, y as f32, Z_ESAIL as f32),
-        ))
-        .id()
-    ;
-
-    commands.entity(sail_element)
-        .insert(components::SailElement{is_deployed: is_deployed})
-        .insert(components::Mass(mass))
-        .insert(components::VerletObject{previous_x: x, previous_y: y, current_x: x, current_y: y, is_deployed: is_deployed})
+        .insert(components::VerletObject{previous_x: x, previous_y: y, previous_z: z, current_x: x, current_y: y, current_z: z, is_deployed: is_deployed})
         .insert(components::ElectricallyCharged{potential: quantities::ElectricPotential::new::<volt>(0.0)})    // This should be a default of the component
         ;
 

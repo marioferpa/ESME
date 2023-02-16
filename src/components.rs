@@ -7,6 +7,9 @@ pub struct CenterOfMass;
 #[derive(Component)]
 pub struct Axes;
 
+#[derive(Component)]
+pub struct SatelliteBody;
+
 #[derive(Component, Debug)]
 pub struct SailElement {
     pub is_deployed:    bool,   // Not used. Makes more sense than in VerletObject,
@@ -33,8 +36,10 @@ pub struct ElectricallyCharged {
 pub struct VerletObject {
     pub previous_x:     f64,
     pub previous_y:     f64,
+    pub previous_z:     f64,
     pub current_x:      f64,
     pub current_y:      f64,
+    pub current_z:      f64,
     pub is_deployed:    bool,  // This would be better in another component, SailElement maybe
 }
 
