@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{ components, resources };
+use crate::{ components };
 
 pub fn get_primary_window_size(windows: &Res<Windows>) -> Vec2 {
     let window = windows.get_primary().unwrap();
@@ -26,7 +26,6 @@ impl CameraPlugin {
 
     fn spawn_camera(
         mut commands: Commands,
-        simulation_parameters:  ResMut<resources::SimulationParameters>,
         ) {
 
         let translation = Vec3::new(-500.0, 100.0, 500.0);

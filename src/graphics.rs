@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy_prototype_lyon::prelude::*;
 use uom::si::f64 as quantities;
 
 use uom::lib::marker::PhantomData;
@@ -8,9 +7,6 @@ use uom::si::electric_potential::volt;
 use crate::{ components, resources };
 
 const X_FIRST_ELEMENT:          f64 = 0.1;  // meters (more like pixels?)
-
-const Z_ESAIL:                  f64 = 1.0;  // Will need to change if I move to 3D
-const Z_CENTER_MASS:            f64 = 10.0;
 
 const BODY_MASS:         quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 10.0};  // You sure these are in kg?
 const SAIL_ELEMENT_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.01}; // Isn't this defined somewhere else from aluminiums density?
@@ -103,9 +99,9 @@ fn spawn_axes (
 }
 
 fn spawn_arrow (
-    mut commands:   &mut Commands,
-    mut meshes:     &mut ResMut<Assets<Mesh>>,
-    mut materials:  &mut ResMut<Assets<StandardMaterial>>,
+    commands:   &mut Commands,
+    meshes:     &mut ResMut<Assets<Mesh>>,
+    materials:  &mut ResMut<Assets<StandardMaterial>>,
     color: Color, length: f32, direction: Vec3, rotation: Quat,
     ) -> Entity {
 
@@ -134,13 +130,7 @@ fn spawn_center_mass(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    simulation_parameters: Res<resources::SimulationParameters>,
     ){
-
-    let center_mass_shape = shapes::Circle {
-        radius: 10.0,
-        ..shapes::Circle::default() // Editing the transform later.
-    };
 
     let com_entity = commands.spawn(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::UVSphere { radius: 10.0, ..default() })),

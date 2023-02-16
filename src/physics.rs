@@ -150,7 +150,8 @@ impl PhysicsPlugin {
     fn update_center_of_mass(
         simulation_parameters:     Res<resources::SimulationParameters>,
         mass_query:     Query<(&Transform, &components::Mass), Without<components::CenterOfMass>>,
-        mut com_query:  Query<(&mut Transform, &mut Visibility), With<components::CenterOfMass>>, 
+        //mut com_query:  Query<(&mut Transform, &mut Visibility), With<components::CenterOfMass>>, 
+        mut com_query:  Query<&mut Transform, With<components::CenterOfMass>>, 
         ){
 
         let mut total_mass:     f32 = 0.0;  // In this particular case I don't think I should use physical units.
@@ -168,7 +169,8 @@ impl PhysicsPlugin {
             println!("Total mass: {} | Center of mass: ({},{})", total_mass, center_mass_x, center_mass_y);
         }
 
-        let (mut com_transform, mut com_visibility) = com_query.single_mut();
+        //let (mut com_transform, mut com_visibility) = com_query.single_mut();
+        let mut com_transform = com_query.single_mut();
 
         com_transform.translation.x = center_mass_x;
         com_transform.translation.y = center_mass_y;
@@ -189,13 +191,16 @@ fn verlet_integration(
 
     let current_position_x  = verlet_object.current_x;
     let current_position_y  = verlet_object.current_y;
+    let current_position_z  = verlet_object.current_z;
 
     let previous_position_x = verlet_object.previous_x;
     let previous_position_y = verlet_object.previous_y;
+    let previous_position_z = verlet_object.previous_z;
 
     // Maybe I shouldn't call these velocities, even if they are proportional to that.
     let velocity_x = current_position_x - previous_position_x;
-    let velocity_y /* wait what */ = current_position_y - previous_position_y;
+    let velocity_y = current_position_y - previous_position_y;
+    let velocity_z = current_position_z - previous_position_z;
 
 
     // FORCES
@@ -210,9 +215,8 @@ fn verlet_integration(
 
     let next_position_x = current_position_x + velocity_x + acceleration_x.value * simulation_parameters.timestep * simulation_parameters.timestep;
 
-    // Y AXIS: Coulomb drag
+    // Y̶ Z AXIS: Coulomb drag
     
-    //let force_per_segment = coulomb_force_per_segment(&solar_wind_parameters, &spacecraft_parameters);
     let force_per_segment = coulomb_force_per_meter(&solar_wind_parameters, &spacecraft_parameters) * spacecraft_parameters.segment_length();
 
     let acceleration_y = force_per_segment / spacecraft_parameters.segment_mass();
