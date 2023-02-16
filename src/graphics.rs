@@ -44,13 +44,16 @@ impl GraphicsPlugin {
     }
 
     fn gizmo_visibility (
-        mut com_query:          Query<&mut Visibility, With<components::CenterOfMass>>, 
-        //mut axes_query:         Query<&mut Visibility, With<components::CenterOfMass>>,   // Need the axes to be an entity now
+        mut com_query:          Query<&mut Visibility, (With<components::CenterOfMass>, Without<components::Axes>)>, 
+        mut axes_query:         Query<&mut Visibility, (With<components::Axes>, Without<components::CenterOfMass>)>,   
         simulation_parameters:  Res<resources::SimulationParameters>,
         ) {
 
-        let mut com_visibility = com_query.single_mut();
-        com_visibility.is_visible = simulation_parameters.com_visibility;
+        let mut com_entity  = com_query.single_mut();
+        let mut axes_entity = axes_query.single_mut();
+
+        com_entity.is_visible = simulation_parameters.com_visibility;
+        axes_entity.is_visible = simulation_parameters.axes_visibility;
     }
 }
 
@@ -77,13 +80,24 @@ fn spawn_axes (
     let z_rotation = Quat::from_rotation_x(std::f32::consts::PI / 2.0);
 
     // X (red)
-    spawn_arrow(&mut commands, &mut meshes, &mut materials, red, ARROW_LENGTH, x_direction, x_rotation);
+    let x_arrow = spawn_arrow(&mut commands, &mut meshes, &mut materials, red, ARROW_LENGTH, x_direction, x_rotation);
 
     // Y (green)
-    spawn_arrow(&mut commands, &mut meshes, &mut materials, green, ARROW_LENGTH, y_direction, y_rotation);
+    let y_arrow = spawn_arrow(&mut commands, &mut meshes, &mut materials, green, ARROW_LENGTH, y_direction, y_rotation);
 
     // Z (blue)
-    spawn_arrow(&mut commands, &mut meshes, &mut materials, blue, ARROW_LENGTH, z_direction, z_rotation);
+    let z_arrow = spawn_arrow(&mut commands, &mut meshes, &mut materials, blue, ARROW_LENGTH, z_direction, z_rotation);
+
+    let axes_entity = commands.spawn(
+        SpatialBundle { visibility: Visibility { is_visible: true }, ..Default::default() })
+        .insert(Name::new("Axes"))
+        .insert(components::Axes)
+        .id(); 
+
+    //commands.entity(axes_entity).push_children(&[x_arrow, y_arrow, z_arrow]);
+    commands.entity(axes_entity).push_children(&[x_arrow]);
+    commands.entity(axes_entity).push_children(&[y_arrow]);
+    commands.entity(axes_entity).push_children(&[z_arrow]);
 }
 
 fn spawn_arrow (
@@ -97,7 +111,7 @@ fn spawn_arrow (
 
     let material = StandardMaterial { base_color: color, emissive: color, perceptual_roughness: 1.0, ..default() };
 
-    commands.spawn(PbrBundle {
+    return commands.spawn(PbrBundle {
         mesh: meshes.add(Mesh::from(shape::Capsule { 
             radius: 1.0, 
             depth:  length,
@@ -110,7 +124,7 @@ fn spawn_arrow (
             ..default()
         },
         ..default()
-    }).id()
+    }).id();
 
 }
 
