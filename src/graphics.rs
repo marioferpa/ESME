@@ -46,15 +46,14 @@ fn spawn_light( mut commands: Commands) {
 fn spawn_axes (
     mut commands:   Commands,
     mut meshes:     ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut materials:  ResMut<Assets<StandardMaterial>>,
     ) {
 
-    let red     = Color::rgb(1.0, 0.0, 0.0);
+    //let red     = Color::rgb(1.0, 0.0, 0.0);
     let green   = Color::rgb(0.0, 1.0, 0.0);
-    let blue    = Color::rgb(0.0, 0.0, 1.0);
+    //let blue    = Color::rgb(0.0, 0.0, 1.0);
 
     let green_arrow = spawn_arrow(&mut commands, &mut meshes, &mut materials, green, ARROW_LENGTH);
-    //green_arrow.rotate_x(1.5);
 
     // What if I spawn it with the function and then rotate it
 }
@@ -68,15 +67,21 @@ fn spawn_arrow (
 
     let origin = Vec3::new(0.0, 0.0, 0.0);
 
+    let green_material = StandardMaterial {
+                            base_color: color,
+                            emissive:   color,
+                            ..default()
+                        };
+
     commands.spawn(PbrBundle {
         mesh: meshes.add(Mesh::from(shape::Capsule { 
             radius: 1.0, 
             depth:  length,
             ..default() })),
-        material: materials.add(color.into()),
+        //material: materials.add(color.into()),
+        material: materials.add(green_material),
         transform: Transform {
             translation: origin,
-            //rotation: Quat::from_axis_angle(Vec3::new(1.0, 0.0, 0.0), 0.0), // Angle in radians!!
             ..default()
         },
         ..default()
