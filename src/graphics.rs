@@ -16,9 +16,9 @@ const BODY_MASS:         quantities::Mass = quantities::Mass {dimension: Phantom
 const SAIL_ELEMENT_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.01}; // Isn't this defined somewhere else from aluminiums density?
 const ENDMASS_MASS:      quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.05};
 
-const BODY_RADIUS:              f64 = 0.1;  // meters
+const BODY_RADIUS:      f64 = 0.1;  // meters
 
-const ARROW_LENGTH: f32 = 200.0;  // pixels?
+const ARROW_LENGTH:     f32 = 100.0;  // pixels?
 
 pub struct GraphicsPlugin;
 
@@ -42,46 +42,58 @@ fn spawn_light( mut commands: Commands) {
     });
 }
 
-// TEST
 fn spawn_axes (
     mut commands:   Commands,
     mut meshes:     ResMut<Assets<Mesh>>,
     mut materials:  ResMut<Assets<StandardMaterial>>,
     ) {
 
-    //let red     = Color::rgb(1.0, 0.0, 0.0);
+    // Maybe I could make the axes an invisible entity, and the arrows children entities of that
+    // one. Then I could rotate the parent and the children would follow.
+
+    let red     = Color::rgb(1.0, 0.0, 0.0);
     let green   = Color::rgb(0.0, 1.0, 0.0);
-    //let blue    = Color::rgb(0.0, 0.0, 1.0);
+    let blue    = Color::rgb(0.0, 0.0, 1.0);
 
-    let green_arrow = spawn_arrow(&mut commands, &mut meshes, &mut materials, green, ARROW_LENGTH);
+    let x_direction = Vec3::new(1.0, 0.0, 0.0); 
+    let y_direction = Vec3::new(0.0, 1.0, 0.0); 
+    let z_direction = Vec3::new(0.0, 0.0, 1.0); 
 
-    // What if I spawn it with the function and then rotate it
+    let x_rotation = Quat::from_rotation_z(std::f32::consts::PI / 2.0);
+    let y_rotation = Quat::from_rotation_y(0.0);
+    let z_rotation = Quat::from_rotation_x(std::f32::consts::PI / 2.0);
+
+    // X (red)
+    spawn_arrow(&mut commands, &mut meshes, &mut materials, red, ARROW_LENGTH, x_direction, x_rotation);
+
+    // Y (green)
+    spawn_arrow(&mut commands, &mut meshes, &mut materials, green, ARROW_LENGTH, y_direction, y_rotation);
+
+    // Z (blue)
+    spawn_arrow(&mut commands, &mut meshes, &mut materials, blue, ARROW_LENGTH, z_direction, z_rotation);
 }
 
 fn spawn_arrow (
     mut commands:   &mut Commands,
     mut meshes:     &mut ResMut<Assets<Mesh>>,
     mut materials:  &mut ResMut<Assets<StandardMaterial>>,
-    color: Color, length: f32, 
+    color: Color, length: f32, direction: Vec3, rotation: Quat,
     ) -> Entity {
 
-    let origin = Vec3::new(0.0, 0.0, 0.0);
+    let origin = direction * length / 2.0;
 
-    let green_material = StandardMaterial {
-                            base_color: color,
-                            emissive:   color,
-                            ..default()
-                        };
+    let material = StandardMaterial { base_color: color, emissive: color, perceptual_roughness: 1.0, ..default() };
 
     commands.spawn(PbrBundle {
         mesh: meshes.add(Mesh::from(shape::Capsule { 
             radius: 1.0, 
             depth:  length,
             ..default() })),
-        //material: materials.add(color.into()),
-        material: materials.add(green_material),
+        material: materials.add(material),
         transform: Transform {
             translation: origin,
+            //rotation: Quat::from_axis_angle(direction, std::f32::consts::PI / 2.0), // Angle in radians!!
+            rotation: rotation,
             ..default()
         },
         ..default()
