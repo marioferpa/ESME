@@ -21,7 +21,7 @@ pub struct SimulationParameters {
     pub debug:              bool,   // Toggle for printing debug information to console.
     pub com_visibility:     bool,   // Toggle for showing/hiding the center of mass.
     pub pixels_per_meter:   i32,
-    pub three_dimensions:   bool,
+    //pub three_dimensions:   bool,
 }
 
 impl Default for SimulationParameters {
@@ -33,7 +33,7 @@ impl Default for SimulationParameters {
             debug:              false,
             com_visibility:     false,
             pixels_per_meter:   500,
-            three_dimensions:   true,
+            //three_dimensions:   true,
         }
     }
 }

@@ -32,17 +32,13 @@ impl CameraPlugin {
         let translation = Vec3::new(-500.0, 100.0, 500.0);
         let radius = translation.length();
 
-        if simulation_parameters.three_dimensions {
-            // 3D camera (test)
-            // I think quaternions can be used
-            commands.spawn((
-                Camera3dBundle { transform: Transform::from_translation(translation).looking_at(Vec3::ZERO, Vec3::Y), ..default() },
-                components::PanOrbitCamera { radius, ..Default::default() },
-                ));
-        } else {
-            // 2D camera
-            commands.spawn(Camera2dBundle::default());
-        }
+        // 3D camera 
+        // I think quaternions can be used
+        commands.spawn((
+            Camera3dBundle { transform: Transform::from_translation(translation).looking_at(Vec3::ZERO, Vec3::Y), ..default() },
+            components::PanOrbitCamera { radius, ..Default::default() },
+            ));
+        
     }
 }
 

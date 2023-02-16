@@ -113,25 +113,12 @@ fn spawn_center_mass(
         ..shapes::Circle::default() // Editing the transform later.
     };
 
-    let com_entity = if simulation_parameters.three_dimensions {
-
-        commands.spawn(PbrBundle {
+    let com_entity = commands.spawn(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::UVSphere { radius: 10.0, ..default() })),
             material: materials.add(Color::rgb(1.0, 1.0, 0.0).into()),
             transform: Transform::from_xyz(0.0, 0.0, 0.0),
             ..default()
-        }).id()
-
-    } else {
-        commands.spawn(GeometryBuilder::build_as(
-            &center_mass_shape,
-            DrawMode::Outlined {
-                fill_mode: FillMode::color(Color::YELLOW),
-                outline_mode: StrokeMode::new(Color::BLACK, 1.0),
-            },
-            Transform::from_xyz(0.0, 0.0, Z_CENTER_MASS as f32),
-        )).id()
-    };
+        }).id();
 
     commands.entity(com_entity).insert(components::CenterOfMass);
 }
@@ -145,37 +132,12 @@ fn spawn_cubesat(
 
     let cubesat_size = BODY_RADIUS * simulation_parameters.pixels_per_meter as f64 / 0.707;
 
-    let cubesat_entity = if simulation_parameters.three_dimensions {
-        // cube
-        commands.spawn(PbrBundle {
+    let cubesat_entity = commands.spawn(PbrBundle {
             mesh: meshes.add(Mesh::from(shape::Cube { size: cubesat_size as f32})),
             material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
             transform: Transform::from_xyz(0.0, 0.5, 0.0),
             ..default()
-        }).id()
-
-    } else {
-
-        // 2D version
-
-        let sat_shape = shapes::RegularPolygon {
-            sides: 4,
-            feature: shapes::RegularPolygonFeature::Radius( (BODY_RADIUS * simulation_parameters.pixels_per_meter as f64 / 0.707) as f32),
-            ..shapes::RegularPolygon::default()
-        };
-
-        commands
-            .spawn(GeometryBuilder::build_as(
-                &sat_shape,
-                DrawMode::Outlined {
-                    fill_mode: FillMode::color(Color::GRAY),
-                    outline_mode: StrokeMode::new(Color::BLACK, 1.0),
-                },
-                Transform::default(),
-                //Transform::from_xyz(0.0, 0.0, 0.0),
-            )).id()
-
-    };
+        }).id();
 
     commands.entity(cubesat_entity).insert(components::Mass(BODY_MASS));
 }
@@ -217,11 +179,7 @@ fn spawn_esail(
 
         //let element = spawn_esail_element(&mut commands, segment_length_pixels, x, 0.0, radius, mass, is_deployed);
 
-        let element = if simulation_parameters.three_dimensions {
-            spawn_3d_esail_element(&mut commands, &mut meshes, &mut materials, segment_length_pixels, x, 0.0, radius, mass, is_deployed)
-        } else {
-            spawn_esail_element(&mut commands, segment_length_pixels, x, 0.0, radius, mass, is_deployed)
-        };
+        let element = spawn_3d_esail_element(&mut commands, &mut meshes, &mut materials, segment_length_pixels, x, 0.0, radius, mass, is_deployed);
 
         element_vector.push(element);
 
