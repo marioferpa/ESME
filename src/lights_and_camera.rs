@@ -12,17 +12,18 @@ pub fn get_primary_window_size(windows: &Res<Windows>) -> Vec2 {
 
 // -------------------------- Camera plugin ---------------------------------------
 
-pub struct CameraPlugin;
+pub struct LightsAndCameraPlugin;
 
-impl Plugin for CameraPlugin {
+impl Plugin for LightsAndCameraPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_startup_system(Self::spawn_camera)
+            .add_startup_system(Self::spawn_light)
             ;
     }
 }
 
-impl CameraPlugin {
+impl LightsAndCameraPlugin {
 
     fn spawn_camera(
         mut commands: Commands,
@@ -38,6 +39,12 @@ impl CameraPlugin {
             components::PanOrbitCamera { radius, ..Default::default() },
             ));
         
+    }
+
+    fn spawn_light( mut commands: Commands) {
+        commands.spawn(DirectionalLightBundle {
+            ..default()
+        });
     }
 }
 

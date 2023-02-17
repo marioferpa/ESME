@@ -37,12 +37,13 @@ impl PhysicsPlugin {
 
     /// Simulation proper
     fn verlet_simulation(
-        time:                   Res<Time>, 
-        esail_query:            Query<&components::ESail>,
-        mut simulation_parameters:         ResMut<resources::SimulationParameters>,
-        spacecraft_parameters:  Res<resources::SpacecraftParameters>,
-        solar_wind_parameters:  Res<resources::SolarWindParameters>,
-        mut verlet_query:       Query<(&mut components::VerletObject, &components::Mass), With<components::SailElement>>,
+        time:                       Res<Time>, 
+        esail_query:                Query<&components::ESail>,
+        solar_wind_parameters:      Res<resources::SolarWindParameters>,
+        spacecraft_parameters:      Res<resources::SpacecraftParameters>,
+        //mut verlet_query:           Query<(&mut components::VerletObject, &components::Mass), With<components::SailElement>>,
+        mut verlet_query:           Query<&mut components::VerletObject, With<components::SailElement>>,
+        mut simulation_parameters:  ResMut<resources::SimulationParameters>,
         ) {
 
         let esail = esail_query.single();
@@ -55,12 +56,12 @@ impl PhysicsPlugin {
 
             if simulation_parameters.debug { println!("New timestep ---------------"); }
 
-            // VERLET INTEGRATION
-            // Forces are calculated and applied for each esail element
+            // VERLET INTEGRATION: Forces are calculated and applied for each esail element
 
             for element in esail.elements.iter() {  // Iterating over esail elements, in order.
 
-                let (mut verlet_object, _) = verlet_query.get_mut(*element).expect("No sail element found");
+                //let (mut verlet_object, _) = verlet_query.get_mut(*element).expect("No sail element found");
+                let mut verlet_object = verlet_query.get_mut(*element).expect("No sail element found");
 
                 if verlet_object.is_deployed {
                     verlet_integration(&mut simulation_parameters, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
@@ -79,7 +80,8 @@ impl PhysicsPlugin {
                                                                                             // Needed if I'm already checking for deployment?
 
                     // Information about current element
-                    let (current_verlet_object, _) = verlet_query.get(*sail_element).expect("No previous sail element found");
+                    //let (current_verlet_object, _) = verlet_query.get(*sail_element).expect("No previous sail element found");
+                    let current_verlet_object = verlet_query.get(*sail_element).expect("No previous sail element found");
 
                     let current_element_x = current_verlet_object.current_x;
                     let current_element_y = current_verlet_object.current_y;
@@ -87,7 +89,8 @@ impl PhysicsPlugin {
 
                     // Information from previous element
                     let prev_sail_element = esail.elements[index - 1];
-                    let (prev_verlet_object, _) = verlet_query.get(prev_sail_element).expect("No previous sail element found");
+                    //let (prev_verlet_object, _) = verlet_query.get(prev_sail_element).expect("No previous sail element found");
+                    let prev_verlet_object = verlet_query.get(prev_sail_element).expect("No previous sail element found");
 
                     let prev_element_x = prev_verlet_object.current_x;
                     let prev_element_y = prev_verlet_object.current_y;
@@ -120,7 +123,8 @@ impl PhysicsPlugin {
                     // UPDATING POSITIONS
                     // Yes, I'm querying both again, can't find a cleaner way to do it.
                     
-                    let (mut current_verlet_object, _) = verlet_query.get_mut(*sail_element).expect("No previous sail element found");
+                    //let (mut current_verlet_object, _) = verlet_query.get_mut(*sail_element).expect("No previous sail element found");
+                    let mut current_verlet_object = verlet_query.get_mut(*sail_element).expect("No previous sail element found");
                     
                     if current_verlet_object.is_deployed {
                         current_verlet_object.current_x += correction_x;
@@ -128,7 +132,7 @@ impl PhysicsPlugin {
                         current_verlet_object.current_z += correction_z;
                     }
 
-                    let (mut prev_verlet_object, _) = verlet_query.get_mut(prev_sail_element).expect("No previous sail element found");
+                    let mut prev_verlet_object = verlet_query.get_mut(prev_sail_element).expect("No previous sail element found");
                     
                     if prev_verlet_object.is_deployed {
                         prev_verlet_object.current_x -= correction_x;
@@ -226,8 +230,8 @@ fn verlet_integration(
     
     let force_per_segment = coulomb_force_per_meter(&solar_wind_parameters, &spacecraft_parameters) * spacecraft_parameters.segment_length();
 
-    //let acceleration_y = force_per_segment / spacecraft_parameters.segment_mass();
-    let acceleration_z = - force_per_segment / spacecraft_parameters.segment_mass();
+    // Should I pass the mass from the mass query instead? (They should be exactly the same)
+    let acceleration_z = - force_per_segment / spacecraft_parameters.segment_mass(); 
 
     println!("{}: {:?}", "Force per segment", force_per_segment);    
     println!("{}: {:?}", "Total force", force_per_segment * spacecraft_parameters.wire_resolution.value * spacecraft_parameters.wire_length.value);

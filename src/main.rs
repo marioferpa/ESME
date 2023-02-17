@@ -12,8 +12,8 @@ mod physics;
 use physics::PhysicsPlugin;
 mod gui;
 use gui::GUIPlugin;
-mod camera;
-use camera::CameraPlugin;
+mod lights_and_camera;
+use lights_and_camera::LightsAndCameraPlugin;
 mod user_input;
 use user_input::UserInputPlugin;
 
@@ -31,7 +31,7 @@ fn main() {
         .add_plugin(PhysicsPlugin)
         .add_plugin(EguiPlugin)
         .add_plugin(GUIPlugin)
-        .add_plugin(CameraPlugin)
+        .add_plugin(LightsAndCameraPlugin)
         .add_plugin(UserInputPlugin)
         .insert_resource(resources::SpacecraftParameters{..Default::default()})
         .insert_resource(resources::SolarWindParameters{..Default::default()})

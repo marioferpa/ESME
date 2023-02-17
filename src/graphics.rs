@@ -9,7 +9,7 @@ use crate::{ components, resources };
 const X_FIRST_ELEMENT:          f64 = 0.1;  // meters (more like pixels?)
 
 const BODY_MASS:         quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 10.0};  // You sure these are in kg?
-const SAIL_ELEMENT_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.01}; // Isn't this defined somewhere else from aluminiums density?
+//const SAIL_ELEMENT_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.01}; // Isn't this defined somewhere else from aluminiums density?
 const ENDMASS_MASS:      quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.05};
 
 const BODY_RADIUS:      f64 = 0.1;  // meters
@@ -21,7 +21,6 @@ pub struct GraphicsPlugin;
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_startup_system(Self::spawn_light)
             .add_startup_system(spawn_cubesat)
             .add_startup_system(spawn_esail)
             .add_startup_system(spawn_center_mass)
@@ -35,11 +34,6 @@ impl GraphicsPlugin {
 
     //fn rotate_sat(){}
 
-    fn spawn_light( mut commands: Commands) {
-        commands.spawn(DirectionalLightBundle {
-            ..default()
-        });
-    }
 
     fn gizmo_visibility (
         mut com_query:          Query<&mut Visibility, (With<components::CenterOfMass>, Without<components::Axes>)>, 
@@ -190,16 +184,17 @@ fn spawn_esail(
             _ => true,
         };
 
+        // The SAIL_ELEMENT_MASS thing is not being used. Define it here from the spacecraft parameters method and then use it in physics.rs
+
         // Endmass has different mass and size
         let (mass, radius) = if number == number_of_elements.value as i32 - 1 {
             (ENDMASS_MASS, 10.0)
         } else {
-            (SAIL_ELEMENT_MASS, 5.0)
+            //(SAIL_ELEMENT_MASS, 5.0)
+            (spacecraft_parameters.segment_mass(), 5.0)
         };
 
         let segment_length_pixels = spacecraft_parameters.segment_length().value as f32 * simulation_parameters.pixels_per_meter as f32;
-
-        //let element = spawn_esail_element(&mut commands, segment_length_pixels, x, 0.0, radius, mass, is_deployed);
 
         let element = spawn_esail_element(&mut commands, &mut meshes, &mut materials, segment_length_pixels, x, 0.0, 0.0, radius, mass, is_deployed);
 
