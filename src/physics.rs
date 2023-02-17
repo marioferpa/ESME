@@ -78,11 +78,12 @@ impl PhysicsPlugin {
                 for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {    // Iterating over the sail elements in order. Skips the first.
                                                                                             // Needed if I'm already checking for deployment?
 
-                    // Information from current element
+                    // Information about current element
                     let (current_verlet_object, _) = verlet_query.get(*sail_element).expect("No previous sail element found");
 
                     let current_element_x = current_verlet_object.current_x;
                     let current_element_y = current_verlet_object.current_y;
+                    let current_element_z = current_verlet_object.current_z;
 
                     // Information from previous element
                     let prev_sail_element = esail.elements[index - 1];
@@ -90,11 +91,14 @@ impl PhysicsPlugin {
 
                     let prev_element_x = prev_verlet_object.current_x;
                     let prev_element_y = prev_verlet_object.current_y;
+                    let prev_element_z = prev_verlet_object.current_z;
 
                     // Calculating distance between current sail element and previous element in the line (in pixels, right?)
                     let diff_x = current_element_x - prev_element_x;
                     let diff_y = current_element_y - prev_element_y;
-                    let pixels_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
+                    let diff_z = current_element_z - prev_element_z;
+                    //let pixels_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
+                    let pixels_between_elements = (diff_x * diff_x + diff_y * diff_y + diff_z * diff_z).sqrt();
 
                     if simulation_parameters.debug {
                         println!("Index: {} | Distance between elements (px): {}", index, pixels_between_elements);
@@ -111,6 +115,7 @@ impl PhysicsPlugin {
                     // This shouldn't be .5 if one object is not deployed, although I believe it tends to the correct spot anyways.
                     let correction_x = diff_x * 0.5 * difference;
                     let correction_y = diff_y * 0.5 * difference;
+                    let correction_z = diff_z * 0.5 * difference;
 
                     // UPDATING POSITIONS
                     // Yes, I'm querying both again, can't find a cleaner way to do it.
@@ -120,6 +125,7 @@ impl PhysicsPlugin {
                     if current_verlet_object.is_deployed {
                         current_verlet_object.current_x += correction_x;
                         current_verlet_object.current_y += correction_y;
+                        current_verlet_object.current_z += correction_z;
                     }
 
                     let (mut prev_verlet_object, _) = verlet_query.get_mut(prev_sail_element).expect("No previous sail element found");
@@ -127,6 +133,7 @@ impl PhysicsPlugin {
                     if prev_verlet_object.is_deployed {
                         prev_verlet_object.current_x -= correction_x;
                         prev_verlet_object.current_y -= correction_y;
+                        prev_verlet_object.current_z -= correction_z;
                     }
                 }
             }
@@ -141,6 +148,7 @@ impl PhysicsPlugin {
         for (verlet_object, mut transform) in verlet_query.iter_mut() {
             transform.translation.x = verlet_object.current_x as f32;
             transform.translation.y = verlet_object.current_y as f32;
+            transform.translation.z = verlet_object.current_z as f32;
         }
 
         // Should this update the rotation of the segments too?
@@ -150,7 +158,6 @@ impl PhysicsPlugin {
     fn update_center_of_mass(
         simulation_parameters:     Res<resources::SimulationParameters>,
         mass_query:     Query<(&Transform, &components::Mass), Without<components::CenterOfMass>>,
-        //mut com_query:  Query<(&mut Transform, &mut Visibility), With<components::CenterOfMass>>, 
         mut com_query:  Query<&mut Transform, With<components::CenterOfMass>>, 
         ){
 
@@ -219,14 +226,15 @@ fn verlet_integration(
     
     let force_per_segment = coulomb_force_per_meter(&solar_wind_parameters, &spacecraft_parameters) * spacecraft_parameters.segment_length();
 
-    let acceleration_y = force_per_segment / spacecraft_parameters.segment_mass();
+    //let acceleration_y = force_per_segment / spacecraft_parameters.segment_mass();
+    let acceleration_z = - force_per_segment / spacecraft_parameters.segment_mass();
 
     println!("{}: {:?}", "Force per segment", force_per_segment);    
     println!("{}: {:?}", "Total force", force_per_segment * spacecraft_parameters.wire_resolution.value * spacecraft_parameters.wire_length.value);
     println!("-------------------------");
 
-    let next_position_y = current_position_y + velocity_y + acceleration_y.value * simulation_parameters.timestep * simulation_parameters.timestep;
-    //println!("{}", next_position_y);
+    //let next_position_y = current_position_y + velocity_y + acceleration_y.value * simulation_parameters.timestep * simulation_parameters.timestep;
+    let next_position_z = current_position_z + velocity_z + acceleration_z.value * simulation_parameters.timestep * simulation_parameters.timestep;
     
     // Starting to think that the bending moment should go here too.
 
@@ -236,11 +244,13 @@ fn verlet_integration(
     
     // current position becomes previous position,
     verlet_object.previous_x = current_position_x;
-    verlet_object.previous_y = current_position_y;
+    //verlet_object.previous_y = current_position_y;
+    verlet_object.previous_z = current_position_z;
 
     // and next position becomes current position.
     verlet_object.current_x = next_position_x;
-    verlet_object.current_y = next_position_y;
+    //verlet_object.current_y = next_position_y;
+    verlet_object.current_z = next_position_z;
 }
 
 // From janhunen2007, equation 8. Corroborate all the results. And recheck the equations too.
