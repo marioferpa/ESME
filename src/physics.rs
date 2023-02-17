@@ -16,8 +16,8 @@ impl Plugin for PhysicsPlugin {
         app
             .add_system(Self::update_esail_voltage)         // "Charges" the sail with up to the chosen potential
             .add_system(Self::verlet_simulation)            // Calculates new positions
-            .add_system(Self::update_transform_verlets)     // Updates the position of the graphics
             .add_system(Self::update_center_of_mass)        // Updates position of the center of mass
+            .add_system(Self::update_body_rotation)
             ;
     }
 }
@@ -33,6 +33,18 @@ impl PhysicsPlugin {
         for mut electrical_element in electrical_query.iter_mut() {
             electrical_element.potential = spacecraft_parameters.wire_potential;
         }
+    }
+
+    fn update_body_rotation (
+        time:                   Res<Time>, 
+        spacecraft_parameters:  Res<resources::SpacecraftParameters>, 
+        mut satellite_query:    Query<&mut Transform, With<components::SatelliteBody>>,
+        ){
+
+        let mut sat_body_transform = satellite_query.single_mut();
+
+        sat_body_transform.rotate( Quat::from_rotation_z( spacecraft_parameters.rpm.value as f32 / 60.0 * time.delta_seconds()) ); 
+
     }
 
     /// Simulation proper
@@ -144,19 +156,6 @@ impl PhysicsPlugin {
         }
     }
 
-    /// Updates the transform of the verlet objects after the simulation, so that the graphics get updated.
-    fn update_transform_verlets(
-        mut verlet_query: Query<(&components::VerletObject, &mut Transform)>,
-        ){
-        
-        for (verlet_object, mut transform) in verlet_query.iter_mut() {
-            transform.translation.x = verlet_object.current_x as f32;
-            transform.translation.y = verlet_object.current_y as f32;
-            transform.translation.z = verlet_object.current_z as f32;
-        }
-
-        // Should this update the rotation of the segments too?
-    } 
 
     /// Updates position and visibility of the center of mass
     fn update_center_of_mass(
