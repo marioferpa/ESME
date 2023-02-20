@@ -14,6 +14,13 @@ pub struct PhysicsPlugin;   // Plugins are structs, therefore they can hold data
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
+            //.add_system_set(SystemSet::new()
+            //    .with_system(Self::update_esail_voltage)
+            //    .with_system(Self::verlet_simulation)
+            //    .with_system(Self::update_center_of_mass)
+            //    .with_system(Self::update_body_rotation)
+            //    )
+
             .add_system(Self::update_esail_voltage)         // "Charges" the sail with up to the chosen potential
             .add_system(Self::verlet_simulation)            // Calculates new positions
             .add_system(Self::update_center_of_mass)        // Updates position of the center of mass
@@ -38,12 +45,21 @@ impl PhysicsPlugin {
     fn update_body_rotation (
         time:                   Res<Time>, 
         spacecraft_parameters:  Res<resources::SpacecraftParameters>, 
-        mut satellite_query:    Query<&mut Transform, With<components::SatelliteBody>>,
+        //mut satellite_query:    Query<&mut Transform, With<components::SatelliteBody>>,
+        mut satellite_query:    Query<&mut Transform, (With<components::SatelliteBody>, Without<components::ESail>)>,
+        // Test
+        mut esail_query:        Query<&mut Transform, With<components::ESail>>,
         ){
 
-        let mut sat_body_transform = satellite_query.single_mut();
+        let mut sat_body_transform  = satellite_query.single_mut();
+        let mut esail_transform     = esail_query.single_mut();
 
         sat_body_transform.rotate( Quat::from_rotation_z( spacecraft_parameters.rpm.value as f32 / 60.0 * time.delta_seconds()) ); 
+
+        // What if I rotated the whole sail too?
+        esail_transform.rotate( Quat::from_rotation_z( spacecraft_parameters.rpm.value as f32 / 60.0 * time.delta_seconds()) ); 
+
+        // Not working, why? Do children not rotate with the parent?
 
     }
 
@@ -53,7 +69,6 @@ impl PhysicsPlugin {
         esail_query:                Query<&components::ESail>,
         solar_wind_parameters:      Res<resources::SolarWindParameters>,
         spacecraft_parameters:      Res<resources::SpacecraftParameters>,
-        //mut verlet_query:           Query<(&mut components::VerletObject, &components::Mass), With<components::SailElement>>,
         mut verlet_query:           Query<&mut components::VerletObject, With<components::SailElement>>,
         mut simulation_parameters:  ResMut<resources::SimulationParameters>,
         ) {

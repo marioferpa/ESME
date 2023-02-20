@@ -11,15 +11,16 @@ pub struct Axes;
 pub struct SatelliteBody;
 
 #[derive(Component, Debug)]
+pub struct ESail {
+    pub elements: Vec<Entity>,
+}
+
+#[derive(Component, Debug)]
 pub struct SailElement {
     pub is_deployed:    bool,   // Not used. Makes more sense than in VerletObject,
                                 // but it's harder to access from the code.
 }
 
-#[derive(Component, Debug)]
-pub struct ESail {
-    pub elements: Vec<Entity>,
-}
 
 #[derive(Component, Debug)]
 pub struct Mass (

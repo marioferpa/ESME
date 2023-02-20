@@ -9,15 +9,15 @@ impl Plugin for GraphicsPlugin {
         app
             .add_system(Self::gizmo_visibility)
             .add_system(Self::update_transform_verlets)     // Updates the position of the graphics
+            .add_system(Self::update_rotation_axes)
             ;
     }
 }
 
 impl GraphicsPlugin {
 
-    //fn rotate_sat(){}
-
-    //Update transform here
+    // At some point I think that physics.rs will update a component containing the rotation, and
+    // this will adapt the Transform to the value of that component.
 
     fn gizmo_visibility (
         mut com_query:          Query<&mut Visibility, (With<components::CenterOfMass>, Without<components::Axes>)>, 
@@ -33,8 +33,7 @@ impl GraphicsPlugin {
     }
 
     /// Updates the transform of the verlet objects after the simulation, so that the graphics get updated.
-    /// Maybe it will need to update graphics of other things as well.
-    fn update_transform_verlets(
+    fn update_transform_verlets (
         mut verlet_query: Query<(&components::VerletObject, &mut Transform)>,
         ){
         
@@ -46,4 +45,15 @@ impl GraphicsPlugin {
 
         // Should this update the rotation of the segments too?
     } 
+
+    fn update_rotation_axes (
+        mut axes_query:         Query<&mut Transform, (With<components::Axes>, Without<components::SatelliteBody>)>,   
+        mut satellite_query:    Query<&mut Transform, (With<components::SatelliteBody>, Without<components::Axes>)>,
+        ) {
+
+        let mut axes_transform  = axes_query.single_mut();
+        let satellite_transform = satellite_query.single();
+
+        axes_transform.rotation = satellite_transform.rotation;
+    }
 }

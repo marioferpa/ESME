@@ -8,8 +8,6 @@ pub fn get_primary_window_size(windows: &Res<Windows>) -> Vec2 {
     window
 }
 
-// Idea for the coordinates: https://rustrepo.com/repo/urholaukkarinen-egui-gizmo
-
 // -------------------------- Camera plugin ---------------------------------------
 
 pub struct LightsAndCameraPlugin;

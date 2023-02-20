@@ -16,21 +16,26 @@ pub struct SpawnerPlugin;
 impl Plugin for SpawnerPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_startup_system(Self::spawn_cubesat)
-            .add_startup_system(Self::spawn_esail)
-            .add_startup_system(Self::spawn_axes)
-            .add_startup_system(Self::spawn_center_mass)
-            ;
+            .add_startup_system_set(
+                SystemSet::new()
+                    .label("spawn_elements")
+                    .with_system(Self::spawn_cubesat)
+                    .with_system(Self::spawn_esail)
+                    .with_system(Self::spawn_axes)
+                    .with_system(Self::spawn_center_mass)
+            )
+        ;
     }
 }
 
 impl SpawnerPlugin {
 
     fn spawn_cubesat(
-        mut commands: Commands,
-        mut meshes: ResMut<Assets<Mesh>>,
-        mut materials: ResMut<Assets<StandardMaterial>>,
-        simulation_parameters: Res<resources::SimulationParameters>,
+        mut commands:           Commands,
+        mut meshes:             ResMut<Assets<Mesh>>,
+        mut materials:          ResMut<Assets<StandardMaterial>>,
+        simulation_parameters:  Res<resources::SimulationParameters>,
+        spacecraft_parameters:  Res<resources::SpacecraftParameters>,
         ) {
 
         let cubesat_size = BODY_RADIUS * simulation_parameters.pixels_per_meter as f64 / 0.707;
@@ -46,6 +51,8 @@ impl SpawnerPlugin {
             .insert(components::SatelliteBody)
             .insert(components::Mass(BODY_MASS))
             ;
+
+        println!("Cubesat spawned");
     }
 
     fn spawn_esail(
@@ -57,6 +64,14 @@ impl SpawnerPlugin {
         ) {
 
         let mut element_vector: Vec<Entity> = Vec::new();
+
+        // Test: creating e-sail, but not storing the element vector in it yet because it has not been populated yet.
+
+        let esail_entity = commands.spawn((
+            Name::new("E-sail"),
+            //TransformBundle { ..Default::default() },
+            SpatialBundle{ visibility: Visibility{ is_visible: true }, ..Default::default() }
+        )).id();
 
         // User defines length of sail and resolution, elements are calculated from those.
         let number_of_elements = spacecraft_parameters.wire_length * spacecraft_parameters.wire_resolution;
@@ -74,13 +89,10 @@ impl SpawnerPlugin {
                 _ => true,
             };
 
-            // The SAIL_ELEMENT_MASS thing is not being used. Define it here from the spacecraft parameters method and then use it in physics.rs
-
             // Endmass has different mass and size
             let (mass, radius) = if number == number_of_elements.value as i32 - 1 {
                 (ENDMASS_MASS, 10.0)
             } else {
-                //(SAIL_ELEMENT_MASS, 5.0)
                 (spacecraft_parameters.segment_mass(), 5.0)
             };
 
@@ -90,11 +102,23 @@ impl SpawnerPlugin {
 
             element_vector.push(element);
 
+            // TEST: pushing element as children of the e-sail as well
+            commands.entity(esail_entity).push_children(&[element]);
+
         }
 
-        // Creating ESail entity and storing the elements inside.
-        commands.spawn_empty()
-            .insert(components::ESail{elements: element_vector});
+        //// Creating ESail entity and storing the elements inside.
+        //commands.spawn((
+        //    TransformBundle {
+        //        ..Default::default()
+        //    },
+        //    components::ESail{ elements: element_vector },    
+        //));
+
+        commands.entity(esail_entity).insert(components::ESail{ elements: element_vector });
+
+        println!("E-sail spawned");
+
 
     }
 
@@ -160,7 +184,8 @@ fn spawn_esail_element(
     x: f64, y: f64, z: f64, radius: f32, mass: quantities::Mass, is_deployed: bool,
     ) -> Entity {
 
-    let sail_element = commands.spawn(PbrBundle {
+    let sail_element = commands.spawn (
+        PbrBundle {
             mesh: meshes.add(Mesh::from(shape::UVSphere { radius: radius, ..default() })),
             material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
             transform: Transform::from_xyz(x as f32, y as f32, 0.0),
@@ -168,6 +193,7 @@ fn spawn_esail_element(
         }).id();
 
     commands.entity(sail_element)
+        .insert(Name::new("E-sail element"))
         .insert(components::SailElement{is_deployed: is_deployed})
         .insert(components::Mass(mass))
         .insert(components::VerletObject{previous_x: x, previous_y: y, previous_z: z, current_x: x, current_y: y, current_z: z, is_deployed: is_deployed})
