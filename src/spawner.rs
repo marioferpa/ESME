@@ -48,6 +48,7 @@ impl SpawnerPlugin {
             }).id();
 
         commands.entity(cubesat_entity)
+            .insert(Name::new("Satellite body"))
             .insert(components::SatelliteBody)
             .insert(components::Mass(BODY_MASS))
             ;
@@ -65,13 +66,21 @@ impl SpawnerPlugin {
 
         let mut element_vector: Vec<Entity> = Vec::new();
 
-        // Test: creating e-sail, but not storing the element vector in it yet because it has not been populated yet.
+        //let esail_entity = commands.spawn((
+        //    Name::new("E-sail"),
+        //    // Should move this to the side of the cubesat at some point
+        //    SpatialBundle{ visibility: Visibility{ is_visible: true }, ..Default::default() }
+        //)).id();
 
-        let esail_entity = commands.spawn((
-            Name::new("E-sail"),
-            //TransformBundle { ..Default::default() },
-            SpatialBundle{ visibility: Visibility{ is_visible: true }, ..Default::default() }
-        )).id();
+        // Spawning a mesh on the E-sail position for easier debugging
+
+        let esail_entity = commands.spawn(PbrBundle {
+                mesh: meshes.add(Mesh::from(shape::UVSphere { radius: 10.0, ..default() })),
+                material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
+                transform: Transform::from_xyz(40.0, 0.0, 0.0),
+                visibility: Visibility{ is_visible: true },
+                ..default()
+            }).id();
 
         // User defines length of sail and resolution, elements are calculated from those.
         let number_of_elements = spacecraft_parameters.wire_length * spacecraft_parameters.wire_resolution;
@@ -88,6 +97,12 @@ impl SpawnerPlugin {
                 0 => false,
                 _ => true,
             };
+            
+            //let is_deployed = true;
+
+            // I could make it so that the entity with the esail component (esail_entity) works as
+            // the origin for all esail elements, instead of having the first element being
+            // undeployed and rotating with the spacecraft.
 
             // Endmass has different mass and size
             let (mass, radius) = if number == number_of_elements.value as i32 - 1 {
@@ -102,20 +117,23 @@ impl SpawnerPlugin {
 
             element_vector.push(element);
 
-            // TEST: pushing element as children of the e-sail as well
-            commands.entity(esail_entity).push_children(&[element]);
+            // Pushing as children entity as well, so that transforms are shared
+            //commands.entity(esail_entity).push_children(&[element]);
 
+            // Maybe this isn't the way. Maybe only the undeployed element should follow. It's nice
+            // to have them all be children so that they are grouped in the inspector, but it's not
+            // working realistically now.
+
+            if !is_deployed {
+                commands.entity(esail_entity).push_children(&[element]);
+            }
         }
 
-        //// Creating ESail entity and storing the elements inside.
-        //commands.spawn((
-        //    TransformBundle {
-        //        ..Default::default()
-        //    },
-        //    components::ESail{ elements: element_vector },    
-        //));
-
-        commands.entity(esail_entity).insert(components::ESail{ elements: element_vector });
+        commands.entity(esail_entity)
+            .insert(components::ESail{ 
+                origin:      esail_entity,  // TEST!
+                elements:   element_vector,     
+            });
 
         println!("E-sail spawned");
 

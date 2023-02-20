@@ -12,7 +12,41 @@ pub struct SatelliteBody;
 
 #[derive(Component, Debug)]
 pub struct ESail {
-    pub elements: Vec<Entity>,
+    pub origin:     Entity,
+    pub elements:   Vec<Entity>,
+}
+
+impl ESail {
+    pub fn pixels_between_elements(
+        &self,
+        index: usize,
+        verlet_query:   &Query<&mut VerletObject, With<SailElement>>,
+        ) -> (f64, f64, f64, f64)  {
+
+        //let diff_x = current_element_x - prev_element_x;
+        let entity = self.elements[index];
+        let current_verlet_object = 
+            verlet_query
+                .get(entity)
+                .expect("No previous sail element found");
+
+        let (current_element_x, current_element_y, current_element_z) = current_verlet_object.current_coordinates();
+
+        let prev_entity = self.elements[index - 1];
+        let prev_verlet_object = 
+            verlet_query
+                .get(prev_entity)
+                .expect("No previous sail element found");
+
+        let (prev_element_x, prev_element_y, prev_element_z) = prev_verlet_object.current_coordinates();
+
+        let diff_x = current_element_x - prev_element_x;
+        let diff_y = current_element_y - prev_element_y;
+        let diff_z = current_element_z - prev_element_z;
+        let pixels_between_elements = (diff_x * diff_x + diff_y * diff_y + diff_z * diff_z).sqrt();
+
+        return (diff_x, diff_y, diff_z, pixels_between_elements);
+    }
 }
 
 #[derive(Component, Debug)]
@@ -42,6 +76,12 @@ pub struct VerletObject {
     pub current_y:      f64,
     pub current_z:      f64,
     pub is_deployed:    bool,  // This would be better in another component, SailElement maybe
+}
+
+impl VerletObject {
+    pub fn current_coordinates(&self) -> (f64, f64, f64) {
+        return (self.current_x, self.current_y, self.current_z);
+    }
 }
 
 /// Tags an entity as capable of panning and orbiting. Taken from Bevy cheatbook

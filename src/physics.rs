@@ -45,9 +45,7 @@ impl PhysicsPlugin {
     fn update_body_rotation (
         time:                   Res<Time>, 
         spacecraft_parameters:  Res<resources::SpacecraftParameters>, 
-        //mut satellite_query:    Query<&mut Transform, With<components::SatelliteBody>>,
         mut satellite_query:    Query<&mut Transform, (With<components::SatelliteBody>, Without<components::ESail>)>,
-        // Test
         mut esail_query:        Query<&mut Transform, With<components::ESail>>,
         ){
 
@@ -66,7 +64,7 @@ impl PhysicsPlugin {
     /// Simulation proper
     fn verlet_simulation(
         time:                       Res<Time>, 
-        esail_query:                Query<&components::ESail>,
+        esail_query:                Query<&components::ESail>,  // Should I add information about the pivot to ESail?
         solar_wind_parameters:      Res<resources::SolarWindParameters>,
         spacecraft_parameters:      Res<resources::SpacecraftParameters>,
         mut verlet_query:           Query<&mut components::VerletObject, With<components::SailElement>>,
@@ -77,17 +75,12 @@ impl PhysicsPlugin {
 
         let timesteps = timestep_calculation(&time, &mut simulation_parameters);
 
-        if simulation_parameters.debug { println!("New frame ------------------"); }
-
         for _ in 0..timesteps { 
-
-            if simulation_parameters.debug { println!("New timestep ---------------"); }
 
             // VERLET INTEGRATION: Forces are calculated and applied for each esail element
 
             for element in esail.elements.iter() {  // Iterating over esail elements, in order.
 
-                //let (mut verlet_object, _) = verlet_query.get_mut(*element).expect("No sail element found");
                 let mut verlet_object = verlet_query.get_mut(*element).expect("No sail element found");
 
                 if verlet_object.is_deployed {
@@ -95,40 +88,35 @@ impl PhysicsPlugin {
                 }
             }
 
-            // CONSTRAINT LOOP
-            // Final position is corrected taking into account the constraints of the system.
-            // All operations in pixels, I believe.
+            // CONSTRAINT LOOP. All operations in pixels, I believe.
 
             for _ in 0..simulation_parameters.iterations {
 
-                if simulation_parameters.debug { println!("New constraint iteration ---"); }
-
                 for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {    // Iterating over the sail elements in order. Skips the first.
-                                                                                            // Needed if I'm already checking for deployment?
+
+                    // Function/method that gets one entity and the verlet query and outputs
+                    // pixels_between_elements... Anything else?
+                    // One entity if it has info about the previous one, two if it doesn't.
+                    // Or I could pass the index and the verlet query to the esail component
 
                     // Information about current element
-                    //let (current_verlet_object, _) = verlet_query.get(*sail_element).expect("No previous sail element found");
                     let current_verlet_object = verlet_query.get(*sail_element).expect("No previous sail element found");
 
-                    let current_element_x = current_verlet_object.current_x;
-                    let current_element_y = current_verlet_object.current_y;
-                    let current_element_z = current_verlet_object.current_z;
+                    let (current_element_x, current_element_y, current_element_z) = current_verlet_object.current_coordinates();
 
                     // Information from previous element
                     let prev_sail_element = esail.elements[index - 1];
-                    //let (prev_verlet_object, _) = verlet_query.get(prev_sail_element).expect("No previous sail element found");
                     let prev_verlet_object = verlet_query.get(prev_sail_element).expect("No previous sail element found");
 
-                    let prev_element_x = prev_verlet_object.current_x;
-                    let prev_element_y = prev_verlet_object.current_y;
-                    let prev_element_z = prev_verlet_object.current_z;
+                    let (prev_element_x, prev_element_y, prev_element_z) = prev_verlet_object.current_coordinates();
 
                     // Calculating distance between current sail element and previous element in the line (in pixels, right?)
-                    let diff_x = current_element_x - prev_element_x;
-                    let diff_y = current_element_y - prev_element_y;
-                    let diff_z = current_element_z - prev_element_z;
-                    //let pixels_between_elements = (diff_x * diff_x + diff_y * diff_y).sqrt();
-                    let pixels_between_elements = (diff_x * diff_x + diff_y * diff_y + diff_z * diff_z).sqrt();
+                    //let diff_x = current_element_x - prev_element_x;
+                    //let diff_y = current_element_y - prev_element_y;
+                    //let diff_z = current_element_z - prev_element_z;
+                    //let pixels_between_elements = (diff_x * diff_x + diff_y * diff_y + diff_z * diff_z).sqrt();
+                    
+                    let (diff_x, diff_y, diff_z, pixels_between_elements) = esail.pixels_between_elements(index, &verlet_query);
 
                     if simulation_parameters.debug {
                         println!("Index: {} | Distance between elements (px): {}", index, pixels_between_elements);
