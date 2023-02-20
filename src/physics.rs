@@ -94,41 +94,25 @@ impl PhysicsPlugin {
 
                 for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {    // Iterating over the sail elements in order. Skips the first.
 
-                    // Function/method that gets one entity and the verlet query and outputs
-                    // pixels_between_elements... Anything else?
-                    // One entity if it has info about the previous one, two if it doesn't.
-                    // Or I could pass the index and the verlet query to the esail component
-
-                    // Information about current element
-                    let current_verlet_object = verlet_query.get(*sail_element).expect("No previous sail element found");
-
-                    let (current_element_x, current_element_y, current_element_z) = current_verlet_object.current_coordinates();
+                    // I could iterate over the number of elements in the sail, and get both elements from the index, down here.
 
                     // Information from previous element
                     let prev_sail_element = esail.elements[index - 1];
-                    let prev_verlet_object = verlet_query.get(prev_sail_element).expect("No previous sail element found");
 
-                    let (prev_element_x, prev_element_y, prev_element_z) = prev_verlet_object.current_coordinates();
-
-                    // Calculating distance between current sail element and previous element in the line (in pixels, right?)
-                    //let diff_x = current_element_x - prev_element_x;
-                    //let diff_y = current_element_y - prev_element_y;
-                    //let diff_z = current_element_z - prev_element_z;
-                    //let pixels_between_elements = (diff_x * diff_x + diff_y * diff_y + diff_z * diff_z).sqrt();
-                    
+                    // Distance between elements (in pixels)
                     let (diff_x, diff_y, diff_z, pixels_between_elements) = esail.pixels_between_elements(index, &verlet_query);
 
-                    if simulation_parameters.debug {
-                        println!("Index: {} | Distance between elements (px): {}", index, pixels_between_elements);
-                    }
-
-                    let mut difference = 0.0;
-
+                    // Desired distance between elements (in pixels)
                     let desired_pixels_between_elements = spacecraft_parameters.segment_length().value * simulation_parameters.pixels_per_meter as f64;
 
-                    if pixels_between_elements > 0.0 {
-                        difference = (desired_pixels_between_elements - pixels_between_elements) / pixels_between_elements;
-                    }
+                    let difference = if pixels_between_elements > 0.0 {
+                        (desired_pixels_between_elements - pixels_between_elements) / pixels_between_elements
+                    } else {
+                        0.0
+                    };
+
+                    // This will go in a method too, and take into account that the first element
+                    // doesn't have a previous element to measure from, but a pivot that doesn't move.
 
                     // This shouldn't be .5 if one object is not deployed, although I believe it tends to the correct spot anyways.
                     let correction_x = diff_x * 0.5 * difference;
@@ -136,16 +120,17 @@ impl PhysicsPlugin {
                     let correction_z = diff_z * 0.5 * difference;
 
                     // UPDATING POSITIONS
-                    // Yes, I'm querying both again, can't find a cleaner way to do it.
                     
-                    //let (mut current_verlet_object, _) = verlet_query.get_mut(*sail_element).expect("No previous sail element found");
+                    // Can't query just for this, this has to go.
                     let mut current_verlet_object = verlet_query.get_mut(*sail_element).expect("No previous sail element found");
-                    
+                    //
                     if current_verlet_object.is_deployed {
                         current_verlet_object.current_x += correction_x;
                         current_verlet_object.current_y += correction_y;
                         current_verlet_object.current_z += correction_z;
+                        //esail.correct_element_coordinates(index, correction_x, correction_y, correction_z, &mut verlet_query);  
                     }
+
 
                     let mut prev_verlet_object = verlet_query.get_mut(prev_sail_element).expect("No previous sail element found");
                     
@@ -153,6 +138,7 @@ impl PhysicsPlugin {
                         prev_verlet_object.current_x -= correction_x;
                         prev_verlet_object.current_y -= correction_y;
                         prev_verlet_object.current_z -= correction_z;
+                        //esail.correct_element_coordinates(index - 1, -correction_x, -correction_y, -correction_z, &mut verlet_query);  
                     }
                 }
             }

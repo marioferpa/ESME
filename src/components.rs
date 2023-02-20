@@ -17,28 +17,24 @@ pub struct ESail {
 }
 
 impl ESail {
+
     pub fn pixels_between_elements(
         &self,
         index: usize,
         verlet_query:   &Query<&mut VerletObject, With<SailElement>>,
         ) -> (f64, f64, f64, f64)  {
 
-        //let diff_x = current_element_x - prev_element_x;
-        let entity = self.elements[index];
-        let current_verlet_object = 
+        let (current_element_x, current_element_y, current_element_z) =
             verlet_query
-                .get(entity)
-                .expect("No previous sail element found");
+                .get(self.elements[index])
+                .expect("Element not found")
+                .current_coordinates();
 
-        let (current_element_x, current_element_y, current_element_z) = current_verlet_object.current_coordinates();
-
-        let prev_entity = self.elements[index - 1];
-        let prev_verlet_object = 
+        let (prev_element_x, prev_element_y, prev_element_z) =
             verlet_query
-                .get(prev_entity)
-                .expect("No previous sail element found");
-
-        let (prev_element_x, prev_element_y, prev_element_z) = prev_verlet_object.current_coordinates();
+                .get(self.elements[index -1])
+                .expect("Element not found")
+                .current_coordinates();
 
         let diff_x = current_element_x - prev_element_x;
         let diff_y = current_element_y - prev_element_y;
@@ -46,6 +42,20 @@ impl ESail {
         let pixels_between_elements = (diff_x * diff_x + diff_y * diff_y + diff_z * diff_z).sqrt();
 
         return (diff_x, diff_y, diff_z, pixels_between_elements);
+    }
+
+    pub fn correct_element_coordinates(
+        &self,
+        index: usize,
+        correction_x: f64, correction_y: f64, correction_z: f64,
+        verlet_query: &mut Query<&mut VerletObject, With<SailElement>>,
+        ){
+        
+        verlet_query
+            .get(self.elements[index])
+            .expect("Element not found")
+            .correct_coordinates(correction_x, correction_y, correction_z);
+        
     }
 }
 
@@ -67,7 +77,7 @@ pub struct ElectricallyCharged {
 }
 
 // I could call this SailElement and make everything simpler
-#[derive(Component, Debug)]
+#[derive(Component, Debug, Copy, Clone)]
 pub struct VerletObject {
     pub previous_x:     f64,
     pub previous_y:     f64,
@@ -79,9 +89,18 @@ pub struct VerletObject {
 }
 
 impl VerletObject {
+
     pub fn current_coordinates(&self) -> (f64, f64, f64) {
         return (self.current_x, self.current_y, self.current_z);
     }
+
+    pub fn correct_coordinates(mut self, correction_x: f64, correction_y: f64, correction_z: f64) {
+
+        self.current_x += correction_x;
+        self.current_y += correction_y;
+        self.current_z += correction_z;
+    }
+
 }
 
 /// Tags an entity as capable of panning and orbiting. Taken from Bevy cheatbook
