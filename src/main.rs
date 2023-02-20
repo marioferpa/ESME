@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 use bevy_prototype_lyon::prelude::*;
 use bevy_egui::EguiPlugin;
+use bevy_inspector_egui::WorldInspectorPlugin;
 
 mod components;
 mod resources;
@@ -32,6 +33,7 @@ fn main() {
         .add_plugin(GraphicsPlugin)
         .add_plugin(PhysicsPlugin)
         .add_plugin(EguiPlugin)
+        .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(GUIPlugin)
         .add_plugin(LightsAndCameraPlugin)
         .add_plugin(UserInputPlugin)
