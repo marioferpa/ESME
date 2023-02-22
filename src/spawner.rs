@@ -72,10 +72,11 @@ impl SpawnerPlugin {
         //    SpatialBundle{ visibility: Visibility{ is_visible: true }, ..Default::default() }
         //)).id();
 
-        // Spawning a mesh on the E-sail position for easier debugging
+        // Spawning a mesh (red cube) on the E-sail position for easier debugging
 
         let esail_entity = commands.spawn(PbrBundle {
-                mesh: meshes.add(Mesh::from(shape::UVSphere { radius: 10.0, ..default() })),
+                //mesh: meshes.add(Mesh::from(shape::UVSphere { radius: 10.0, ..default() })),
+                mesh: meshes.add(Mesh::from(shape::Cube { size: 5.0, ..default() })),
                 material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
                 transform: Transform::from_xyz(40.0, 0.0, 0.0),
                 visibility: Visibility{ is_visible: true },
@@ -90,48 +91,23 @@ impl SpawnerPlugin {
 
         for number in 0..= number_of_elements.value as i32 - 1 {
      
-            let x = X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64 + number as f64 * pixels_between_elements;
-
-            // The first element stays undeployed and is unaffected by forces
-            let is_deployed = match number {
-                0 => false,
-                _ => true,
-            };
+            let x = X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64 + (number + 1) as f64 * pixels_between_elements;
             
-            //let is_deployed = true;
-
-            // I could make it so that the entity with the esail component (esail_entity) works as
-            // the origin for all esail elements, instead of having the first element being
-            // undeployed and rotating with the spacecraft.
-
-            // Endmass has different mass and size
-            let (mass, radius) = if number == number_of_elements.value as i32 - 1 {
-                (ENDMASS_MASS, 10.0)
+            let element = if number == number_of_elements.value as i32 - 1 {
+                // Endmass
+                spawn_esail_element(&mut commands, &mut meshes, &mut materials, x, 0.0, 0.0, 10.0, ENDMASS_MASS, true)
             } else {
-                (spacecraft_parameters.segment_mass(), 5.0)
+                // Sail segment
+                spawn_esail_element(&mut commands, &mut meshes, &mut materials, x, 0.0, 0.0, 5.0, spacecraft_parameters.segment_mass(), false)
             };
-
-            let segment_length_pixels = spacecraft_parameters.segment_length().value as f32 * simulation_parameters.pixels_per_meter as f32;
-
-            let element = spawn_esail_element(&mut commands, &mut meshes, &mut materials, segment_length_pixels, x, 0.0, 0.0, radius, mass, is_deployed);
 
             element_vector.push(element);
-
-            // Pushing as children entity as well, so that transforms are shared
-            //commands.entity(esail_entity).push_children(&[element]);
-
-            // Maybe this isn't the way. Maybe only the undeployed element should follow. It's nice
-            // to have them all be children so that they are grouped in the inspector, but it's not
-            // working realistically now.
-
-            if !is_deployed {
-                commands.entity(esail_entity).push_children(&[element]);
-            }
         }
 
         commands.entity(esail_entity)
             .insert(components::ESail{ 
-                origin:      esail_entity,  // TEST!
+                //origin:     esail_entity,  
+                origin:     (X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64, 0.0, 0.0),
                 elements:   element_vector,     
             });
 
@@ -198,25 +174,40 @@ fn spawn_esail_element(
     commands:   &mut Commands,
     meshes:     &mut ResMut<Assets<Mesh>>,
     materials:  &mut ResMut<Assets<StandardMaterial>>,
-    _segment_length_pixels: f32,
-    x: f64, y: f64, z: f64, radius: f32, mass: quantities::Mass, is_deployed: bool,
+    x: f64, y: f64, z: f64, radius: f32, mass: quantities::Mass,
+    is_endmass: bool,
     ) -> Entity {
 
-    let sail_element = commands.spawn (
-        PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::UVSphere { radius: radius, ..default() })),
-            material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
-            transform: Transform::from_xyz(x as f32, y as f32, 0.0),
-            ..default()
-        }).id();
+    let sail_element = if is_endmass {
+        commands.spawn (
+            PbrBundle {
+                mesh: meshes.add(Mesh::from(shape::Cube { size: 15.0 })),
+                material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+                transform: Transform::from_xyz(x as f32, y as f32, 0.0),
+                ..default()
+            }
+        ).id()
+
+    } else {
+        commands.spawn ( 
+            PbrBundle {
+                mesh: meshes.add(Mesh::from(shape::UVSphere { radius: radius, ..default() })),
+                material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+                transform: Transform::from_xyz(x as f32, y as f32, 0.0),
+                ..default()
+            }
+        ).id()
+    };
 
     commands.entity(sail_element)
-        .insert(Name::new("E-sail element"))
-        .insert(components::SailElement{is_deployed: is_deployed})
+        .insert(Name::new("E-sail element"))    // Add index to the name!
         .insert(components::Mass(mass))
-        .insert(components::VerletObject{previous_x: x, previous_y: y, previous_z: z, current_x: x, current_y: y, current_z: z, is_deployed: is_deployed})
-        .insert(components::ElectricallyCharged{potential: quantities::ElectricPotential::new::<volt>(0.0)})    // This should be a default of the component
+        .insert(components::VerletObject{previous_x: x, previous_y: y, previous_z: z, current_x: x, current_y: y, current_z: z, is_deployed: true})
         ;
+
+    if !is_endmass {
+        commands.entity(sail_element).insert(components::ElectricallyCharged{ ..Default::default() });
+    }
 
     return sail_element;
 }

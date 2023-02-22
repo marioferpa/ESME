@@ -14,17 +14,11 @@ pub struct PhysicsPlugin;   // Plugins are structs, therefore they can hold data
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            //.add_system_set(SystemSet::new()
-            //    .with_system(Self::update_esail_voltage)
-            //    .with_system(Self::verlet_simulation)
-            //    .with_system(Self::update_center_of_mass)
-            //    .with_system(Self::update_body_rotation)
-            //    )
-
             .add_system(Self::update_esail_voltage)         // "Charges" the sail with up to the chosen potential
             .add_system(Self::verlet_simulation)            // Calculates new positions
             .add_system(Self::update_center_of_mass)        // Updates position of the center of mass
-            .add_system(Self::update_body_rotation)
+            //.add_system(Self::update_body_rotation)
+            .add_system(Self::update_sail_rotation)
             ;
     }
 }
@@ -46,20 +40,38 @@ impl PhysicsPlugin {
         time:                   Res<Time>, 
         spacecraft_parameters:  Res<resources::SpacecraftParameters>, 
         mut satellite_query:    Query<&mut Transform, (With<components::SatelliteBody>, Without<components::ESail>)>,
-        mut esail_query:        Query<&mut Transform, With<components::ESail>>,
         ){
 
+        // Sat should have an angle variable (in uom units!) that I update, and this function
+        // should read that and update the transform, as I do with everything else
+
         let mut sat_body_transform  = satellite_query.single_mut();
-        let mut esail_transform     = esail_query.single_mut();
 
         sat_body_transform.rotate( Quat::from_rotation_z( spacecraft_parameters.rpm.value as f32 / 60.0 * time.delta_seconds()) ); 
 
-        // What if I rotated the whole sail too?
+    }
+
+    fn update_sail_rotation (
+        time:                   Res<Time>, 
+        spacecraft_parameters:  Res<resources::SpacecraftParameters>, 
+        //mut esail_query:        Query<&mut Transform, With<components::ESail>>,
+        mut esail_query:        Query<(&mut Transform, &components::ESail)>,
+        ){
+
+        //let mut esail_transform     = esail_query.single_mut();
+        let (mut esail_transform, mut esail)     = esail_query.single_mut();
+
         esail_transform.rotate( Quat::from_rotation_z( spacecraft_parameters.rpm.value as f32 / 60.0 * time.delta_seconds()) ); 
 
         // Not working, why? Do children not rotate with the parent?
+        // It's rotating over itself!
+        
+        // I don't need it to rotate, it doesn't matter actually. What I need is to make it orbit around the center.
+        
+        //println!("{}", esail.distance_to_center());
 
-    }
+
+        }
 
     /// Simulation proper
     fn verlet_simulation(
@@ -67,7 +79,8 @@ impl PhysicsPlugin {
         esail_query:                Query<&components::ESail>,  // Should I add information about the pivot to ESail?
         solar_wind_parameters:      Res<resources::SolarWindParameters>,
         spacecraft_parameters:      Res<resources::SpacecraftParameters>,
-        mut verlet_query:           Query<&mut components::VerletObject, With<components::SailElement>>,
+        //mut verlet_query:           Query<&mut components::VerletObject, With<components::SailElement>>,
+        mut verlet_query:           Query<&mut components::VerletObject>,
         mut simulation_parameters:  ResMut<resources::SimulationParameters>,
         ) {
 
@@ -92,14 +105,13 @@ impl PhysicsPlugin {
 
             for _ in 0..simulation_parameters.iterations {
 
-                for (index, sail_element) in esail.elements.iter().enumerate().skip(1) {    // Iterating over the sail elements in order. Skips the first.
+                for index in 0..esail.elements.len() {  
 
-                    // I could iterate over the number of elements in the sail, and get both elements from the index, down here.
+                    // Information about the esail element and its predecessor in the line
+                    let sail_element        = esail.elements[index];
+                    //let prev_sail_element   = esail.elements[index - 1];
 
-                    // Information from previous element
-                    let prev_sail_element = esail.elements[index - 1];
-
-                    // Distance between elements (in pixels)
+                    // Distance between elements (in pixels). Tested these new functions with asserteq!, the results are exactly as before.
                     let (diff_x, diff_y, diff_z, pixels_between_elements) = esail.pixels_between_elements(index, &verlet_query);
 
                     // Desired distance between elements (in pixels)
@@ -114,32 +126,36 @@ impl PhysicsPlugin {
                     // This will go in a method too, and take into account that the first element
                     // doesn't have a previous element to measure from, but a pivot that doesn't move.
 
-                    // This shouldn't be .5 if one object is not deployed, although I believe it tends to the correct spot anyways.
-                    let correction_x = diff_x * 0.5 * difference;
-                    let correction_y = diff_y * 0.5 * difference;
-                    let correction_z = diff_z * 0.5 * difference;
+                    let (correction_x, correction_y, correction_z) = if index > 1 {
+                        (diff_x * 0.5 * difference, diff_y * 0.5 * difference, diff_z * 0.5 * difference)
+                    } else {
+                        (diff_x * difference, diff_y * difference, diff_z * difference)
+                    };
 
                     // UPDATING POSITIONS
                     
-                    // Can't query just for this, this has to go.
-                    let mut current_verlet_object = verlet_query.get_mut(*sail_element).expect("No previous sail element found");
-                    //
-                    if current_verlet_object.is_deployed {
-                        current_verlet_object.current_x += correction_x;
-                        current_verlet_object.current_y += correction_y;
-                        current_verlet_object.current_z += correction_z;
-                        //esail.correct_element_coordinates(index, correction_x, correction_y, correction_z, &mut verlet_query);  
-                    }
+                    let mut current_verlet_object = verlet_query.get_mut(sail_element).expect("No previous sail element found");
 
+                    current_verlet_object.current_x += correction_x;
+                    current_verlet_object.current_y += correction_y;
+                    current_verlet_object.current_z += correction_z;
 
-                    let mut prev_verlet_object = verlet_query.get_mut(prev_sail_element).expect("No previous sail element found");
+                    // It's like the function is not doing anything. The force is applied, the constraint is not.
+                    // Sometimes I think that it is being applied, only backwards, but still it doesn't explain it.
+                    //current_verlet_object.correct_coordinates(correction_x, correction_y, correction_z);
+                    //esail.correct_element_coordinates(index, correction_x, correction_y, correction_z, &mut verlet_query);  
+
                     
-                    if prev_verlet_object.is_deployed {
+                    //if prev_verlet_object.is_deployed { // IF I REMOVE THIS IT FAILS LIKE WHEN USING THE METHOD
+                    if index > 1 {
+                        let prev_sail_element   = esail.elements[index - 1];
+                        let mut prev_verlet_object = verlet_query.get_mut(prev_sail_element).expect("No previous sail element found");
                         prev_verlet_object.current_x -= correction_x;
                         prev_verlet_object.current_y -= correction_y;
                         prev_verlet_object.current_z -= correction_z;
-                        //esail.correct_element_coordinates(index - 1, -correction_x, -correction_y, -correction_z, &mut verlet_query);  
                     }
+                    //prev_verlet_object.correct_coordinates(-correction_x, -correction_y, -correction_z);
+                    //esail.correct_element_coordinates(index - 1, -correction_x, -correction_y, -correction_z, &mut verlet_query);  
                 }
             }
         }
@@ -221,9 +237,9 @@ fn verlet_integration(
     // Should I pass the mass from the mass query instead? (They should be exactly the same)
     let acceleration_z = - force_per_segment / spacecraft_parameters.segment_mass(); 
 
-    println!("{}: {:?}", "Force per segment", force_per_segment);    
-    println!("{}: {:?}", "Total force", force_per_segment * spacecraft_parameters.wire_resolution.value * spacecraft_parameters.wire_length.value);
-    println!("-------------------------");
+    //println!("{}: {:?}", "Force per segment", force_per_segment);    
+    //println!("{}: {:?}", "Total force", force_per_segment * spacecraft_parameters.wire_resolution.value * spacecraft_parameters.wire_length.value);
+    //println!("-------------------------");
 
     //let next_position_y = current_position_y + velocity_y + acceleration_y.value * simulation_parameters.timestep * simulation_parameters.timestep;
     let next_position_z = current_position_z + velocity_z + acceleration_z.value * simulation_parameters.timestep * simulation_parameters.timestep;
@@ -269,7 +285,7 @@ fn coulomb_force_per_meter(
 
     let force_per_unit_length = r_s * K * resources::M_PROTON * solar_wind.n_0 * solar_wind.velocity * solar_wind.velocity;
 
-    println!("{}: {:?}", "Force per meter", force_per_unit_length); 
+    //println!("{}: {:?}", "Force per meter", force_per_unit_length); 
 
     return force_per_unit_length;
 }

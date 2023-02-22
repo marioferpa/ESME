@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use uom::si::f64 as quantities;  // Should I use f64?
+use uom::si::electric_potential::volt;
 
 #[derive(Component)]
 pub struct CenterOfMass;
@@ -12,16 +13,22 @@ pub struct SatelliteBody;
 
 #[derive(Component, Debug)]
 pub struct ESail {
-    pub origin:     Entity,
+    //pub origin:     Entity,
+    pub origin:     (f64, f64, f64),
     pub elements:   Vec<Entity>,
 }
 
 impl ESail {
 
+    pub fn distance_to_center(&self) -> f64 {
+        return self.origin.0;
+    }
+
+    // Modify this so that if index = 0 it calculates distance to origin instead
     pub fn pixels_between_elements(
         &self,
         index: usize,
-        verlet_query:   &Query<&mut VerletObject, With<SailElement>>,
+        verlet_query:   &Query<&mut VerletObject>,
         ) -> (f64, f64, f64, f64)  {
 
         let (current_element_x, current_element_y, current_element_z) =
@@ -31,10 +38,14 @@ impl ESail {
                 .current_coordinates();
 
         let (prev_element_x, prev_element_y, prev_element_z) =
-            verlet_query
-                .get(self.elements[index -1])
-                .expect("Element not found")
-                .current_coordinates();
+            if index > 0 {
+                verlet_query
+                    .get(self.elements[index -1])
+                    .expect("Element not found")
+                    .current_coordinates()
+            } else {
+                self.origin
+            };
 
         let diff_x = current_element_x - prev_element_x;
         let diff_y = current_element_y - prev_element_y;
@@ -44,11 +55,12 @@ impl ESail {
         return (diff_x, diff_y, diff_z, pixels_between_elements);
     }
 
+    /// Doesn't work and I can't figure out why
     pub fn correct_element_coordinates(
         &self,
         index: usize,
         correction_x: f64, correction_y: f64, correction_z: f64,
-        verlet_query: &mut Query<&mut VerletObject, With<SailElement>>,
+        verlet_query: &mut Query<&mut VerletObject>,
         ){
         
         verlet_query
@@ -59,11 +71,11 @@ impl ESail {
     }
 }
 
-#[derive(Component, Debug)]
-pub struct SailElement {
-    pub is_deployed:    bool,   // Not used. Makes more sense than in VerletObject,
-                                // but it's harder to access from the code.
-}
+//#[derive(Component, Debug)]
+//pub struct SailElement {
+//    pub is_deployed:    bool,   // Not used. Makes more sense than in VerletObject,
+//                                // but it's harder to access from the code.
+//}
 
 
 #[derive(Component, Debug)]
@@ -76,7 +88,17 @@ pub struct ElectricallyCharged {
     pub potential:  quantities::ElectricPotential,
 }
 
-// I could call this SailElement and make everything simpler
+impl Default for ElectricallyCharged {
+    fn default() -> Self {
+        ElectricallyCharged {
+            potential: quantities::ElectricPotential::new::<volt>(0.0),
+        }
+    }
+}
+ 
+//commands.entity(sail_element).insert(components::ElectricallyCharged{potential: quantities::ElectricPotential::new::<volt>(0.0)});    // This should be a default of the component
+
+// I could rename this to SailElement and make everything simpler
 #[derive(Component, Debug, Copy, Clone)]
 pub struct VerletObject {
     pub previous_x:     f64,
@@ -96,9 +118,14 @@ impl VerletObject {
 
     pub fn correct_coordinates(mut self, correction_x: f64, correction_y: f64, correction_z: f64) {
 
-        self.current_x += correction_x;
-        self.current_y += correction_y;
-        self.current_z += correction_z;
+        //println!("X before: {}", self.current_x);
+        //if self.is_deployed {
+            self.current_x += correction_x;
+            self.current_y += correction_y;
+            self.current_z += correction_z;
+        //}
+
+        //println!("X after: {}", self.current_x);
     }
 
 }
