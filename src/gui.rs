@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContext};
 
-use crate::{ resources };
+use crate::{ resources, physics };
 
 use uom::si::*;
 
@@ -59,6 +59,7 @@ impl GUIPlugin {
 
             ui.separator();
 
+
             ui.label("SIMULATION");
 
             ui.horizontal(|ui| { ui.label("Constraint iterations per timestep"); });
@@ -78,6 +79,11 @@ impl GUIPlugin {
             });
 
             ui.separator();
+
+            ui.label("RESULTS");
+            ui.horizontal(|ui| { 
+                ui.monospace( format!("Total coulomb force: "));
+            });
 
             //if ui.add(egui::Button::new("Reset")).clicked() {
             //   println!("Hey");

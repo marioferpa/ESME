@@ -55,20 +55,20 @@ impl ESail {
         return (diff_x, diff_y, diff_z, pixels_between_elements);
     }
 
-    /// Doesn't work and I can't figure out why
-    pub fn correct_element_coordinates(
-        &self,
-        index: usize,
-        correction_x: f64, correction_y: f64, correction_z: f64,
-        verlet_query: &mut Query<&mut VerletObject>,
-        ){
-        
-        verlet_query
-            .get(self.elements[index])
-            .expect("Element not found")
-            .correct_coordinates(correction_x, correction_y, correction_z);
-        
-    }
+    ///// Doesn't work and I can't figure out why
+    //pub fn correct_element_coordinates(
+    //    &self,
+    //    index: usize,
+    //    correction_x: f64, correction_y: f64, correction_z: f64,
+    //    verlet_query: &mut Query<&mut VerletObject>,
+    //    ){
+    //    
+    //    verlet_query
+    //        .get(self.elements[index])
+    //        .expect("Element not found")
+    //        .correct_coordinates(correction_x, correction_y, correction_z);
+    //    
+    //}
 }
 
 //#[derive(Component, Debug)]
@@ -116,16 +116,12 @@ impl VerletObject {
         return (self.current_x, self.current_y, self.current_z);
     }
 
-    pub fn correct_coordinates(mut self, correction_x: f64, correction_y: f64, correction_z: f64) {
+    pub fn correct_coordinates(&mut self, correction_x: f64, correction_y: f64, correction_z: f64) {    // I think this solved it omg
 
-        //println!("X before: {}", self.current_x);
-        //if self.is_deployed {
-            self.current_x += correction_x;
-            self.current_y += correction_y;
-            self.current_z += correction_z;
-        //}
+        self.current_x += correction_x;
+        self.current_y += correction_y;
+        self.current_z += correction_z;
 
-        //println!("X after: {}", self.current_x);
     }
 
 }

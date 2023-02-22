@@ -43,7 +43,8 @@ impl PhysicsPlugin {
         ){
 
         // Sat should have an angle variable (in uom units!) that I update, and this function
-        // should read that and update the transform, as I do with everything else
+        // should read that and update the transform, as I do with everything else. And moving it
+        // to graphics too
 
         let mut sat_body_transform  = satellite_query.single_mut();
 
@@ -79,7 +80,6 @@ impl PhysicsPlugin {
         esail_query:                Query<&components::ESail>,  // Should I add information about the pivot to ESail?
         solar_wind_parameters:      Res<resources::SolarWindParameters>,
         spacecraft_parameters:      Res<resources::SpacecraftParameters>,
-        //mut verlet_query:           Query<&mut components::VerletObject, With<components::SailElement>>,
         mut verlet_query:           Query<&mut components::VerletObject>,
         mut simulation_parameters:  ResMut<resources::SimulationParameters>,
         ) {
@@ -107,10 +107,6 @@ impl PhysicsPlugin {
 
                 for index in 0..esail.elements.len() {  
 
-                    // Information about the esail element and its predecessor in the line
-                    let sail_element        = esail.elements[index];
-                    //let prev_sail_element   = esail.elements[index - 1];
-
                     // Distance between elements (in pixels). Tested these new functions with asserteq!, the results are exactly as before.
                     let (diff_x, diff_y, diff_z, pixels_between_elements) = esail.pixels_between_elements(index, &verlet_query);
 
@@ -126,7 +122,8 @@ impl PhysicsPlugin {
                     // This will go in a method too, and take into account that the first element
                     // doesn't have a previous element to measure from, but a pivot that doesn't move.
 
-                    let (correction_x, correction_y, correction_z) = if index > 1 {
+                    //let (correction_x, correction_y, correction_z) = if index > 1 {
+                    let (correction_x, correction_y, correction_z) = if index > 0 {     // 0 or 1??
                         (diff_x * 0.5 * difference, diff_y * 0.5 * difference, diff_z * 0.5 * difference)
                     } else {
                         (diff_x * difference, diff_y * difference, diff_z * difference)
@@ -134,28 +131,16 @@ impl PhysicsPlugin {
 
                     // UPDATING POSITIONS
                     
-                    let mut current_verlet_object = verlet_query.get_mut(sail_element).expect("No previous sail element found");
+                    let mut current_verlet_object = verlet_query.get_mut(esail.elements[index]).expect("No previous sail element found");
 
-                    current_verlet_object.current_x += correction_x;
-                    current_verlet_object.current_y += correction_y;
-                    current_verlet_object.current_z += correction_z;
+                    current_verlet_object.correct_coordinates(correction_x, correction_y, correction_z);
 
-                    // It's like the function is not doing anything. The force is applied, the constraint is not.
-                    // Sometimes I think that it is being applied, only backwards, but still it doesn't explain it.
-                    //current_verlet_object.correct_coordinates(correction_x, correction_y, correction_z);
-                    //esail.correct_element_coordinates(index, correction_x, correction_y, correction_z, &mut verlet_query);  
-
-                    
-                    //if prev_verlet_object.is_deployed { // IF I REMOVE THIS IT FAILS LIKE WHEN USING THE METHOD
-                    if index > 1 {
+                    //if index > 1 {
+                    if index > 0 {
                         let prev_sail_element   = esail.elements[index - 1];
-                        let mut prev_verlet_object = verlet_query.get_mut(prev_sail_element).expect("No previous sail element found");
-                        prev_verlet_object.current_x -= correction_x;
-                        prev_verlet_object.current_y -= correction_y;
-                        prev_verlet_object.current_z -= correction_z;
+                        let mut prev_verlet_object = verlet_query.get_mut(esail.elements[index - 1]).expect("No previous sail element found");
+                        prev_verlet_object.correct_coordinates(-correction_x, -correction_y, -correction_z);
                     }
-                    //prev_verlet_object.correct_coordinates(-correction_x, -correction_y, -correction_z);
-                    //esail.correct_element_coordinates(index - 1, -correction_x, -correction_y, -correction_z, &mut verlet_query);  
                 }
             }
         }
@@ -219,6 +204,10 @@ fn verlet_integration(
 
 
     // FORCES
+    //
+    // Improvements:
+    // * Each element will need to calculate its own centrifugal force!
+    // * Forces should be vectors instead of going over one axis like they do now
 
     // X AXIS: Centrifugal force
 
@@ -263,7 +252,7 @@ fn verlet_integration(
 
 // From janhunen2007, equation 8. Corroborate all the results. And recheck the equations too.
 #[allow(non_snake_case)]
-fn coulomb_force_per_meter( 
+pub fn coulomb_force_per_meter( 
     solar_wind:         &Res<resources::SolarWindParameters>, 
     spacecraft:         &Res<resources::SpacecraftParameters>,
     ) -> uom::si::f64::RadiantExposure {    // Radiant exposure is [mass][time]⁻²
