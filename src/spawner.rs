@@ -35,7 +35,6 @@ impl SpawnerPlugin {
         mut meshes:             ResMut<Assets<Mesh>>,
         mut materials:          ResMut<Assets<StandardMaterial>>,
         simulation_parameters:  Res<resources::SimulationParameters>,
-        spacecraft_parameters:  Res<resources::SpacecraftParameters>,
         ) {
 
         let cubesat_size = BODY_RADIUS * simulation_parameters.pixels_per_meter as f64 / 0.707;

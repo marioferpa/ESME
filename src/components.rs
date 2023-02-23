@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 use bevy::math::DVec3;  // Vec3 with f64 values
 use std::ops::Sub;      // For subtracting DVec3
-use std::ops::Mul;
 use uom::si::f64 as quantities;  
 use uom::si::electric_potential::volt;
 
@@ -51,16 +50,7 @@ impl ESail {
                 self.origin
             };
 
-        let diff_vector = current_element_coords.sub(preceding_element_coords);
-        
-        // Test
-        let v1 = DVec3::new(1.0, 2.0, 0.0);
-        let v2 = DVec3::new(3.0, 2.0, 2.0);
-        //println!("Product test: {}", v1.mul(v2)); // Success
-        //println!("Product test: {}", v1.mul(2.0)); // Success as well!
-        //println!("Product test: {}", v1.mul(2.0 * 3.0)); // Success as well!
-
-        return diff_vector;
+        return current_element_coords.sub(preceding_element_coords);
     }
 }
 

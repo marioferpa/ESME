@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContext};
 
-use crate::{ resources, physics };
+use crate::{ resources };
 
 use uom::si::*;
 
@@ -55,7 +55,6 @@ impl GUIPlugin {
 
             ui.horizontal(|ui| {
                 ui.label(format!("Solar wind velocity: {} km/s", solar_wind.velocity.get::<velocity::kilometer_per_second>()));
-                //ui.add(egui::DragValue::new(&mut solar_wind.velocity.get::<velocity::kilometer_per_second>()));
             });
 
             ui.separator();

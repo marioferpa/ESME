@@ -181,6 +181,7 @@ impl PhysicsPlugin {
 
 
 /// Updates the position of a verlet object
+/// This needs a rewrite using vectors
 fn verlet_integration(
     simulation_parameters:  &mut ResMut<resources::SimulationParameters>,
     verlet_object:          &mut components::VerletObject,
