@@ -40,8 +40,9 @@ impl GUIPlugin {
             ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential.value, 0.0..=MAX_VOLTAGE).text("V (want kV)"));
 
             ui.horizontal(|ui| {
-                ui.label("Deployed wire length (m)");
-                ui.add(egui::DragValue::new(&mut spacecraft_parameters.wire_length.get::<length::meter>()));
+                //ui.label("Deployed wire length (m)");
+                //ui.add(egui::DragValue::new(&mut spacecraft_parameters.wire_length.get::<length::meter>()));
+                ui.label( format!("Deployed wire length: {} m", spacecraft_parameters.wire_length.get::<length::meter>()));
             });
             ui.separator();
 
@@ -53,8 +54,8 @@ impl GUIPlugin {
             });
 
             ui.horizontal(|ui| {
-                ui.label("Solar wind velocity(km/s)");
-                ui.add(egui::DragValue::new(&mut solar_wind.velocity.get::<velocity::kilometer_per_second>()));
+                ui.label(format!("Solar wind velocity: {} km/s", solar_wind.velocity.get::<velocity::kilometer_per_second>()));
+                //ui.add(egui::DragValue::new(&mut solar_wind.velocity.get::<velocity::kilometer_per_second>()));
             });
 
             ui.separator();
@@ -82,7 +83,7 @@ impl GUIPlugin {
 
             ui.label("RESULTS");
             ui.horizontal(|ui| { 
-                ui.monospace( format!("Total coulomb force: "));
+                ui.label( format!("Total coulomb force: "));
             });
 
             //if ui.add(egui::Button::new("Reset")).clicked() {
