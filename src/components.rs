@@ -1,5 +1,8 @@
 use bevy::prelude::*;
-use uom::si::f64 as quantities;  // Should I use f64?
+use bevy::math::DVec3;  // Vec3 with f64 values
+use std::ops::Sub;      // For subtracting DVec3
+use std::ops::Mul;
+use uom::si::f64 as quantities;  
 use uom::si::electric_potential::volt;
 
 #[derive(Component)]
@@ -13,15 +16,16 @@ pub struct SatelliteBody;
 
 #[derive(Component, Debug)]
 pub struct ESail {
-    //pub origin:     Entity,
-    pub origin:     (f64, f64, f64),
+    pub origin:     DVec3,
     pub elements:   Vec<Entity>,
 }
 
 impl ESail {
 
+    // Should it be Pixels to center?
+    // Also, is this in use?
     pub fn distance_to_center(&self) -> f64 {
-        return self.origin.0;
+        return self.origin[0];  // This doesn't work for 3D, careful
     }
 
     // Modify this so that if index = 0 it calculates distance to origin instead
@@ -29,15 +33,15 @@ impl ESail {
         &self,
         index: usize,
         verlet_query:   &Query<&mut VerletObject>,
-        ) -> (f64, f64, f64, f64)  {
+        ) -> DVec3 {
 
-        let (current_element_x, current_element_y, current_element_z) =
+        let current_element_coords =
             verlet_query
                 .get(self.elements[index])
                 .expect("Element not found")
                 .current_coordinates();
 
-        let (prev_element_x, prev_element_y, prev_element_z) =
+        let preceding_element_coords = 
             if index > 0 {
                 verlet_query
                     .get(self.elements[index -1])
@@ -47,36 +51,18 @@ impl ESail {
                 self.origin
             };
 
-        let diff_x = current_element_x - prev_element_x;
-        let diff_y = current_element_y - prev_element_y;
-        let diff_z = current_element_z - prev_element_z;
-        let pixels_between_elements = (diff_x * diff_x + diff_y * diff_y + diff_z * diff_z).sqrt();
+        let diff_vector = current_element_coords.sub(preceding_element_coords);
+        
+        // Test
+        let v1 = DVec3::new(1.0, 2.0, 0.0);
+        let v2 = DVec3::new(3.0, 2.0, 2.0);
+        //println!("Product test: {}", v1.mul(v2)); // Success
+        //println!("Product test: {}", v1.mul(2.0)); // Success as well!
+        //println!("Product test: {}", v1.mul(2.0 * 3.0)); // Success as well!
 
-        return (diff_x, diff_y, diff_z, pixels_between_elements);
+        return diff_vector;
     }
-
-    ///// Doesn't work and I can't figure out why
-    //pub fn correct_element_coordinates(
-    //    &self,
-    //    index: usize,
-    //    correction_x: f64, correction_y: f64, correction_z: f64,
-    //    verlet_query: &mut Query<&mut VerletObject>,
-    //    ){
-    //    
-    //    verlet_query
-    //        .get(self.elements[index])
-    //        .expect("Element not found")
-    //        .correct_coordinates(correction_x, correction_y, correction_z);
-    //    
-    //}
 }
-
-//#[derive(Component, Debug)]
-//pub struct SailElement {
-//    pub is_deployed:    bool,   // Not used. Makes more sense than in VerletObject,
-//                                // but it's harder to access from the code.
-//}
-
 
 #[derive(Component, Debug)]
 pub struct Mass (
@@ -96,11 +82,9 @@ impl Default for ElectricallyCharged {
     }
 }
  
-//commands.entity(sail_element).insert(components::ElectricallyCharged{potential: quantities::ElectricPotential::new::<volt>(0.0)});    // This should be a default of the component
-
 // I could rename this to SailElement and make everything simpler
 #[derive(Component, Debug, Copy, Clone)]
-pub struct VerletObject {
+pub struct VerletObject {   // Should these be vectors too?
     pub previous_x:     f64,
     pub previous_y:     f64,
     pub previous_z:     f64,
@@ -112,16 +96,29 @@ pub struct VerletObject {
 
 impl VerletObject {
 
-    pub fn current_coordinates(&self) -> (f64, f64, f64) {
-        return (self.current_x, self.current_y, self.current_z);
+    //pub fn current_coordinates(&self) -> (f64, f64, f64) {
+    //    return (self.current_x, self.current_y, self.current_z);
+    //}
+
+    pub fn current_coordinates(&self) -> DVec3 {
+        return DVec3::new(self.current_x, self.current_y, self.current_z);
     }
 
-    pub fn correct_coordinates(&mut self, correction_x: f64, correction_y: f64, correction_z: f64) {    // I think this solved it omg
+    /// Trying Vec3 for this one
+    pub fn previous_coordinates(&self) -> DVec3 {
+        return DVec3::splat(0.0);
+    }
 
-        self.current_x += correction_x;
-        self.current_y += correction_y;
-        self.current_z += correction_z;
+    //pub fn correct_coordinates(&mut self, correction_x: f64, correction_y: f64, correction_z: f64) {    // I think this solved it omg
+    //    self.current_x += correction_x;
+    //    self.current_y += correction_y;
+    //    self.current_z += correction_z;
+    //}
 
+    pub fn correct_current_coordinates(&mut self, correction_vector: DVec3) {    // I think this solved it omg
+        self.current_x += correction_vector[0];
+        self.current_y += correction_vector[1];
+        self.current_z += correction_vector[2];
     }
 
 }

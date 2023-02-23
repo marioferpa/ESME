@@ -1,6 +1,6 @@
 use bevy::prelude::*;
+use bevy::math::DVec3;  // Vec3 with f64 values
 use uom::si::f64 as quantities;
-use uom::si::electric_potential::volt;
 use uom::lib::marker::PhantomData;
 use crate::{ components, resources };
 
@@ -78,8 +78,9 @@ impl SpawnerPlugin {
                 //mesh: meshes.add(Mesh::from(shape::UVSphere { radius: 10.0, ..default() })),
                 mesh: meshes.add(Mesh::from(shape::Cube { size: 5.0, ..default() })),
                 material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
-                transform: Transform::from_xyz(40.0, 0.0, 0.0),
-                visibility: Visibility{ is_visible: true },
+                transform: Transform::from_xyz(
+                    X_FIRST_ELEMENT as f32 * simulation_parameters.pixels_per_meter as f32, 0.0, 0.0),
+                    visibility: Visibility{ is_visible: true },
                 ..default()
             }).id();
 
@@ -87,11 +88,10 @@ impl SpawnerPlugin {
         let number_of_elements = spacecraft_parameters.wire_length * spacecraft_parameters.wire_resolution;
         let pixels_between_elements = (1.0 / spacecraft_parameters.wire_resolution.value) * simulation_parameters.pixels_per_meter as f64;   // Pixels
 
-        // x is in pixels here, I think that is correct.
-
         for number in 0..= number_of_elements.value as i32 - 1 {
      
             let x = X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64 + (number + 1) as f64 * pixels_between_elements;
+            //let x = X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64 + number as f64 * pixels_between_elements;
             
             let element = if number == number_of_elements.value as i32 - 1 {
                 // Endmass
@@ -106,8 +106,8 @@ impl SpawnerPlugin {
 
         commands.entity(esail_entity)
             .insert(components::ESail{ 
-                //origin:     esail_entity,  
-                origin:     (X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64, 0.0, 0.0),
+                //origin:     (X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64, 0.0, 0.0),
+                origin:     DVec3::new(X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64, 0.0, 0.0),
                 elements:   element_vector,     
             });
 

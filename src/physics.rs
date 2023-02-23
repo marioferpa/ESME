@@ -5,6 +5,7 @@
 
 use std::f64::consts;
 use bevy::prelude::*;
+use std::ops::Mul;  // For multiplying DVec3
 use crate::{ components, resources };
 
 use uom::si::*;
@@ -96,50 +97,49 @@ impl PhysicsPlugin {
 
                 let mut verlet_object = verlet_query.get_mut(*element).expect("No sail element found");
 
-                if verlet_object.is_deployed {
+                if verlet_object.is_deployed {  // Needed?
                     verlet_integration(&mut simulation_parameters, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
                 }
             }
 
-            // CONSTRAINT LOOP. All operations in pixels, I believe.
+            // CONSTRAINT LOOP. All operations in pixels, I'm pretty sure.
 
             for _ in 0..simulation_parameters.iterations {
 
                 for index in 0..esail.elements.len() {  
 
-                    // Distance between elements (in pixels). Tested these new functions with asserteq!, the results are exactly as before.
-                    let (diff_x, diff_y, diff_z, pixels_between_elements) = esail.pixels_between_elements(index, &verlet_query);
+                    // Distance between element and preceding element (in pixels). 
+                    let pixels_between_elements = esail.pixels_between_elements(index, &verlet_query);  // The return is a DVec3 now
 
                     // Desired distance between elements (in pixels)
                     let desired_pixels_between_elements = spacecraft_parameters.segment_length().value * simulation_parameters.pixels_per_meter as f64;
 
-                    let difference = if pixels_between_elements > 0.0 {
-                        (desired_pixels_between_elements - pixels_between_elements) / pixels_between_elements
+                    // If difference is zero then I can skip all the rest, right? Perfect spot for an early return.
+
+                    let difference = if pixels_between_elements.length() > 0.0 {
+                        (desired_pixels_between_elements - pixels_between_elements.length()) / pixels_between_elements.length()
                     } else {
                         0.0
                     };
 
-                    // This will go in a method too, and take into account that the first element
-                    // doesn't have a previous element to measure from, but a pivot that doesn't move.
-
-                    //let (correction_x, correction_y, correction_z) = if index > 1 {
-                    let (correction_x, correction_y, correction_z) = if index > 0 {     // 0 or 1??
-                        (diff_x * 0.5 * difference, diff_y * 0.5 * difference, diff_z * 0.5 * difference)
+                    let correction_vector = if index > 0 {
+                        pixels_between_elements.mul(0.5 * difference)
                     } else {
-                        (diff_x * difference, diff_y * difference, diff_z * difference)
+                        pixels_between_elements.mul(difference)
                     };
 
                     // UPDATING POSITIONS
                     
                     let mut current_verlet_object = verlet_query.get_mut(esail.elements[index]).expect("No previous sail element found");
 
-                    current_verlet_object.correct_coordinates(correction_x, correction_y, correction_z);
+                    current_verlet_object.correct_current_coordinates(correction_vector);
 
-                    //if index > 1 {
+                    // Also change previous to preceding wherever needed
+
                     if index > 0 {
-                        let prev_sail_element   = esail.elements[index - 1];
-                        let mut prev_verlet_object = verlet_query.get_mut(esail.elements[index - 1]).expect("No previous sail element found");
-                        prev_verlet_object.correct_coordinates(-correction_x, -correction_y, -correction_z);
+                        //let preceding_sail_element   = esail.elements[index - 1];
+                        let mut preceding_verlet_object = verlet_query.get_mut(esail.elements[index - 1]).expect("No previous sail element found");
+                        preceding_verlet_object.correct_current_coordinates(correction_vector.mul(-1.0));
                     }
                 }
             }
@@ -148,6 +148,7 @@ impl PhysicsPlugin {
 
 
     /// Updates position and visibility of the center of mass
+    /// Maybe this should calculate its position, and graphics.rs should update the transform
     fn update_center_of_mass(
         simulation_parameters:     Res<resources::SimulationParameters>,
         mass_query:     Query<(&Transform, &components::Mass), Without<components::CenterOfMass>>,
@@ -196,6 +197,10 @@ fn verlet_integration(
     let previous_position_x = verlet_object.previous_x;
     let previous_position_y = verlet_object.previous_y;
     let previous_position_z = verlet_object.previous_z;
+
+    // Test
+    //let prev_positions = verlet_object.previous_coordinates();
+    //println!("{:?}", prev_positions[0]);
 
     // Maybe I shouldn't call these velocities, even if they are proportional to that.
     let velocity_x = current_position_x - previous_position_x;

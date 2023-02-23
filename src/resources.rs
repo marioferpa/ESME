@@ -47,6 +47,7 @@ pub struct SpacecraftParameters {
     pub wire_density:       quantities::MassDensity,
     pub wire_potential:     quantities::ElectricPotential,
     pub wire_resolution:    quantities::LinearNumberDensity,
+    //pub esail_coordinates ? (Coordinates of the exit of the reel)
 }
 
 impl Default for SpacecraftParameters {
