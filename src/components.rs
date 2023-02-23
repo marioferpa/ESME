@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy::math::DVec3;  // Vec3 with f64 values
 use std::ops::Sub;      // For subtracting DVec3
+use std::ops::Add;      // For adding DVec3
 use uom::si::f64 as quantities;  
 use uom::si::electric_potential::volt;
 
@@ -21,12 +22,6 @@ pub struct ESail {
 
 impl ESail {
 
-    // Should it be Pixels to center?
-    // Also, is this in use?
-    pub fn distance_to_center(&self) -> f64 {
-        return self.origin[0];  // This doesn't work for 3D, careful
-    }
-
     // Modify this so that if index = 0 it calculates distance to origin instead
     pub fn pixels_between_elements(
         &self,
@@ -38,14 +33,14 @@ impl ESail {
             verlet_query
                 .get(self.elements[index])
                 .expect("Element not found")
-                .current_coordinates();
+                .current_coordinates;
 
         let preceding_element_coords = 
             if index > 0 {
                 verlet_query
                     .get(self.elements[index -1])
                     .expect("Element not found")
-                    .current_coordinates()
+                    .current_coordinates
             } else {
                 self.origin
             };
@@ -74,43 +69,17 @@ impl Default for ElectricallyCharged {
  
 // I could rename this to SailElement and make everything simpler
 #[derive(Component, Debug, Copy, Clone)]
-pub struct VerletObject {   // Should these be vectors too?
-    pub previous_x:     f64,
-    pub previous_y:     f64,
-    pub previous_z:     f64,
-    pub current_x:      f64,
-    pub current_y:      f64,
-    pub current_z:      f64,
-    pub is_deployed:    bool,  // This would be better in another component, SailElement maybe
+pub struct VerletObject { 
+    pub previous_coordinates:   DVec3,
+    pub current_coordinates:    DVec3,
+    pub is_deployed:            bool,  // This would be better in another component, SailElement maybe
 }
 
 impl VerletObject {
 
-    //pub fn current_coordinates(&self) -> (f64, f64, f64) {
-    //    return (self.current_x, self.current_y, self.current_z);
-    //}
-
-    pub fn current_coordinates(&self) -> DVec3 {
-        return DVec3::new(self.current_x, self.current_y, self.current_z);
-    }
-
-    /// Trying Vec3 for this one
-    pub fn previous_coordinates(&self) -> DVec3 {
-        return DVec3::splat(0.0);
-    }
-
-    //pub fn correct_coordinates(&mut self, correction_x: f64, correction_y: f64, correction_z: f64) {    // I think this solved it omg
-    //    self.current_x += correction_x;
-    //    self.current_y += correction_y;
-    //    self.current_z += correction_z;
-    //}
-
     pub fn correct_current_coordinates(&mut self, correction_vector: DVec3) {    // I think this solved it omg
-        self.current_x += correction_vector[0];
-        self.current_y += correction_vector[1];
-        self.current_z += correction_vector[2];
+        self.current_coordinates = self.current_coordinates.add(correction_vector); //Check if add works as you think)
     }
-
 }
 
 /// Tags an entity as capable of panning and orbiting. Taken from Bevy cheatbook

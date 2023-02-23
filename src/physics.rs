@@ -5,7 +5,9 @@
 
 use std::f64::consts;
 use bevy::prelude::*;
+use bevy::math::DVec3;
 use std::ops::Mul;  // For multiplying DVec3
+use std::ops::Sub;
 use crate::{ components, resources };
 
 use uom::si::*;
@@ -190,36 +192,34 @@ fn verlet_integration(
     ){
 
     // CALCULATION OF VELOCITIES
-
-    let current_position_x  = verlet_object.current_x;
-    let current_position_y  = verlet_object.current_y;
-    let current_position_z  = verlet_object.current_z;
-
-    let previous_position_x = verlet_object.previous_x;
-    let previous_position_y = verlet_object.previous_y;
-    let previous_position_z = verlet_object.previous_z;
-
-    // Test
-    //let prev_positions = verlet_object.previous_coordinates();
-    //println!("{:?}", prev_positions[0]);
-
     // Maybe I shouldn't call these velocities, even if they are proportional to that.
+
+    let current_position_x  = verlet_object.current_coordinates[0];
+    let current_position_y  = verlet_object.current_coordinates[1];
+    let current_position_z  = verlet_object.current_coordinates[2];
+
+    let previous_position_x = verlet_object.previous_coordinates[0];
+    let previous_position_y = verlet_object.previous_coordinates[1];
+    let previous_position_z = verlet_object.previous_coordinates[2];
+
     let velocity_x = current_position_x - previous_position_x;
     let velocity_y = current_position_y - previous_position_y;
     let velocity_z = current_position_z - previous_position_z;
 
+    // New!
+    let velocity_vector = verlet_object.current_coordinates.sub(verlet_object.previous_coordinates);
 
     // FORCES
-    //
     // Improvements:
     // * Each element will need to calculate its own centrifugal force!
     // * Forces should be vectors instead of going over one axis like they do now
 
     // X AXIS: Centrifugal force
 
-    let distance_to_center = (current_position_x * current_position_x + current_position_y * current_position_y).sqrt();
+    //let distance_to_center = (current_position_x * current_position_x + current_position_y * current_position_y).sqrt();
+    let distance_to_center = verlet_object.current_coordinates.length();
 
-    let angular_velocity = spacecraft_parameters.rpm * consts::PI / 30.0;   // What was this 30.0 for?
+    let angular_velocity = spacecraft_parameters.rpm * consts::PI / 30.0;   // RPM to Radians per second
 
     let acceleration_x = distance_to_center * angular_velocity * angular_velocity;
 
@@ -237,23 +237,23 @@ fn verlet_integration(
     //println!("-------------------------");
 
     //let next_position_y = current_position_y + velocity_y + acceleration_y.value * simulation_parameters.timestep * simulation_parameters.timestep;
+    let next_position_y = current_position_y; 
     let next_position_z = current_position_z + velocity_z + acceleration_z.value * simulation_parameters.timestep * simulation_parameters.timestep;
     
     // Starting to think that the bending moment should go here too.
 
     // UPDATING OBJECT POSITION
+    // This could be a method on VerletObject
 
     // Previous position is forgotten,
     
     // current position becomes previous position,
-    verlet_object.previous_x = current_position_x;
-    //verlet_object.previous_y = current_position_y;
-    verlet_object.previous_z = current_position_z;
+
+    verlet_object.previous_coordinates = DVec3::new(current_position_x, current_position_y, current_position_z);
 
     // and next position becomes current position.
-    verlet_object.current_x = next_position_x;
-    //verlet_object.current_y = next_position_y;
-    verlet_object.current_z = next_position_z;
+
+    verlet_object.current_coordinates = DVec3::new(next_position_x, next_position_y, next_position_z);
 }
 
 // From janhunen2007, equation 8. Corroborate all the results. And recheck the equations too.

@@ -38,9 +38,12 @@ impl GraphicsPlugin {
         ){
         
         for (verlet_object, mut transform) in verlet_query.iter_mut() {
-            transform.translation.x = verlet_object.current_x as f32;
-            transform.translation.y = verlet_object.current_y as f32;
-            transform.translation.z = verlet_object.current_z as f32;
+            //transform.translation.x = verlet_object.current_x as f32;
+            //transform.translation.y = verlet_object.current_y as f32;
+            //transform.translation.z = verlet_object.current_z as f32;
+            transform.translation.x = verlet_object.current_coordinates[0] as f32;
+            transform.translation.y = verlet_object.current_coordinates[1] as f32;
+            transform.translation.z = verlet_object.current_coordinates[2] as f32;
         }
 
         // Should this update the rotation of the segments too?

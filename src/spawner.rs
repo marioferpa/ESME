@@ -201,7 +201,7 @@ fn spawn_esail_element(
     commands.entity(sail_element)
         .insert(Name::new("E-sail element"))    // Add index to the name!
         .insert(components::Mass(mass))
-        .insert(components::VerletObject{previous_x: x, previous_y: y, previous_z: z, current_x: x, current_y: y, current_z: z, is_deployed: true})
+        .insert(components::VerletObject{previous_coordinates: DVec3::new(x, y, z), current_coordinates: DVec3::new(x, y, z), is_deployed: true})
         ;
 
     if !is_endmass {
