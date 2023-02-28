@@ -80,6 +80,13 @@ impl VerletObject {
     pub fn correct_current_coordinates(&mut self, correction_vector: DVec3) {    // I think this solved it omg
         self.current_coordinates = self.current_coordinates.add(correction_vector); //Check if add works as you think)
     }
+
+    /// Previous position if forgotten, current coordinates become previous coordinates, and next coordinates become current coordinates.
+    pub fn update_coordinates(&mut self, next_coordinates: DVec3) {
+        self.previous_coordinates = self.current_coordinates;
+        self.current_coordinates  = next_coordinates;
+    }
+
 }
 
 /// Tags an entity as capable of panning and orbiting. Taken from Bevy cheatbook

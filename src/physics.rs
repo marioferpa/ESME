@@ -208,15 +208,15 @@ fn verlet_integration(
 
     let coulomb_force = solar_wind.direction.mul(force_per_segment.value);  // I can't make a DVec3 of uom quantities, damn
 
-    let force_vector = coulomb_force + centrifugal_force;
+    let total_force = coulomb_force + centrifugal_force;
 
-    let acceleration_vector = force_vector.div(spacecraft_parameters.segment_mass().value); // AHÁ! If I use this instead of the mass query, it will be wrong for the endmass.
+    let acceleration_vector = total_force.div(spacecraft_parameters.segment_mass().value); // AHÁ! If I use this instead of the mass query, it will be wrong for the endmass.
                                                                                             // Also, am I treating the endmass as if it was charged here?
 
     // Next position calculation
 
     // Taking the formula from here: https://www.algorithm-archive.org/contents/verlet_integration/verlet_integration.html
-    let next_position = verlet_object.current_coordinates.mul(2.0) - verlet_object.previous_coordinates + acceleration_vector.mul(simulation_parameters.timestep * simulation_parameters.timestep);
+    let next_coordinates = verlet_object.current_coordinates.mul(2.0) - verlet_object.previous_coordinates + acceleration_vector.mul(simulation_parameters.timestep * simulation_parameters.timestep);
     
 
     // UPDATING OBJECT POSITION (This could be a method on VerletObject)
@@ -224,10 +224,13 @@ fn verlet_integration(
     // Previous position is forgotten,
     
     // current position becomes previous position,
-    verlet_object.previous_coordinates = verlet_object.current_coordinates;
+    //verlet_object.previous_coordinates = verlet_object.current_coordinates;
 
     // and next position becomes current position.
-    verlet_object.current_coordinates = next_position;
+    //verlet_object.current_coordinates = next_coordinates;
+
+    // Test
+    verlet_object.update_coordinates(next_coordinates);
 
     //println!("{}: {:?}", "Force per segment", force_per_segment);    
     //// And force per meter?
