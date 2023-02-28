@@ -6,8 +6,10 @@
 use std::f64::consts;
 use bevy::prelude::*;
 use bevy::math::DVec3;
-use std::ops::Mul;  // For multiplying DVec3
-use std::ops::Sub;
+//use std::ops::Mul;  // For multiplying DVec3
+//use std::ops::Sub;
+//use std::ops::Div;
+use std::ops::{ Mul, Sub, Div };
 use crate::{ components, resources };
 
 use uom::si::*;
@@ -188,72 +190,50 @@ fn verlet_integration(
     simulation_parameters:  &mut ResMut<resources::SimulationParameters>,
     verlet_object:          &mut components::VerletObject,
     spacecraft_parameters:  &Res<resources::SpacecraftParameters>,
-    solar_wind_parameters:  &Res<resources::SolarWindParameters>,
+    solar_wind:             &Res<resources::SolarWindParameters>,
     ){
 
-    // CALCULATION OF VELOCITIES
-    // Maybe I shouldn't call these velocities, even if they are proportional to that.
+    // Centrifugal force (Along x for now, this needs to change)
 
-    let current_position_x  = verlet_object.current_coordinates[0];
-    let current_position_y  = verlet_object.current_coordinates[1];
-    let current_position_z  = verlet_object.current_coordinates[2];
-
-    let previous_position_x = verlet_object.previous_coordinates[0];
-    let previous_position_y = verlet_object.previous_coordinates[1];
-    let previous_position_z = verlet_object.previous_coordinates[2];
-
-    let velocity_x = current_position_x - previous_position_x;
-    let velocity_y = current_position_y - previous_position_y;
-    let velocity_z = current_position_z - previous_position_z;
-
-    // New!
-    let velocity_vector = verlet_object.current_coordinates.sub(verlet_object.previous_coordinates);
-
-    // FORCES
-    // Improvements:
-    // * Each element will need to calculate its own centrifugal force!
-    // * Forces should be vectors instead of going over one axis like they do now
-
-    // X AXIS: Centrifugal force
-
-    //let distance_to_center = (current_position_x * current_position_x + current_position_y * current_position_y).sqrt();
     let distance_to_center = verlet_object.current_coordinates.length();
 
     let angular_velocity = spacecraft_parameters.rpm * consts::PI / 30.0;   // RPM to Radians per second
 
-    let acceleration_x = distance_to_center * angular_velocity * angular_velocity;
+    // Should be an UOM force, or at least a force.value inside the vector (using units for as long as possible)
+    let centrifugal_force = DVec3::new(spacecraft_parameters.segment_mass().value * distance_to_center * angular_velocity.value * angular_velocity.value, 0.0, 0.0);
 
-    let next_position_x = current_position_x + velocity_x + acceleration_x.value * simulation_parameters.timestep * simulation_parameters.timestep;
-
-    // Y̶ Z AXIS: Coulomb drag
+    // Coulomb drag force
     
-    let force_per_segment = coulomb_force_per_meter(&solar_wind_parameters, &spacecraft_parameters) * spacecraft_parameters.segment_length();
+    let force_per_segment = coulomb_force_per_meter(&solar_wind, &spacecraft_parameters) * spacecraft_parameters.segment_length();
 
-    // Should I pass the mass from the mass query instead? (They should be exactly the same)
-    let acceleration_z = - force_per_segment / spacecraft_parameters.segment_mass(); 
+    let coulomb_force = solar_wind.direction.mul(force_per_segment.value);  // I can't make a DVec3 of uom quantities, damn
 
-    //println!("{}: {:?}", "Force per segment", force_per_segment);    
-    //println!("{}: {:?}", "Total force", force_per_segment * spacecraft_parameters.wire_resolution.value * spacecraft_parameters.wire_length.value);
-    //println!("-------------------------");
+    let force_vector = coulomb_force + centrifugal_force;
 
-    //let next_position_y = current_position_y + velocity_y + acceleration_y.value * simulation_parameters.timestep * simulation_parameters.timestep;
-    let next_position_y = current_position_y; 
-    let next_position_z = current_position_z + velocity_z + acceleration_z.value * simulation_parameters.timestep * simulation_parameters.timestep;
+    let acceleration_vector = force_vector.div(spacecraft_parameters.segment_mass().value); // AHÁ! If I use this instead of the mass query, it will be wrong for the endmass.
+                                                                                            // Also, am I treating the endmass as if it was charged here?
+
+    // Next position calculation
+
+    // Taking the formula from here: https://www.algorithm-archive.org/contents/verlet_integration/verlet_integration.html
+    let next_position = verlet_object.current_coordinates.mul(2.0) - verlet_object.previous_coordinates + acceleration_vector.mul(simulation_parameters.timestep * simulation_parameters.timestep);
     
-    // Starting to think that the bending moment should go here too.
 
-    // UPDATING OBJECT POSITION
-    // This could be a method on VerletObject
+    // UPDATING OBJECT POSITION (This could be a method on VerletObject)
 
     // Previous position is forgotten,
     
     // current position becomes previous position,
-
-    verlet_object.previous_coordinates = DVec3::new(current_position_x, current_position_y, current_position_z);
+    verlet_object.previous_coordinates = verlet_object.current_coordinates;
 
     // and next position becomes current position.
+    verlet_object.current_coordinates = next_position;
 
-    verlet_object.current_coordinates = DVec3::new(next_position_x, next_position_y, next_position_z);
+    //println!("{}: {:?}", "Force per segment", force_per_segment);    
+    //// And force per meter?
+    //println!("{}: {:?}", "Total force", force_per_segment * spacecraft_parameters.wire_resolution.value * spacecraft_parameters.wire_length.value);
+    //println!("-------------------------");
+
 }
 
 // From janhunen2007, equation 8. Corroborate all the results. And recheck the equations too.
