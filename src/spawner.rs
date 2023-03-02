@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy::math::DVec3;  // Vec3 with f64 values
 use uom::si::f64 as quantities;
+use uom::si::*;
 use uom::lib::marker::PhantomData;
 use crate::{ components, resources };
 
@@ -9,7 +10,7 @@ const BODY_MASS:        quantities::Mass = quantities::Mass {dimension: PhantomD
 const ENDMASS_MASS:     quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.05};
 
 const ARROW_LENGTH:     f32 = 100.0;  // pixels?    Move to f64 for consistency?
-const X_FIRST_ELEMENT:  f64 = 0.1;  // meters (more like pixels?)
+const X_FIRST_ELEMENT:  f64 = 0.1;  // meters? 
 
 pub struct SpawnerPlugin;
 
@@ -49,7 +50,7 @@ impl SpawnerPlugin {
         commands.entity(cubesat_entity)
             .insert(Name::new("Satellite body"))
             .insert(components::SatelliteBody)
-            .insert(components::Mass(BODY_MASS))
+            //.insert(components::Mass(BODY_MASS))
             ;
 
         println!("Cubesat spawned");
@@ -73,12 +74,15 @@ impl SpawnerPlugin {
 
         // Spawning a mesh (red cube) on the E-sail position for easier debugging
 
+        let x_position = (BODY_RADIUS / 2.0) * simulation_parameters.pixels_per_meter as f64 / 0.707;
+
+
         let esail_entity = commands.spawn(PbrBundle {
                 //mesh: meshes.add(Mesh::from(shape::UVSphere { radius: 10.0, ..default() })),
                 mesh: meshes.add(Mesh::from(shape::Cube { size: 5.0, ..default() })),
                 material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
                 transform: Transform::from_xyz(
-                    X_FIRST_ELEMENT as f32 * simulation_parameters.pixels_per_meter as f32, 0.0, 0.0),
+                    x_position as f32, 0.0, 0.0),
                     visibility: Visibility{ is_visible: true },
                 ..default()
             }).id();
@@ -90,7 +94,6 @@ impl SpawnerPlugin {
         for number in 0..= number_of_elements.value as i32 - 1 {
      
             let x = X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64 + (number + 1) as f64 * pixels_between_elements;
-            //let x = X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64 + number as f64 * pixels_between_elements;
             
             let element = if number == number_of_elements.value as i32 - 1 {
                 // Endmass
@@ -104,11 +107,21 @@ impl SpawnerPlugin {
         }
 
         commands.entity(esail_entity)
+            .insert(Name::new("E-sail"))
             .insert(components::ESail{ 
-                //origin:     (X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64, 0.0, 0.0),
                 origin:     DVec3::new(X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64, 0.0, 0.0),
+                // NEW!
+                //origin_new: vec![ quantities::Length::new::<length::meter>(BODY_RADIUS / 2.0), quantities::Length::new::<length::meter>(0.0), quantities::Length::new::<length::meter>(0.0), ],
+                origin_new: components::PositionVector::new(
+                                quantities::Length::new::<length::meter>(BODY_RADIUS / 2.0), 
+                                quantities::Length::new::<length::meter>(0.0), 
+                                quantities::Length::new::<length::meter>(0.0)),
                 elements:   element_vector,     
-            });
+            })
+        //return quantities::Length::new::<length::meter>(segment_length);
+        ;
+
+        // Shit, the e-sail component holds a reference to its own position. And in a Vec3!!
 
         println!("E-sail spawned");
 
@@ -201,7 +214,10 @@ fn spawn_esail_element(
     commands.entity(sail_element)
         .insert(Name::new("E-sail element"))    // Add index to the name!
         .insert(components::Mass(mass))
-        .insert(components::VerletObject{previous_coordinates: DVec3::new(x, y, z), current_coordinates: DVec3::new(x, y, z), is_deployed: true})
+        //.insert(components::VerletObject{previous_coordinates: DVec3::new(x, y, z), current_coordinates: DVec3::new(x, y, z)})
+        .insert(components::VerletObject{previous_coordinates: DVec3::new(x, y, z), current_coordinates: DVec3::new(x, y, z),
+                //previous_coordinates_new: Vec::new(), current_coordinates_new: Vec::new()})
+                previous_coordinates_new: components::PositionVector::empty(), current_coordinates_new: components::PositionVector::empty()})
         ;
 
     if !is_endmass {

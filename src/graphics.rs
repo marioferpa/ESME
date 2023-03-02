@@ -38,16 +38,23 @@ impl GraphicsPlugin {
         ){
         
         for (verlet_object, mut transform) in verlet_query.iter_mut() {
-            //transform.translation.x = verlet_object.current_x as f32;
-            //transform.translation.y = verlet_object.current_y as f32;
-            //transform.translation.z = verlet_object.current_z as f32;
             transform.translation.x = verlet_object.current_coordinates[0] as f32;
             transform.translation.y = verlet_object.current_coordinates[1] as f32;
             transform.translation.z = verlet_object.current_coordinates[2] as f32;
         }
 
-        // Should this update the rotation of the segments too?
+        // This (or similar functions here) should update the transform of every entity that
+        // changes its transform
+        // For that I would need a coordinates component or something like that. Verlets would have
+        // their own, but things like sat body and esail could use it. But what would it contain?
+        // DVec3 is no good here because it can't hold uom types. Should it be Vec<uom>? The change
+        // to DVec3 would probably have to be reverted
+
     } 
+
+    // Test
+    //fn update_transform (
+        
 
     fn update_rotation_axes (
         mut axes_query:         Query<&mut Transform, (With<components::Axes>, Without<components::SatelliteBody>)>,   

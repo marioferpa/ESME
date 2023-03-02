@@ -6,13 +6,13 @@
 use std::f64::consts;
 use bevy::prelude::*;
 use bevy::math::DVec3;
-//use std::ops::Mul;  // For multiplying DVec3
-//use std::ops::Sub;
-//use std::ops::Div;
 use std::ops::{ Mul, Sub, Div };
 use crate::{ components, resources };
 
 use uom::si::*;
+
+// All operations in this plugin should be done in physical units. Get rid of pixels in verlets.
+// Graphics.rs should then translate distances to pixels when needed.
 
 pub struct PhysicsPlugin;   // Plugins are structs, therefore they can hold data!
 
@@ -101,9 +101,7 @@ impl PhysicsPlugin {
 
                 let mut verlet_object = verlet_query.get_mut(*element).expect("No sail element found");
 
-                if verlet_object.is_deployed {  // Needed?
-                    verlet_integration(&mut simulation_parameters, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
-                }
+                verlet_integration(&mut simulation_parameters, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
             }
 
             // CONSTRAINT LOOP. All operations in pixels, I'm pretty sure.
@@ -185,7 +183,6 @@ impl PhysicsPlugin {
 
 
 /// Updates the position of a verlet object
-/// This needs a rewrite using vectors
 fn verlet_integration(
     simulation_parameters:  &mut ResMut<resources::SimulationParameters>,
     verlet_object:          &mut components::VerletObject,
@@ -199,8 +196,7 @@ fn verlet_integration(
 
     let angular_velocity = spacecraft_parameters.rpm * consts::PI / 30.0;   // RPM to Radians per second
 
-    // Should be an UOM force, or at least a force.value inside the vector (using units for as long as possible)
-    let centrifugal_force = DVec3::new(spacecraft_parameters.segment_mass().value * distance_to_center * angular_velocity.value * angular_velocity.value, 0.0, 0.0);
+    let centrifugal_force = DVec3::new( (spacecraft_parameters.segment_mass() * distance_to_center * angular_velocity * angular_velocity).value, 0.0, 0.0);
 
     // Coulomb drag force
     
@@ -213,23 +209,10 @@ fn verlet_integration(
     let acceleration_vector = total_force.div(spacecraft_parameters.segment_mass().value); // AHÁ! If I use this instead of the mass query, it will be wrong for the endmass.
                                                                                             // Also, am I treating the endmass as if it was charged here?
 
-    // Next position calculation
-
-    // Taking the formula from here: https://www.algorithm-archive.org/contents/verlet_integration/verlet_integration.html
+    // Next position calculation (formula from here: https://www.algorithm-archive.org/contents/verlet_integration/verlet_integration.html)
     let next_coordinates = verlet_object.current_coordinates.mul(2.0) - verlet_object.previous_coordinates + acceleration_vector.mul(simulation_parameters.timestep * simulation_parameters.timestep);
     
-
-    // UPDATING OBJECT POSITION (This could be a method on VerletObject)
-
-    // Previous position is forgotten,
-    
-    // current position becomes previous position,
-    //verlet_object.previous_coordinates = verlet_object.current_coordinates;
-
-    // and next position becomes current position.
-    //verlet_object.current_coordinates = next_coordinates;
-
-    // Test
+    // Updating verlet coordinates
     verlet_object.update_coordinates(next_coordinates);
 
     //println!("{}: {:?}", "Force per segment", force_per_segment);    

@@ -40,7 +40,6 @@ impl Default for SimulationParameters {
 }
 
 #[derive(Resource)]
-#[allow(non_snake_case)]
 pub struct SpacecraftParameters {
     pub rpm:                quantities::Frequency,  // This could be angular velocity, so I get value and direction together.
     pub rotation_axis:      DVec3,
@@ -49,7 +48,7 @@ pub struct SpacecraftParameters {
     pub wire_density:       quantities::MassDensity,
     pub wire_potential:     quantities::ElectricPotential,
     pub wire_resolution:    quantities::LinearNumberDensity,
-    //pub esail_coordinates ? (Coordinates of the exit of the reel)
+    //pub esail_x:            quantities::Length,     // Coordinate x of the exit of the reel
 }
 
 // Maybe a method to return angular velocity as DVec3 in rads per second?
