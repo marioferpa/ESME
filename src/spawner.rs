@@ -3,7 +3,8 @@ use bevy::math::DVec3;  // Vec3 with f64 values
 use uom::si::f64 as quantities;
 use uom::si::*;
 use uom::lib::marker::PhantomData;
-use crate::{ components, resources };
+
+use crate::{ physics, components, resources };
 
 const BODY_RADIUS:      f64 = 0.1;  // meters
 const BODY_MASS:        quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 10.0};  // You sure these are in kg?
@@ -112,7 +113,7 @@ impl SpawnerPlugin {
                 origin:     DVec3::new(X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64, 0.0, 0.0),
                 // NEW!
                 //origin_new: vec![ quantities::Length::new::<length::meter>(BODY_RADIUS / 2.0), quantities::Length::new::<length::meter>(0.0), quantities::Length::new::<length::meter>(0.0), ],
-                origin_new: components::PositionVector::new(
+                origin_new: physics::PositionVector::new(
                                 quantities::Length::new::<length::meter>(BODY_RADIUS / 2.0), 
                                 quantities::Length::new::<length::meter>(0.0), 
                                 quantities::Length::new::<length::meter>(0.0)),
@@ -217,7 +218,7 @@ fn spawn_esail_element(
         //.insert(components::VerletObject{previous_coordinates: DVec3::new(x, y, z), current_coordinates: DVec3::new(x, y, z)})
         .insert(components::VerletObject{previous_coordinates: DVec3::new(x, y, z), current_coordinates: DVec3::new(x, y, z),
                 //previous_coordinates_new: Vec::new(), current_coordinates_new: Vec::new()})
-                previous_coordinates_new: components::PositionVector::empty(), current_coordinates_new: components::PositionVector::empty()})
+                previous_coordinates_new: physics::PositionVector::empty(), current_coordinates_new: physics::PositionVector::empty()})
         ;
 
     if !is_endmass {

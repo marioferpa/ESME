@@ -17,7 +17,7 @@ use uom::si::*;
 
 // -------------------------- Custom types ---------------------------------------
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct PositionVector ( Vec<quantities::Length> );
 
 impl PositionVector {

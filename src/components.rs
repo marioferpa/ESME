@@ -6,42 +6,7 @@ use uom::si::f64 as quantities;
 use uom::si::electric_potential::volt;
 use uom::si::*;
 
-// TEST! If it works move it somewhere better
-#[derive(Debug)]
-pub struct PositionVector ( Vec<quantities::Length> );
-
-impl PositionVector {
-
-    pub fn empty() -> Self {
-        return PositionVector( Vec::new() );
-    }
-
-    pub fn new(x: quantities::Length, y: quantities::Length, z: quantities::Length) -> Self {
-        return PositionVector( vec![x, y, z] );
-    }
-}
-
-impl Add for PositionVector {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        let x = self.0[0] + other.0[0];
-        let y = self.0[1] + other.0[1];
-        let z = self.0[2] + other.0[2];
-        return Self(vec![x, y, z]); 
-    }
-}
-
-impl Sub for PositionVector {
-    type Output = Self;
-
-    fn sub(self, other: Self) -> Self {
-        let x = self.0[0] - other.0[0];
-        let y = self.0[1] - other.0[1];
-        let z = self.0[2] - other.0[2];
-        return Self(vec![x, y, z]); 
-    }
-}
+use crate::{ physics };
 
 ///////////////////////////////////////////////////////
 
@@ -57,17 +22,14 @@ pub struct SatelliteBody;
 #[derive(Component, Debug)]
 pub struct ESail {
     pub origin:     DVec3,
-    // NEW!
-    //pub origin_new:     Vec<quantities::Length>,
-    pub origin_new: PositionVector,
-    pub elements:   Vec<Entity>,
+    pub origin_new: physics::PositionVector, 
+    pub elements:   Vec<Entity>,    // Why's this Vec<Entity> and not Vec<VerletObject>?
 }
 
 
 impl ESail {
 
-    // Test
-    pub fn distance_between_elements(&self, index: usize, verlet_query: &Query<&mut VerletObject>) -> PositionVector {
+    pub fn distance_between_elements(&self, index: usize, verlet_query: &Query<&mut VerletObject>) -> physics::PositionVector {
 
         let element_position = &verlet_query.get(self.elements[index]).expect("").current_coordinates_new;
 
@@ -78,8 +40,8 @@ impl ESail {
                 &self.origin_new
             };
 
-        //return element_position - preceding_element_position; // This won't work
-        return PositionVector::empty();
+        let distance = element_position.clone() - preceding_element_position.clone();
+        return distance;
     }
 
     pub fn pixels_between_elements( // Are they actually pixels? You're mixing up stuff, dude
@@ -103,15 +65,6 @@ impl ESail {
             } else {
                 self.origin
             };
-
-        // TEST, remove later
-        //let quantity1 = quantities::Length::new::<length::meter>(1.1);
-        //let quantity2 = quantities::Length::new::<length::meter>(2.2);
-        //let quantity3 = quantities::Length::new::<length::meter>(3.3);
-        //let vector1 = PositionVector(vec![quantity1, quantity2, quantity3]);
-        //let vector2 = PositionVector(vec![quantity1, quantity2, quantity3]);
-        ////println!("{:?}", vector1 + vector2);
-        //println!("{:?}", vector1 - vector2);
 
         return current_element_coords.sub(preceding_element_coords);
     }
@@ -148,10 +101,8 @@ pub struct Position (
 pub struct VerletObject { 
     pub previous_coordinates:   DVec3,  // Are these meters or what? They should!
     pub current_coordinates:    DVec3,
-    //pub previous_coordinates_new:   Vec<quantities::Length>,
-    //pub current_coordinates_new:    Vec<quantities::Length>,
-    pub previous_coordinates_new:   PositionVector,
-    pub current_coordinates_new:    PositionVector,
+    pub previous_coordinates_new:   physics::PositionVector,
+    pub current_coordinates_new:    physics::PositionVector,
 }
 
 impl VerletObject {
