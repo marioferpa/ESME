@@ -6,13 +6,58 @@
 use std::f64::consts;
 use bevy::prelude::*;
 use bevy::math::DVec3;
-use std::ops::{ Mul, Sub, Div };
+use std::ops::{ Add, Sub, Mul, Div };
 use crate::{ components, resources };
 
+use uom::si::f64 as quantities;  
 use uom::si::*;
 
 // All operations in this plugin should be done in physical units. Get rid of pixels in verlets.
 // Graphics.rs should then translate distances to pixels when needed.
+
+// -------------------------- Custom types ---------------------------------------
+
+#[derive(Debug)]
+pub struct PositionVector ( Vec<quantities::Length> );
+
+impl PositionVector {
+
+    pub fn new(x: quantities::Length, y: quantities::Length, z: quantities::Length) -> Self {
+        let mut vector = Vec::with_capacity(3);
+        vector.push(x);
+        vector.push(y);
+        vector.push(z);
+        return Self(vector);
+    }
+
+    pub fn empty() -> Self {
+        return PositionVector( Vec::new() );
+    }
+}
+
+impl Add for PositionVector {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        let x = self.0[0] + other.0[0];
+        let y = self.0[1] + other.0[1];
+        let z = self.0[2] + other.0[2];
+        return Self(vec![x, y, z]); 
+    }
+}
+
+impl Sub for PositionVector {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        let x = self.0[0] - other.0[0];
+        let y = self.0[1] - other.0[1];
+        let z = self.0[2] - other.0[2];
+        return Self(vec![x, y, z]); 
+    }
+}
+
+// -------------------------- Physics plugin ---------------------------------------
 
 pub struct PhysicsPlugin;   // Plugins are structs, therefore they can hold data!
 
