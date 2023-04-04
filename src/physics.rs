@@ -3,61 +3,20 @@
 
 // Problem, maybe: The simulation seems to be idle for the two first frames
 
-use std::f64::consts;
 use bevy::prelude::*;
 use bevy::math::DVec3;
-use std::ops::{ Add, Sub, Mul, Div };
-use crate::{ components, resources };
+use crate::{ components, resources, elements };
 
-use uom::si::f64 as quantities;  
 use uom::si::*;
+
+use std::ops::{ Mul };
+
+pub mod position_vector;
+pub mod force_vector;
+pub mod verlet_object;
 
 // All operations in this plugin should be done in physical units. Get rid of pixels in verlets.
 // Graphics.rs should then translate distances to pixels when needed.
-
-// -------------------------- Custom types ---------------------------------------
-
-#[derive(Debug, Clone)]
-pub struct PositionVector ( Vec<quantities::Length> );
-
-impl PositionVector {
-
-    pub fn new(x: quantities::Length, y: quantities::Length, z: quantities::Length) -> Self {
-        let mut vector = Vec::with_capacity(3);
-        vector.push(x);
-        vector.push(y);
-        vector.push(z);
-        return Self(vector);
-    }
-
-    pub fn empty() -> Self {
-        return PositionVector( Vec::new() );
-    }
-}
-
-impl Add for PositionVector {
-    type Output = Self;
-
-    fn add(self, other: Self) -> Self {
-        let x = self.0[0] + other.0[0];
-        let y = self.0[1] + other.0[1];
-        let z = self.0[2] + other.0[2];
-        return Self(vec![x, y, z]); 
-    }
-}
-
-impl Sub for PositionVector {
-    type Output = Self;
-
-    fn sub(self, other: Self) -> Self {
-        let x = self.0[0] - other.0[0];
-        let y = self.0[1] - other.0[1];
-        let z = self.0[2] - other.0[2];
-        return Self(vec![x, y, z]); 
-    }
-}
-
-// -------------------------- Physics plugin ---------------------------------------
 
 pub struct PhysicsPlugin;   // Plugins are structs, therefore they can hold data!
 
@@ -67,8 +26,6 @@ impl Plugin for PhysicsPlugin {
             .add_system(Self::update_esail_voltage)         // "Charges" the sail with up to the chosen potential
             .add_system(Self::verlet_simulation)            // Calculates new positions
             .add_system(Self::update_center_of_mass)        // Updates position of the center of mass
-            //.add_system(Self::update_body_rotation)
-            .add_system(Self::update_sail_rotation)
             ;
     }
 }
@@ -77,7 +34,7 @@ impl PhysicsPlugin {
 
     /// Updates the potential of every conductor to whatever the gui is showing
     fn update_esail_voltage(
-        spacecraft_parameters:  Res<resources::SpacecraftParameters>,
+        spacecraft_parameters:  Res<elements::SpacecraftParameters>,
         mut electrical_query:   Query<&mut components::ElectricallyCharged>,
         ) {
 
@@ -86,51 +43,13 @@ impl PhysicsPlugin {
         }
     }
 
-    fn update_body_rotation (
-        time:                   Res<Time>, 
-        spacecraft_parameters:  Res<resources::SpacecraftParameters>, 
-        mut satellite_query:    Query<&mut Transform, (With<components::SatelliteBody>, Without<components::ESail>)>,
-        ){
-
-        // Sat should have an angle variable (in uom units!) that I update, and this function
-        // should read that and update the transform, as I do with everything else. And moving it
-        // to graphics too
-
-        let mut sat_body_transform  = satellite_query.single_mut();
-
-        sat_body_transform.rotate( Quat::from_rotation_z( spacecraft_parameters.rpm.value as f32 / 60.0 * time.delta_seconds()) ); 
-
-    }
-
-    fn update_sail_rotation (
-        time:                   Res<Time>, 
-        spacecraft_parameters:  Res<resources::SpacecraftParameters>, 
-        //mut esail_query:        Query<&mut Transform, With<components::ESail>>,
-        mut esail_query:        Query<(&mut Transform, &components::ESail)>,
-        ){
-
-        //let mut esail_transform     = esail_query.single_mut();
-        let (mut esail_transform, mut esail)     = esail_query.single_mut();
-
-        esail_transform.rotate( Quat::from_rotation_z( spacecraft_parameters.rpm.value as f32 / 60.0 * time.delta_seconds()) ); 
-
-        // Not working, why? Do children not rotate with the parent?
-        // It's rotating over itself!
-        
-        // I don't need it to rotate, it doesn't matter actually. What I need is to make it orbit around the center.
-        
-        //println!("{}", esail.distance_to_center());
-
-
-        }
-
     /// Simulation proper
     fn verlet_simulation(
         time:                       Res<Time>, 
-        esail_query:                Query<&components::ESail>,  // Should I add information about the pivot to ESail?
+        esail_query:                Query<&elements::esail::ESail>,  // Should I add information about the pivot to ESail?
         solar_wind_parameters:      Res<resources::SolarWindParameters>,
-        spacecraft_parameters:      Res<resources::SpacecraftParameters>,
-        mut verlet_query:           Query<&mut components::VerletObject>,
+        spacecraft_parameters:      Res<elements::SpacecraftParameters>,
+        mut verlet_query:           Query<&mut verlet_object::VerletObject>,
         mut simulation_parameters:  ResMut<resources::SimulationParameters>,
         ) {
 
@@ -155,31 +74,31 @@ impl PhysicsPlugin {
 
                 for index in 0..esail.elements.len() {  
 
-                    // Distance between element and preceding element (in pixels). 
-                    let pixels_between_elements = esail.pixels_between_elements(index, &verlet_query);  // The return is a DVec3 now
+                    // Distance between element and preceding element (in METERS). 
+                    let distance_between_elements = esail.distance_between_elements(index, &verlet_query);    // Now is a PositionVector
 
-                    // Desired distance between elements (in pixels)
-                    let desired_pixels_between_elements = spacecraft_parameters.segment_length().value * simulation_parameters.pixels_per_meter as f64;
+                    // Desired distance between elements (in METERS TOO)
+                    let desired_distance_between_elements = spacecraft_parameters.segment_length();
 
                     // If difference is zero then I can skip all the rest, right? Perfect spot for an early return.
 
-                    let difference = if pixels_between_elements.length() > 0.0 {
-                        (desired_pixels_between_elements - pixels_between_elements.length()) / pixels_between_elements.length()
+                    let difference = if distance_between_elements.clone().length().value > 0.0 {
+                        (desired_distance_between_elements.value - distance_between_elements.clone().length().value) / distance_between_elements.clone().length().value
                     } else {
                         0.0
                     };
 
                     let correction_vector = if index > 0 {
-                        pixels_between_elements.mul(0.5 * difference)
+                        distance_between_elements.mul(0.5 * difference)
                     } else {
-                        pixels_between_elements.mul(difference)
+                        distance_between_elements.mul(difference)
                     };
 
                     // UPDATING POSITIONS
                     
                     let mut current_verlet_object = verlet_query.get_mut(esail.elements[index]).expect("No previous sail element found");
 
-                    current_verlet_object.correct_current_coordinates(correction_vector);
+                    current_verlet_object.correct_current_coordinates(correction_vector.clone());
 
                     // Also change previous to preceding wherever needed
 
@@ -198,8 +117,8 @@ impl PhysicsPlugin {
     /// Maybe this should calculate its position, and graphics.rs should update the transform
     fn update_center_of_mass(
         simulation_parameters:     Res<resources::SimulationParameters>,
-        mass_query:     Query<(&Transform, &components::Mass), Without<components::CenterOfMass>>,
-        mut com_query:  Query<&mut Transform, With<components::CenterOfMass>>, 
+        mass_query:     Query<(&Transform, &components::Mass), Without<elements::center_mass::CenterOfMass>>,
+        mut com_query:  Query<&mut Transform, With<elements::center_mass::CenterOfMass>>, 
         ){
 
         let mut total_mass:     f32 = 0.0;  // In this particular case I don't think I should use physical units.
@@ -230,32 +149,44 @@ impl PhysicsPlugin {
 /// Updates the position of a verlet object
 fn verlet_integration(
     simulation_parameters:  &mut ResMut<resources::SimulationParameters>,
-    verlet_object:          &mut components::VerletObject,
-    spacecraft_parameters:  &Res<resources::SpacecraftParameters>,
+    verlet_object:          &mut verlet_object::VerletObject,
+    spacecraft_parameters:  &Res<elements::SpacecraftParameters>,
     solar_wind:             &Res<resources::SolarWindParameters>,
     ){
 
-    // Centrifugal force (Along x for now, this needs to change)
+    // Forces per verlet (so, per segment)
 
-    let distance_to_center = verlet_object.current_coordinates.length();
+    //// Centrifugal force (Along x for now, this needs to change)
 
-    let angular_velocity = spacecraft_parameters.rpm * consts::PI / 30.0;   // RPM to Radians per second
+    let centrifugal_force_magnitude = spacecraft_parameters.segment_mass() * verlet_object.current_coordinates.clone().length()
+                                        * spacecraft_parameters.angular_velocity() * spacecraft_parameters.angular_velocity();
 
-    let centrifugal_force = DVec3::new( (spacecraft_parameters.segment_mass() * distance_to_center * angular_velocity * angular_velocity).value, 0.0, 0.0);
+    let centrifugal_force_direction = DVec3::new(1.0, 0.0, 0.0);
 
-    // Coulomb drag force
+    let centrifugal_force = force_vector::ForceVector::from_direction(centrifugal_force_magnitude, centrifugal_force_direction);
+
+    //// Coulomb drag force
     
-    let force_per_segment = coulomb_force_per_meter(&solar_wind, &spacecraft_parameters) * spacecraft_parameters.segment_length();
+    let coulomb_force_magnitude= coulomb_force_per_meter(&solar_wind, &spacecraft_parameters) * spacecraft_parameters.segment_length();
 
-    let coulomb_force = solar_wind.direction.mul(force_per_segment.value);  // I can't make a DVec3 of uom quantities, damn
+    let coulomb_force = force_vector::ForceVector::from_direction(coulomb_force_magnitude, solar_wind.direction); 
 
-    let total_force = coulomb_force + centrifugal_force;
 
-    let acceleration_vector = total_force.div(spacecraft_parameters.segment_mass().value); // AHÁ! If I use this instead of the mass query, it will be wrong for the endmass.
-                                                                                            // Also, am I treating the endmass as if it was charged here?
+    //// Total force
+
+    let total_force = coulomb_force + centrifugal_force;    // This is a ForceVector containing uom quantities
+
+    // Not making an acceleration uom vector just for this if the result is a position vector anyways
+    let x_acceleration = total_force.x() / spacecraft_parameters.segment_mass() * simulation_parameters.timestep_s * simulation_parameters.timestep_s;
+    let y_acceleration = total_force.y() / spacecraft_parameters.segment_mass() * simulation_parameters.timestep_s * simulation_parameters.timestep_s;
+    let z_acceleration = total_force.z() / spacecraft_parameters.segment_mass() * simulation_parameters.timestep_s * simulation_parameters.timestep_s;
+
+    // Wondering if these units are correct
+    let position_from_acceleration = position_vector::PositionVector::new(x_acceleration, y_acceleration, z_acceleration);
 
     // Next position calculation (formula from here: https://www.algorithm-archive.org/contents/verlet_integration/verlet_integration.html)
-    let next_coordinates = verlet_object.current_coordinates.mul(2.0) - verlet_object.previous_coordinates + acceleration_vector.mul(simulation_parameters.timestep * simulation_parameters.timestep);
+    let next_coordinates = verlet_object.current_coordinates.clone().mul(2.0) - verlet_object.previous_coordinates.clone() + position_from_acceleration;
+
     
     // Updating verlet coordinates
     verlet_object.update_coordinates(next_coordinates);
@@ -268,10 +199,11 @@ fn verlet_integration(
 }
 
 // From janhunen2007, equation 8. Corroborate all the results. And recheck the equations too.
+// Should this go inside the physics folder, in its own file?
 #[allow(non_snake_case)]
 pub fn coulomb_force_per_meter( 
     solar_wind:         &Res<resources::SolarWindParameters>, 
-    spacecraft:         &Res<resources::SpacecraftParameters>,
+    spacecraft:         &Res<elements::SpacecraftParameters>,
     ) -> uom::si::f64::RadiantExposure {    // Radiant exposure is [mass][time]⁻²
 
     // First: r_0, distance at which the potential vanishes

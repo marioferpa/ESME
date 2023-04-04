@@ -1,74 +1,13 @@
 use bevy::prelude::*;
-use bevy::math::DVec3;  // Vec3 with f64 values
-use std::ops::Sub;      // For subtracting DVec3
-use std::ops::Add;      // For adding DVec3
 use uom::si::f64 as quantities;  
 use uom::si::electric_potential::volt;
 use uom::si::*;
 
 use crate::{ physics };
 
-///////////////////////////////////////////////////////
-
-#[derive(Component)]
-pub struct CenterOfMass;
-
-#[derive(Component)]
-pub struct Axes;
-
-#[derive(Component)]
-pub struct SatelliteBody;
-
-#[derive(Component, Debug)]
-pub struct ESail {
-    pub origin:     DVec3,
-    pub origin_new: physics::PositionVector, 
-    pub elements:   Vec<Entity>,    // Why's this Vec<Entity> and not Vec<VerletObject>?
-}
 
 
-impl ESail {
 
-    pub fn distance_between_elements(&self, index: usize, verlet_query: &Query<&mut VerletObject>) -> physics::PositionVector {
-
-        let element_position = &verlet_query.get(self.elements[index]).expect("").current_coordinates_new;
-
-        let preceding_element_position = 
-            if index > 0 {
-                &verlet_query.get(self.elements[index-1]).expect("").current_coordinates_new
-            } else {
-                &self.origin_new
-            };
-
-        let distance = element_position.clone() - preceding_element_position.clone();
-        return distance;
-    }
-
-    pub fn pixels_between_elements( // Are they actually pixels? You're mixing up stuff, dude
-        &self,
-        index: usize,
-        verlet_query:   &Query<&mut VerletObject>,
-        ) -> DVec3 {
-
-        let current_element_coords =
-            verlet_query
-                .get(self.elements[index])
-                .expect("Element not found")
-                .current_coordinates;
-
-        let preceding_element_coords = 
-            if index > 0 {
-                verlet_query
-                    .get(self.elements[index -1])
-                    .expect("Element not found")
-                    .current_coordinates
-            } else {
-                self.origin
-            };
-
-        return current_element_coords.sub(preceding_element_coords);
-    }
-}
 
 #[derive(Component, Debug)]
 pub struct Mass (
@@ -94,30 +33,6 @@ pub struct Position (
 );
 
 // pub struct rotation
-
-// I could rename this to SailElement and make everything simpler
-//#[derive(Component, Debug, Copy, Clone)]
-#[derive(Component, Debug)]
-pub struct VerletObject { 
-    pub previous_coordinates:   DVec3,  // Are these meters or what? They should!
-    pub current_coordinates:    DVec3,
-    pub previous_coordinates_new:   physics::PositionVector,
-    pub current_coordinates_new:    physics::PositionVector,
-}
-
-impl VerletObject {
-
-    pub fn correct_current_coordinates(&mut self, correction_vector: DVec3) {    // I think this solved it omg
-        self.current_coordinates = self.current_coordinates.add(correction_vector); //Check if add works as you think)
-    }
-
-    /// Previous position if forgotten, current coordinates become previous coordinates, and next coordinates become current coordinates.
-    pub fn update_coordinates(&mut self, next_coordinates: DVec3) {
-        self.previous_coordinates = self.current_coordinates;
-        self.current_coordinates  = next_coordinates;
-    }
-
-}
 
 /// Tags an entity as capable of panning and orbiting. Taken from Bevy cheatbook
 #[derive(Component)]

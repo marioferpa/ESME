@@ -1,6 +1,7 @@
 use bevy::prelude::*;
+use uom::si::length::meter;
 
-use crate::{ components, resources };
+use crate::{ physics, elements, components, resources };
 
 pub struct GraphicsPlugin;
 
@@ -20,8 +21,8 @@ impl GraphicsPlugin {
     // this will adapt the Transform to the value of that component.
 
     fn gizmo_visibility (
-        mut com_query:          Query<&mut Visibility, (With<components::CenterOfMass>, Without<components::Axes>)>, 
-        mut axes_query:         Query<&mut Visibility, (With<components::Axes>, Without<components::CenterOfMass>)>,   
+        mut com_query:          Query<&mut Visibility, (With<elements::center_mass::CenterOfMass>, Without<elements::axes::Axes>)>, 
+        mut axes_query:         Query<&mut Visibility, (With<elements::axes::Axes>, Without<elements::center_mass::CenterOfMass>)>,   
         simulation_parameters:  Res<resources::SimulationParameters>,
         ) {
 
@@ -34,31 +35,25 @@ impl GraphicsPlugin {
 
     /// Updates the transform of the verlet objects after the simulation, so that the graphics get updated.
     fn update_transform_verlets (
-        mut verlet_query: Query<(&components::VerletObject, &mut Transform)>,
+        mut verlet_query: Query<(&physics::verlet_object::VerletObject, &mut Transform)>,
+        simulation_parameters:  Res<resources::SimulationParameters>,
         ){
         
         for (verlet_object, mut transform) in verlet_query.iter_mut() {
-            transform.translation.x = verlet_object.current_coordinates[0] as f32;
-            transform.translation.y = verlet_object.current_coordinates[1] as f32;
-            transform.translation.z = verlet_object.current_coordinates[2] as f32;
+            // Should I use get<meter> in these cases?
+            transform.translation.x = verlet_object.current_coordinates.0[0].get::<meter>() as f32 * simulation_parameters.pixels_per_meter as f32;
+            //transform.translation.x = verlet_object.current_coordinates.0[0].value as f32;  
+            transform.translation.y = verlet_object.current_coordinates.0[1].get::<meter>() as f32 * simulation_parameters.pixels_per_meter as f32;
+            transform.translation.z = verlet_object.current_coordinates.0[2].get::<meter>() as f32 * simulation_parameters.pixels_per_meter as f32;
+
+            //println!("Transform X: {}", transform.translation.x);
         }
-
-        // This (or similar functions here) should update the transform of every entity that
-        // changes its transform
-        // For that I would need a coordinates component or something like that. Verlets would have
-        // their own, but things like sat body and esail could use it. But what would it contain?
-        // DVec3 is no good here because it can't hold uom types. Should it be Vec<uom>? The change
-        // to DVec3 would probably have to be reverted
-
     } 
 
-    // Test
-    //fn update_transform (
-        
 
     fn update_rotation_axes (
-        mut axes_query:         Query<&mut Transform, (With<components::Axes>, Without<components::SatelliteBody>)>,   
-        mut satellite_query:    Query<&mut Transform, (With<components::SatelliteBody>, Without<components::Axes>)>,
+        mut axes_query:         Query<&mut Transform, (With<elements::axes::Axes>, Without<elements::body::SatelliteBody>)>,   
+        mut satellite_query:    Query<&mut Transform, (With<elements::body::SatelliteBody>, Without<elements::axes::Axes>)>,
         ) {
 
         let mut axes_transform  = axes_query.single_mut();

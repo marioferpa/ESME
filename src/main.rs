@@ -17,8 +17,8 @@ mod lights_and_camera;
 use lights_and_camera::LightsAndCameraPlugin;
 mod user_input;
 use user_input::UserInputPlugin;
-mod spawner;
-use spawner::SpawnerPlugin;
+mod elements;
+use elements::ElementsPlugin;
 
 extern crate uom;
 
@@ -37,8 +37,7 @@ fn main() {
         .add_plugin(GUIPlugin)
         .add_plugin(LightsAndCameraPlugin)
         .add_plugin(UserInputPlugin)
-        .add_plugin(SpawnerPlugin)
-        .insert_resource(resources::SpacecraftParameters{..Default::default()})
+        .add_plugin(ElementsPlugin)
         .insert_resource(resources::SolarWindParameters{..Default::default()})
         .insert_resource(resources::SimulationParameters{..Default::default()})
         .run();

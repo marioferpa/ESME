@@ -18,6 +18,7 @@ pub const EPSILON_0: quantities::ElectricPermittivity = quantities::ElectricPerm
 pub struct SimulationParameters {
     pub iterations:         i32,    // Number of constraint iterations per timestep.
     pub timestep:           f64,    // Timestep for the physics simulation, in seconds. Should be an uom quantity, right??
+    pub timestep_s:         quantities::Time,   // Update everything to uom seconds later
     pub leftover_time:      f64,    // Unused time from the previous simulation loop.
     pub debug:              bool,   // Toggle for printing debug information to console.
     pub com_visibility:     bool,   // Toggle for showing/hiding the center of mass.
@@ -30,6 +31,7 @@ impl Default for SimulationParameters {
         SimulationParameters {
             iterations:         60,
             timestep:           1.0/60.0,   // In seconds (right?)
+            timestep_s:         quantities::Time::new::<time::second>(1.0/60.0),
             leftover_time:      0.0,
             debug:              false,
             com_visibility:     false,
@@ -38,49 +40,6 @@ impl Default for SimulationParameters {
         }
     }
 }
-
-#[derive(Resource)]
-pub struct SpacecraftParameters {
-    pub rpm:                quantities::Frequency,  // This could be angular velocity, so I get value and direction together.
-    pub rotation_axis:      DVec3,
-    pub wire_length:        quantities::Length,
-    pub wire_radius:        quantities::Length, 
-    pub wire_density:       quantities::MassDensity,
-    pub wire_potential:     quantities::ElectricPotential,
-    pub wire_resolution:    quantities::LinearNumberDensity,
-    //pub esail_x:            quantities::Length,     // Coordinate x of the exit of the reel
-}
-
-// Maybe a method to return angular velocity as DVec3 in rads per second?
-
-impl Default for SpacecraftParameters {
-    fn default() -> SpacecraftParameters {
-        SpacecraftParameters {
-            rpm:                quantities::Frequency::new::<frequency::cycle_per_minute>(0.0),
-            rotation_axis:      DVec3::new(0.0, 0.0, 1.0),  // Is it correct? I think so, right hand rule
-            wire_length:        quantities::Length::new::<length::meter>(1.0),
-            wire_radius:        quantities::Length::new::<length::micrometer>(10.0),
-            wire_density:       quantities::MassDensity::new::<mass_density::gram_per_cubic_centimeter>(2.7),
-            wire_potential:     quantities::ElectricPotential::new::<electric_potential::kilovolt>(0.0),
-            wire_resolution:    quantities::LinearNumberDensity::new::<linear_number_density::per_meter>(25.0),
-        }
-    }
-}
-
-impl SpacecraftParameters {
-    pub fn segment_length (&self) -> quantities::Length {
-        // This is too hacky for my tastes, but dividing 1.0 over self.wire_resolution gave me errors
-        let segment_length: f64 = 1.0 / self.wire_resolution.value;
-        return quantities::Length::new::<length::meter>(segment_length);
-    }
-
-    pub fn segment_mass(&self) -> quantities::Mass {
-        let segment_volume = consts::PI * self.wire_radius * self.wire_radius * self.segment_length();
-        return segment_volume * self.wire_density;
-    }
-}
-
-
 
 #[derive(Resource)]
 #[allow(non_snake_case)]
