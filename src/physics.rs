@@ -5,7 +5,7 @@
 
 use bevy::prelude::*;
 use bevy::math::DVec3;
-use crate::{ components, resources, elements };
+use crate::{ components, resources, spacecraft };
 
 use uom::si::*;
 
@@ -34,7 +34,7 @@ impl PhysicsPlugin {
 
     ///// Updates the potential of every conductor to whatever the gui is showing
     //fn update_esail_voltage(
-    //    spacecraft_parameters:  Res<elements::SpacecraftParameters>,
+    //    spacecraft_parameters:  Res<spacecraft::SpacecraftParameters>,
     //    mut electrical_query:   Query<&mut components::ElectricallyCharged>,
     //    ) {
 
@@ -46,9 +46,9 @@ impl PhysicsPlugin {
     ///// Simulation proper
     //fn verlet_simulation(
     //    time:                       Res<Time>, 
-    //    esail_query:                Query<&elements::esail::ESail>,  // Should I add information about the pivot to ESail?
+    //    esail_query:                Query<&spacecraft::esail::ESail>,  // Should I add information about the pivot to ESail?
     //    solar_wind_parameters:      Res<resources::SolarWindParameters>,
-    //    spacecraft_parameters:      Res<elements::SpacecraftParameters>,
+    //    spacecraft_parameters:      Res<spacecraft::SpacecraftParameters>,
     //    mut verlet_query:           Query<&mut verlet_object::VerletObject>,
     //    mut simulation_parameters:  ResMut<resources::SimulationParameters>,
     //    ) {
@@ -117,8 +117,8 @@ impl PhysicsPlugin {
     /// Maybe this should calculate its position, and graphics.rs should update the transform
     fn update_center_of_mass(
         simulation_parameters:     Res<resources::SimulationParameters>,
-        mass_query:     Query<(&Transform, &components::Mass), Without<elements::center_mass::CenterOfMass>>,
-        mut com_query:  Query<&mut Transform, With<elements::center_mass::CenterOfMass>>, 
+        mass_query:     Query<(&Transform, &components::Mass), Without<spacecraft::center_mass::CenterOfMass>>,
+        mut com_query:  Query<&mut Transform, With<spacecraft::center_mass::CenterOfMass>>, 
         ){
 
         let mut total_mass:     f32 = 0.0;  // In this particular case I don't think I should use physical units.
@@ -150,7 +150,7 @@ impl PhysicsPlugin {
 fn verlet_integration(
     simulation_parameters:  &mut ResMut<resources::SimulationParameters>,
     verlet_object:          &mut verlet_object::VerletObject,
-    spacecraft_parameters:  &Res<elements::SpacecraftParameters>,
+    spacecraft_parameters:  &Res<spacecraft::SpacecraftParameters>,
     solar_wind:             &Res<resources::SolarWindParameters>,
     ){
 
@@ -203,7 +203,7 @@ fn verlet_integration(
 #[allow(non_snake_case)]
 pub fn coulomb_force_per_meter( 
     solar_wind:         &Res<resources::SolarWindParameters>, 
-    spacecraft:         &Res<elements::SpacecraftParameters>,
+    spacecraft:         &Res<spacecraft::SpacecraftParameters>,
     ) -> uom::si::f64::RadiantExposure {    // Radiant exposure is [mass][time]⁻²
 
     // First: r_0, distance at which the potential vanishes

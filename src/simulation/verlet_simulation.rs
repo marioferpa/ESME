@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use crate::{ physics, resources, elements };
+use crate::{ physics, resources, spacecraft };
 use bevy::math::DVec3;
 use std::ops::{ Mul };
 
@@ -7,9 +7,9 @@ use std::ops::{ Mul };
 
 pub fn verlet_simulation(
     time:                       Res<Time>, 
-    esail_query:                Query<&elements::esail::ESail>,  
+    esail_query:                Query<&spacecraft::esail::ESail>,  
     solar_wind_parameters:      Res<resources::SolarWindParameters>,
-    spacecraft_parameters:      Res<elements::SpacecraftParameters>,
+    spacecraft_parameters:      Res<spacecraft::SpacecraftParameters>,
     mut verlet_query:           Query<&mut physics::verlet_object::VerletObject>,
     mut simulation_parameters:  ResMut<resources::SimulationParameters>,
     ) {
@@ -77,7 +77,7 @@ pub fn verlet_simulation(
 fn verlet_integration(
     simulation_parameters:  &mut ResMut<resources::SimulationParameters>,
     verlet_object:          &mut physics::verlet_object::VerletObject,
-    spacecraft_parameters:  &Res<elements::SpacecraftParameters>,
+    spacecraft_parameters:  &Res<spacecraft::SpacecraftParameters>,
     solar_wind:             &Res<resources::SolarWindParameters>,
     ){
 
@@ -146,7 +146,7 @@ fn timestep_calculation(
 #[allow(non_snake_case)]
 pub fn coulomb_force_per_meter( 
     solar_wind:         &Res<resources::SolarWindParameters>, 
-    spacecraft:         &Res<elements::SpacecraftParameters>,
+    spacecraft:         &Res<spacecraft::SpacecraftParameters>,
     ) -> uom::si::f64::RadiantExposure {    // Radiant exposure is [mass][time]⁻²
 
     // First: r_0, distance at which the potential vanishes

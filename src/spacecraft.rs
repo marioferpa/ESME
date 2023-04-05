@@ -13,9 +13,9 @@ pub mod esail;
 pub mod body;
 pub mod center_mass; 
 
-pub struct ElementsPlugin;
+pub struct SpacecraftPlugin;
 
-impl Plugin for ElementsPlugin {
+impl Plugin for SpacecraftPlugin {
     fn build(&self, app: &mut App) {
         app
             .insert_resource(SpacecraftParameters{..Default::default()})

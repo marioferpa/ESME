@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use uom::si::length::meter;
 
-use crate::{ physics, elements, components, resources };
+use crate::{ physics, spacecraft, components, resources };
 
 pub struct GraphicsPlugin;
 
@@ -21,8 +21,8 @@ impl GraphicsPlugin {
     // this will adapt the Transform to the value of that component.
 
     fn gizmo_visibility (
-        mut com_query:          Query<&mut Visibility, (With<elements::center_mass::CenterOfMass>, Without<elements::axes::Axes>)>, 
-        mut axes_query:         Query<&mut Visibility, (With<elements::axes::Axes>, Without<elements::center_mass::CenterOfMass>)>,   
+        mut com_query:          Query<&mut Visibility, (With<spacecraft::center_mass::CenterOfMass>, Without<spacecraft::axes::Axes>)>, 
+        mut axes_query:         Query<&mut Visibility, (With<spacecraft::axes::Axes>, Without<spacecraft::center_mass::CenterOfMass>)>,   
         simulation_parameters:  Res<resources::SimulationParameters>,
         ) {
 
@@ -52,8 +52,8 @@ impl GraphicsPlugin {
 
 
     fn update_rotation_axes (
-        mut axes_query:         Query<&mut Transform, (With<elements::axes::Axes>, Without<elements::body::SatelliteBody>)>,   
-        mut satellite_query:    Query<&mut Transform, (With<elements::body::SatelliteBody>, Without<elements::axes::Axes>)>,
+        mut axes_query:         Query<&mut Transform, (With<spacecraft::axes::Axes>, Without<spacecraft::body::SatelliteBody>)>,   
+        mut satellite_query:    Query<&mut Transform, (With<spacecraft::body::SatelliteBody>, Without<spacecraft::axes::Axes>)>,
         ) {
 
         let mut axes_transform  = axes_query.single_mut();

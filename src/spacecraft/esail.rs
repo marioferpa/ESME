@@ -7,9 +7,6 @@ use uom::lib::marker::PhantomData;
 
 use crate::{ physics, components, resources };
 
-// This needs to go, and use the resource instead
-const X_FIRST_ELEMENT:  f64 = 0.1;  // meters? 
-
 const BODY_MASS:        quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 10.0};  // You sure these are in kg?
 const ENDMASS_MASS:     quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.05};
 

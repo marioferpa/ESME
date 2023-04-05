@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContext};
 
-use crate::{ resources, elements };
+use crate::{ resources, spacecraft };
 
 use uom::si::*;
 
@@ -24,8 +24,8 @@ impl GUIPlugin {
         mut egui_ctx: ResMut<EguiContext>,
         mut sim_params:             ResMut<resources::SimulationParameters>,
         mut solar_wind:             ResMut<resources::SolarWindParameters>, 
-        mut spacecraft_parameters:  ResMut<elements::SpacecraftParameters>,
-        mut esail_query:            Query<(&elements::esail::ESail2, &mut Transform)>,
+        mut spacecraft_parameters:  ResMut<spacecraft::SpacecraftParameters>,
+        mut esail_query:            Query<(&spacecraft::esail::ESail2, &mut Transform)>,
         ) {
 
         let (esail2, mut esail2_transform) = esail_query.single_mut();

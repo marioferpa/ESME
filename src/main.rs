@@ -17,8 +17,8 @@ mod lights_and_camera;
 use lights_and_camera::LightsAndCameraPlugin;
 mod user_input;
 use user_input::UserInputPlugin;
-mod elements;
-use elements::ElementsPlugin;
+mod spacecraft;
+use spacecraft::SpacecraftPlugin;
 mod simulation;
 use simulation::SimulationPlugin;
 
@@ -39,7 +39,7 @@ fn main() {
         .add_plugin(GUIPlugin)
         .add_plugin(LightsAndCameraPlugin)
         .add_plugin(UserInputPlugin)
-        .add_plugin(ElementsPlugin)
+        .add_plugin(SpacecraftPlugin)
         .add_plugin(SimulationPlugin)
         .insert_resource(resources::SolarWindParameters{..Default::default()})
         .insert_resource(resources::SimulationParameters{..Default::default()})
