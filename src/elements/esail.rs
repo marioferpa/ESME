@@ -7,6 +7,7 @@ use uom::lib::marker::PhantomData;
 
 use crate::{ physics, components, resources };
 
+// This needs to go, and use the resource instead
 const X_FIRST_ELEMENT:  f64 = 0.1;  // meters? 
 
 const BODY_MASS:        quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 10.0};  // You sure these are in kg?
@@ -92,29 +93,29 @@ pub fn spawn_esail(
     //    SpatialBundle{ visibility: Visibility{ is_visible: true }, ..Default::default() }
     //)).id();
 
-    let x_position = spacecraft_parameters.esail_origin.x().get::<meter>();
+    let esail_origin_x = spacecraft_parameters.esail_origin.x().get::<meter>();
 
+    // Red cube at the origin of the sail, for debugging
     let esail_entity = commands.spawn(PbrBundle {
-            //mesh: meshes.add(Mesh::from(shape::UVSphere { radius: 10.0, ..default() })),
             mesh: meshes.add(Mesh::from(shape::Cube { size: 5.0, ..default() })),
             material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
             transform: Transform::from_xyz(
-                x_position as f32 * simulation_parameters.pixels_per_meter as f32, 0.0, 0.0),
+                esail_origin_x as f32 * simulation_parameters.pixels_per_meter as f32, 0.0, 0.0),
                 visibility: Visibility{ is_visible: true },
             ..default()
         }).id();
 
     // User defines length of sail and resolution, elements are calculated from those.
     let number_of_elements = spacecraft_parameters.wire_length * spacecraft_parameters.wire_resolution; // Should be a method of sp parameters
-    let pixels_between_elements = (1.0 / spacecraft_parameters.wire_resolution.value) * simulation_parameters.pixels_per_meter as f64;   // Pixels
+    let distance_between_elements = 1.0 / spacecraft_parameters.wire_resolution.value;  // Using get for linear density would get weird
 
     println!("Number of elements: {:?}", number_of_elements);
 
     for number in 0..= number_of_elements.value as i32 - 1 {
 
-        let x = X_FIRST_ELEMENT * simulation_parameters.pixels_per_meter as f64 + (number + 1) as f64 * pixels_between_elements;
+        let x = esail_origin_x + ( number as f64 + 1.0 ) * distance_between_elements;
 
-        println!("Element {}, x = {} pixels", number, x);
+        println!("Element {}, x = {} meters", number, x);
         
         let element = if number == number_of_elements.value as i32 - 1 {
             // Endmass
@@ -131,14 +132,11 @@ pub fn spawn_esail(
         .insert(Name::new("E-sail"))
         .insert(ESail{ 
             origin: physics::position_vector::PositionVector::new(
-                            //quantities::Length::new::<length::meter>(super::body::BODY_X / 2.0), 
-                            //quantities::Length::new::<length::meter>(x_position), 
                             spacecraft_parameters.esail_origin.x(),
                             quantities::Length::new::<length::meter>(0.0), 
                             quantities::Length::new::<length::meter>(0.0)),
             elements:   element_vector,     
         })
-    //return quantities::Length::new::<length::meter>(segment_length);
     ;
 
     println!("E-sail spawned");

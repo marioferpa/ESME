@@ -54,7 +54,7 @@ impl Default for SpacecraftParameters {
             wire_radius:        quantities::Length::new::<length::micrometer>(10.0),
             wire_density:       quantities::MassDensity::new::<mass_density::gram_per_cubic_centimeter>(2.7),
             wire_potential:     quantities::ElectricPotential::new::<electric_potential::kilovolt>(0.0),
-            wire_resolution:    quantities::LinearNumberDensity::new::<linear_number_density::per_meter>(25.0),
+            wire_resolution:    quantities::LinearNumberDensity::new::<linear_number_density::per_meter>(20.0),
             body_size:          quantities::Length::new::<length::meter>(0.15),
             esail_origin:       PositionVector::new(
                                     quantities::Length::new::<length::meter>(0.15 / 2.0),
@@ -64,6 +64,8 @@ impl Default for SpacecraftParameters {
         }
     }
 }
+
+// Should I write a test that ensures that wire_length is a multiple of wire_resolution?
 
 impl SpacecraftParameters {
     pub fn segment_length (&self) -> quantities::Length {
