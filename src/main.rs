@@ -19,6 +19,8 @@ mod user_input;
 use user_input::UserInputPlugin;
 mod elements;
 use elements::ElementsPlugin;
+mod simulation;
+use simulation::SimulationPlugin;
 
 extern crate uom;
 
@@ -38,6 +40,7 @@ fn main() {
         .add_plugin(LightsAndCameraPlugin)
         .add_plugin(UserInputPlugin)
         .add_plugin(ElementsPlugin)
+        .add_plugin(SimulationPlugin)
         .insert_resource(resources::SolarWindParameters{..Default::default()})
         .insert_resource(resources::SimulationParameters{..Default::default()})
         .run();

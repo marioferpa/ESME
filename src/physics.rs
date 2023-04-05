@@ -23,7 +23,7 @@ pub struct PhysicsPlugin;   // Plugins are structs, therefore they can hold data
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_system(Self::update_esail_voltage)         // "Charges" the sail with up to the chosen potential
+            //.add_system(Self::update_esail_voltage)         // "Charges" the sail with up to the chosen potential
             .add_system(Self::verlet_simulation)            // Calculates new positions
             .add_system(Self::update_center_of_mass)        // Updates position of the center of mass
             ;
@@ -32,16 +32,16 @@ impl Plugin for PhysicsPlugin {
 
 impl PhysicsPlugin {
 
-    /// Updates the potential of every conductor to whatever the gui is showing
-    fn update_esail_voltage(
-        spacecraft_parameters:  Res<elements::SpacecraftParameters>,
-        mut electrical_query:   Query<&mut components::ElectricallyCharged>,
-        ) {
+    ///// Updates the potential of every conductor to whatever the gui is showing
+    //fn update_esail_voltage(
+    //    spacecraft_parameters:  Res<elements::SpacecraftParameters>,
+    //    mut electrical_query:   Query<&mut components::ElectricallyCharged>,
+    //    ) {
 
-        for mut electrical_element in electrical_query.iter_mut() {
-            electrical_element.potential = spacecraft_parameters.wire_potential;
-        }
-    }
+    //    for mut electrical_element in electrical_query.iter_mut() {
+    //        electrical_element.potential = spacecraft_parameters.wire_potential;
+    //    }
+    //}
 
     /// Simulation proper
     fn verlet_simulation(
