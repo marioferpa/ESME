@@ -24,7 +24,7 @@ impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
             //.add_system(Self::update_esail_voltage)         // "Charges" the sail with up to the chosen potential
-            .add_system(Self::verlet_simulation)            // Calculates new positions
+            //.add_system(Self::verlet_simulation)            // Calculates new positions
             .add_system(Self::update_center_of_mass)        // Updates position of the center of mass
             ;
     }
@@ -43,74 +43,74 @@ impl PhysicsPlugin {
     //    }
     //}
 
-    /// Simulation proper
-    fn verlet_simulation(
-        time:                       Res<Time>, 
-        esail_query:                Query<&elements::esail::ESail>,  // Should I add information about the pivot to ESail?
-        solar_wind_parameters:      Res<resources::SolarWindParameters>,
-        spacecraft_parameters:      Res<elements::SpacecraftParameters>,
-        mut verlet_query:           Query<&mut verlet_object::VerletObject>,
-        mut simulation_parameters:  ResMut<resources::SimulationParameters>,
-        ) {
+    ///// Simulation proper
+    //fn verlet_simulation(
+    //    time:                       Res<Time>, 
+    //    esail_query:                Query<&elements::esail::ESail>,  // Should I add information about the pivot to ESail?
+    //    solar_wind_parameters:      Res<resources::SolarWindParameters>,
+    //    spacecraft_parameters:      Res<elements::SpacecraftParameters>,
+    //    mut verlet_query:           Query<&mut verlet_object::VerletObject>,
+    //    mut simulation_parameters:  ResMut<resources::SimulationParameters>,
+    //    ) {
 
-        let esail = esail_query.single();
+    //    let esail = esail_query.single();
 
-        let timesteps = timestep_calculation(&time, &mut simulation_parameters);
+    //    let timesteps = timestep_calculation(&time, &mut simulation_parameters);
 
-        for _ in 0..timesteps { 
+    //    for _ in 0..timesteps { 
 
-            // VERLET INTEGRATION: Forces are calculated and applied for each esail element
+    //        // VERLET INTEGRATION: Forces are calculated and applied for each esail element
 
-            for element in esail.elements.iter() {  // Iterating over esail elements, in order.
+    //        for element in esail.elements.iter() {  // Iterating over esail elements, in order.
 
-                let mut verlet_object = verlet_query.get_mut(*element).expect("No sail element found");
+    //            let mut verlet_object = verlet_query.get_mut(*element).expect("No sail element found");
 
-                verlet_integration(&mut simulation_parameters, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
-            }
+    //            verlet_integration(&mut simulation_parameters, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
+    //        }
 
-            // CONSTRAINT LOOP. All operations in pixels, I'm pretty sure.
+    //        // CONSTRAINT LOOP. All operations in pixels, I'm pretty sure.
 
-            for _ in 0..simulation_parameters.iterations {
+    //        for _ in 0..simulation_parameters.iterations {
 
-                for index in 0..esail.elements.len() {  
+    //            for index in 0..esail.elements.len() {  
 
-                    // Distance between element and preceding element (in METERS). 
-                    let distance_between_elements = esail.distance_between_elements(index, &verlet_query);    // Now is a PositionVector
+    //                // Distance between element and preceding element (in METERS). 
+    //                let distance_between_elements = esail.distance_between_elements(index, &verlet_query);    // Now is a PositionVector
 
-                    // Desired distance between elements (in METERS TOO)
-                    let desired_distance_between_elements = spacecraft_parameters.segment_length();
+    //                // Desired distance between elements (in METERS TOO)
+    //                let desired_distance_between_elements = spacecraft_parameters.segment_length();
 
-                    // If difference is zero then I can skip all the rest, right? Perfect spot for an early return.
+    //                // If difference is zero then I can skip all the rest, right? Perfect spot for an early return.
 
-                    let difference = if distance_between_elements.clone().length().value > 0.0 {
-                        (desired_distance_between_elements.value - distance_between_elements.clone().length().value) / distance_between_elements.clone().length().value
-                    } else {
-                        0.0
-                    };
+    //                let difference = if distance_between_elements.clone().length().value > 0.0 {
+    //                    (desired_distance_between_elements.value - distance_between_elements.clone().length().value) / distance_between_elements.clone().length().value
+    //                } else {
+    //                    0.0
+    //                };
 
-                    let correction_vector = if index > 0 {
-                        distance_between_elements.mul(0.5 * difference)
-                    } else {
-                        distance_between_elements.mul(difference)
-                    };
+    //                let correction_vector = if index > 0 {
+    //                    distance_between_elements.mul(0.5 * difference)
+    //                } else {
+    //                    distance_between_elements.mul(difference)
+    //                };
 
-                    // UPDATING POSITIONS
-                    
-                    let mut current_verlet_object = verlet_query.get_mut(esail.elements[index]).expect("No previous sail element found");
+    //                // UPDATING POSITIONS
+    //                
+    //                let mut current_verlet_object = verlet_query.get_mut(esail.elements[index]).expect("No previous sail element found");
 
-                    current_verlet_object.correct_current_coordinates(correction_vector.clone());
+    //                current_verlet_object.correct_current_coordinates(correction_vector.clone());
 
-                    // Also change previous to preceding wherever needed
+    //                // Also change previous to preceding wherever needed
 
-                    if index > 0 {
-                        //let preceding_sail_element   = esail.elements[index - 1];
-                        let mut preceding_verlet_object = verlet_query.get_mut(esail.elements[index - 1]).expect("No previous sail element found");
-                        preceding_verlet_object.correct_current_coordinates(correction_vector.mul(-1.0));
-                    }
-                }
-            }
-        }
-    }
+    //                if index > 0 {
+    //                    //let preceding_sail_element   = esail.elements[index - 1];
+    //                    let mut preceding_verlet_object = verlet_query.get_mut(esail.elements[index - 1]).expect("No previous sail element found");
+    //                    preceding_verlet_object.correct_current_coordinates(correction_vector.mul(-1.0));
+    //                }
+    //            }
+    //        }
+    //    }
+    //}
 
 
     /// Updates position and visibility of the center of mass
@@ -228,18 +228,18 @@ pub fn coulomb_force_per_meter(
     return force_per_unit_length;
 }
 
-/// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.
-fn timestep_calculation(
-    time: &Res<Time>,
-    simulation_parameters: &mut ResMut<resources::SimulationParameters>,
-    ) -> i32 {
-
-    let elapsed_time = time.delta_seconds() as f64 + simulation_parameters.leftover_time; // Elapsed time + leftover time from previous frame
-
-    let timesteps = (elapsed_time / simulation_parameters.timestep).floor() as i32; // Number of timesteps for the current frame
-
-    let leftover_time = elapsed_time - timesteps as f64 * simulation_parameters.timestep;  // Leftover time saved for next frame
-    simulation_parameters.leftover_time = leftover_time;
-
-    return timesteps;
-}
+///// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.
+//fn timestep_calculation(
+//    time: &Res<Time>,
+//    simulation_parameters: &mut ResMut<resources::SimulationParameters>,
+//    ) -> i32 {
+//
+//    let elapsed_time = time.delta_seconds() as f64 + simulation_parameters.leftover_time; // Elapsed time + leftover time from previous frame
+//
+//    let timesteps = (elapsed_time / simulation_parameters.timestep).floor() as i32; // Number of timesteps for the current frame
+//
+//    let leftover_time = elapsed_time - timesteps as f64 * simulation_parameters.timestep;  // Leftover time saved for next frame
+//    simulation_parameters.leftover_time = leftover_time;
+//
+//    return timesteps;
+//}

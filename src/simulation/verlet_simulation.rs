@@ -1,9 +1,16 @@
-fn verlet_simulation(
+use bevy::prelude::*;
+use crate::{ physics, resources, elements };
+use bevy::math::DVec3;
+use std::ops::{ Mul };
+
+// Figure out please why when I deactivate verlet_simulation the esail elements are 35000 pixels away from the center
+
+pub fn verlet_simulation(
     time:                       Res<Time>, 
     esail_query:                Query<&elements::esail::ESail>,  
     solar_wind_parameters:      Res<resources::SolarWindParameters>,
     spacecraft_parameters:      Res<elements::SpacecraftParameters>,
-    mut verlet_query:           Query<&mut verlet_object::VerletObject>,
+    mut verlet_query:           Query<&mut physics::verlet_object::VerletObject>,
     mut simulation_parameters:  ResMut<resources::SimulationParameters>,
     ) {
 
@@ -69,7 +76,7 @@ fn verlet_simulation(
 /// Updates the position of a verlet object
 fn verlet_integration(
     simulation_parameters:  &mut ResMut<resources::SimulationParameters>,
-    verlet_object:          &mut verlet_object::VerletObject,
+    verlet_object:          &mut physics::verlet_object::VerletObject,
     spacecraft_parameters:  &Res<elements::SpacecraftParameters>,
     solar_wind:             &Res<resources::SolarWindParameters>,
     ){
@@ -83,13 +90,13 @@ fn verlet_integration(
 
     let centrifugal_force_direction = DVec3::new(1.0, 0.0, 0.0);
 
-    let centrifugal_force = force_vector::ForceVector::from_direction(centrifugal_force_magnitude, centrifugal_force_direction);
+    let centrifugal_force = physics::force_vector::ForceVector::from_direction(centrifugal_force_magnitude, centrifugal_force_direction);
 
     //// Coulomb drag force
     
     let coulomb_force_magnitude= coulomb_force_per_meter(&solar_wind, &spacecraft_parameters) * spacecraft_parameters.segment_length();
 
-    let coulomb_force = force_vector::ForceVector::from_direction(coulomb_force_magnitude, solar_wind.direction); 
+    let coulomb_force = physics::force_vector::ForceVector::from_direction(coulomb_force_magnitude, solar_wind.direction); 
 
 
     //// Total force
@@ -102,7 +109,7 @@ fn verlet_integration(
     let z_acceleration = total_force.z() / spacecraft_parameters.segment_mass() * simulation_parameters.timestep_s * simulation_parameters.timestep_s;
 
     // Wondering if these units are correct
-    let position_from_acceleration = position_vector::PositionVector::new(x_acceleration, y_acceleration, z_acceleration);
+    let position_from_acceleration = physics::position_vector::PositionVector::new(x_acceleration, y_acceleration, z_acceleration);
 
     // Next position calculation (formula from here: https://www.algorithm-archive.org/contents/verlet_integration/verlet_integration.html)
     let next_coordinates = verlet_object.current_coordinates.clone().mul(2.0) - verlet_object.previous_coordinates.clone() + position_from_acceleration;
@@ -116,4 +123,50 @@ fn verlet_integration(
     //println!("{}: {:?}", "Total force", force_per_segment * spacecraft_parameters.wire_resolution.value * spacecraft_parameters.wire_length.value);
     //println!("-------------------------");
 
+}
+
+/// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.
+fn timestep_calculation(
+    time: &Res<Time>,
+    simulation_parameters: &mut ResMut<resources::SimulationParameters>,
+    ) -> i32 {
+
+    let elapsed_time = time.delta_seconds() as f64 + simulation_parameters.leftover_time; // Elapsed time + leftover time from previous frame
+
+    let timesteps = (elapsed_time / simulation_parameters.timestep).floor() as i32; // Number of timesteps for the current frame
+
+    let leftover_time = elapsed_time - timesteps as f64 * simulation_parameters.timestep;  // Leftover time saved for next frame
+    simulation_parameters.leftover_time = leftover_time;
+
+    return timesteps;
+}
+
+// From janhunen2007, equation 8. Corroborate all the results. And recheck the equations too.
+// Should this go inside the physics folder, in its own file?
+#[allow(non_snake_case)]
+pub fn coulomb_force_per_meter( 
+    solar_wind:         &Res<resources::SolarWindParameters>, 
+    spacecraft:         &Res<elements::SpacecraftParameters>,
+    ) -> uom::si::f64::RadiantExposure {    // Radiant exposure is [mass][time]⁻²
+
+    // First: r_0, distance at which the potential vanishes
+    let r0_numerator    = resources::EPSILON_0 * solar_wind.T_e;
+    let r0_denominator  = solar_wind.n_0 * resources::Q_E * resources::Q_E; 
+    let r_0             = 2.0 * (r0_numerator / r0_denominator).sqrt();    
+
+    // Second: r_s, stopping distance of protons
+    let exp_numerator   = resources::M_PROTON * solar_wind.velocity * solar_wind.velocity * (r_0 / spacecraft.wire_radius).ln();
+    let exp_denominator = resources::Q_E * spacecraft.wire_potential; 
+    let exp             = (exp_numerator / exp_denominator).exp();  
+    let rs_denominator  = (exp.value - 1.0).sqrt();
+    let r_s             = r_0 / rs_denominator;
+
+    // Third: force per unit length
+    let K = 3.09;   // Empirical, from Monte Carlo sims, I need to calculate this myself somehow.
+
+    let force_per_unit_length = r_s * K * resources::M_PROTON * solar_wind.n_0 * solar_wind.velocity * solar_wind.velocity;
+
+    //println!("{}: {:?}", "Force per meter", force_per_unit_length); 
+
+    return force_per_unit_length;
 }
