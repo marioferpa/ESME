@@ -24,12 +24,14 @@ impl Plugin for SpacecraftPlugin {
                     .label("spawn_elements")
                     .with_system(axes::spawn_axes)
                     .with_system(esail::spawn_esail)
-                    .with_system(esail::spawn_second_esail)
                     .with_system(body::spawn_cubesat)
                     .with_system(center_mass::spawn_center_mass)
-            );
+            )
+            .add_system(esail::click)  
+            ;
     }
 }
+
 
 #[derive(Resource)]
 pub struct SpacecraftParameters {
@@ -68,6 +70,12 @@ impl Default for SpacecraftParameters {
 // Should I write a test that ensures that wire_length is a multiple of wire_resolution?
 
 impl SpacecraftParameters {
+
+    pub fn number_of_esail_elements(&self) -> i32 {
+        let number_of_elements = self.wire_length * self.wire_resolution; 
+        return number_of_elements.value as i32;
+    }
+
     pub fn segment_length (&self) -> quantities::Length {
         // This is too hacky for my tastes, but dividing 1.0 over self.wire_resolution gave me errors
         let segment_length: f64 = 1.0 / self.wire_resolution.value;

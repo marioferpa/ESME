@@ -16,6 +16,7 @@ impl Plugin for UserInputPlugin {
 
 impl UserInputPlugin {
 
+
     /// Pan the camera with middle mouse click, zoom with scroll wheel, orbit with right mouse click.
     /// From the Bevy cheatbook
     fn pan_orbit_camera(

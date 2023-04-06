@@ -14,16 +14,12 @@ const ENDMASS_MASS:     quantities::Mass = quantities::Mass {dimension: PhantomD
 pub struct ESail {
     pub origin:     physics::position_vector::PositionVector, 
     pub elements:   Vec<Entity>,    // Why's this Vec<Entity> and not Vec<VerletObject>?
+    //Should length go here and not on the spacecraft parameters?
 }
-
-#[derive(Component, Debug)]
-pub struct ESail2 {
-    pub origin: physics::position_vector::PositionVector,
-} 
 
 impl ESail {
 
-    pub fn distance_between_elements (
+    pub fn vector_to_previous_element (
         &self, index: usize, verlet_query: &Query<&mut physics::verlet_object::VerletObject>) 
         -> physics::position_vector::PositionVector {
 
@@ -33,45 +29,39 @@ impl ESail {
             if index > 0 {
                 &verlet_query.get(self.elements[index-1]).expect("").current_coordinates
             } else {
-                //&self.origin_new
                 &self.origin
             };
 
-        let distance = element_position.clone() - preceding_element_position.clone();
-        return distance;
+        let relative_vector = element_position.clone() - preceding_element_position.clone();
+        return relative_vector;
+    }
+
+    /// Adds an esail element (near the cubesat)
+    fn add_element(&mut self, esail_element: Entity) {
+        self.elements.insert(0, esail_element); 
     }
 }
 
-pub fn spawn_second_esail (
+// Test for adding new elements to the sail
+pub fn click (
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    simulation_parameters: Res<resources::SimulationParameters>,
+    spacecraft_parameters: Res<super::SpacecraftParameters>,
+    keyboard: Res<Input<KeyCode>>,
+    mut esail_query: Query<&mut super::esail::ESail>,  
     ) {
 
-    //let x_position = (super::body::BODY_X * simulation_parameters.pixels_per_meter as f64) / 2.0;
-    let x_position = 0.5 * simulation_parameters.pixels_per_meter as f64; 
+    // Clicking crashes everything because verlet_simulation finds an element in the sail that is
+    // not in the verlet query. But it is! Maybe it's a syncronization problem.
 
-    let esail_entity = commands.spawn(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::UVSphere { radius: 10.0, ..default() })),
-            //mesh: meshes.add(Mesh::from(shape::Cube { size: 5.0, ..default() })),
-            material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
-            transform: Transform::from_xyz(
-                //50.0, 0.0, 0.0),
-                x_position as f32, 0.0, 0.0),
-                visibility: Visibility{ is_visible: true },
-            ..default()
-        }).id();
-
-    commands.entity(esail_entity)
-        .insert(Name::new("New E-sail"))
-        .insert(ESail2 {
-            origin: physics::position_vector::PositionVector::new(
-                            //quantities::Length::new::<length::meter>(super::body::BODY_X / 2.0), // Not multiplied by pixels per meter??
-                            quantities::Length::new::<length::meter>(x_position), 
-                            quantities::Length::new::<length::meter>(0.0), 
-                            quantities::Length::new::<length::meter>(0.0)),
-            });
+    if keyboard.just_pressed(KeyCode::Up) {
+        println!("Hey");
+        let mut esail = esail_query.single_mut();
+        let x = spacecraft_parameters.esail_origin.x().get::<meter>();
+        let element = spawn_esail_element(&mut commands, &mut meshes, &mut materials, x, 0.0, 0.0, 5.0, spacecraft_parameters.segment_mass(), false);
+        esail.add_element(element);
+    }
 }
 
 pub fn spawn_esail(
@@ -103,18 +93,18 @@ pub fn spawn_esail(
         }).id();
 
     // User defines length of sail and resolution, elements are calculated from those.
-    let number_of_elements = spacecraft_parameters.wire_length * spacecraft_parameters.wire_resolution; // Should be a method of sp parameters
+    let number_of_elements = spacecraft_parameters.number_of_esail_elements();
     let distance_between_elements = 1.0 / spacecraft_parameters.wire_resolution.value;  // Using get for linear density would get weird
 
     println!("Number of elements: {:?}", number_of_elements);
 
-    for number in 0..= number_of_elements.value as i32 - 1 {
+    for number in 0..= number_of_elements - 1 {
 
         let x = esail_origin_x + ( number as f64 + 1.0 ) * distance_between_elements;
 
         println!("Element {}, x = {} meters", number, x);
         
-        let element = if number == number_of_elements.value as i32 - 1 {
+        let element = if number == number_of_elements - 1 {
             // Endmass
             spawn_esail_element(&mut commands, &mut meshes, &mut materials, x, 0.0, 0.0, 10.0, ENDMASS_MASS, true)
         } else {

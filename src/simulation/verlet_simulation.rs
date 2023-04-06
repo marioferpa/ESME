@@ -36,7 +36,7 @@ pub fn verlet_simulation(
             for index in 0..esail.elements.len() {  
 
                 // Distance between element and preceding element (in METERS). 
-                let distance_between_elements = esail.distance_between_elements(index, &verlet_query);    // Now is a PositionVector
+                let distance_between_elements = esail.vector_to_previous_element(index, &verlet_query);    // Now is a PositionVector
 
                 // Desired distance between elements (in METERS TOO)
                 let desired_distance_between_elements = spacecraft_parameters.segment_length();

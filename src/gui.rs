@@ -25,10 +25,10 @@ impl GUIPlugin {
         mut sim_params:             ResMut<resources::SimulationParameters>,
         mut solar_wind:             ResMut<resources::SolarWindParameters>, 
         mut spacecraft_parameters:  ResMut<spacecraft::SpacecraftParameters>,
-        mut esail_query:            Query<(&spacecraft::esail::ESail2, &mut Transform)>,
+        //mut esail_query:            Query<(&spacecraft::esail::ESail2, &mut Transform)>,
         ) {
 
-        let (esail2, mut esail2_transform) = esail_query.single_mut();
+        //let (esail2, mut esail2_transform) = esail_query.single_mut();
 
         egui::SidePanel::left("side_panel")
         .default_width(200.0)
@@ -46,9 +46,9 @@ impl GUIPlugin {
                 ui.label( format!("Deployed wire length: {} m", spacecraft_parameters.wire_length.get::<length::meter>()));
             });
 
-            ui.horizontal(|ui| {
-                ui.add(egui::Slider::new(&mut esail2_transform.translation.x, 0.0..=500.0).text("Deployed ESail2 (pixels?)"));
-            });
+            //ui.horizontal(|ui| {
+            //    ui.add(egui::Slider::new(&mut esail2_transform.translation.x, 0.0..=500.0).text("Deployed ESail2 (pixels?)"));
+            //});
 
             ui.separator();
 
