@@ -26,7 +26,6 @@ pub fn spawn_cubesat(
     commands.entity(cubesat_entity)
         .insert(Name::new("Satellite body"))
         .insert(SatelliteBody)
-        //.insert(components::Mass(BODY_MASS))
         ;
 
     println!("Cubesat spawned");
