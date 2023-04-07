@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use uom::si::f64 as quantities;
 use uom::si::*;
 use uom::si::length::meter;
-use uom::lib::marker::PhantomData;
+use uom::lib::marker::PhantomData;  // Consts in uom are not very well supported
 
 use crate::{ physics, components, resources };
 
@@ -18,21 +18,32 @@ pub struct ESail {
 
 impl ESail {
 
+    // I need that the first element does not stay at a distance of the origin, but stays at that
+    // point instead.
+
     pub fn vector_to_previous_element (
         &self, index: usize, verlet_query: &Query<&mut physics::verlet_object::VerletObject>) 
         -> physics::position_vector::PositionVector {
 
         let element_position = &verlet_query.get(self.elements[index]).expect("").current_coordinates;
 
-        let preceding_element_position = 
-            if index > 0 {
-                &verlet_query.get(self.elements[index-1]).expect("").current_coordinates
-            } else {
-                &self.origin
-            };
+        //let preceding_element_position = 
+        //    if index > 0 {
+        //        &verlet_query.get(self.elements[index-1]).expect("").current_coordinates
+        //    } else {
+        //        &self.origin
+        //    };
 
-        let relative_vector = element_position.clone() - preceding_element_position.clone();
-        return relative_vector;
+        //let relative_vector = element_position.clone() - preceding_element_position.clone();
+        //return relative_vector;
+
+        if index > 0 {
+            let preceding_element_position = &verlet_query.get(self.elements[index-1]).expect("").current_coordinates;
+            return element_position.clone() - preceding_element_position.clone();
+        } else {
+            let zero = quantities::Length::new::<length::meter>(0.0);
+            return physics::position_vector::PositionVector::new(zero, zero, zero);
+        }
     }
 
     /// Adds an esail element (near the cubesat)

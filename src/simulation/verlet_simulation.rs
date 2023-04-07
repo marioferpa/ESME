@@ -35,24 +35,24 @@ pub fn verlet_simulation(
 
             for index in 0..esail.elements.len() {  
 
-                // Distance between element and preceding element (in METERS). 
-                let distance_between_elements = esail.vector_to_previous_element(index, &verlet_query);    // Now is a PositionVector
+                // Relative position between element and preceding element
+                let relative_position_between_elements = esail.vector_to_previous_element(index, &verlet_query);    // Now is a PositionVector
 
                 // Desired distance between elements (in METERS TOO)
-                let desired_distance_between_elements = spacecraft_parameters.segment_length();
+                let desired_relative_position_between_elements = spacecraft_parameters.segment_length();
 
                 // If difference is zero then I can skip all the rest, right? Perfect spot for an early return.
 
-                let difference = if distance_between_elements.clone().length().value > 0.0 {
-                    (desired_distance_between_elements.value - distance_between_elements.clone().length().value) / distance_between_elements.clone().length().value
+                let difference = if relative_position_between_elements.clone().length().value > 0.0 {
+                    (desired_relative_position_between_elements.value - relative_position_between_elements.clone().length().value) / relative_position_between_elements.clone().length().value
                 } else {
                     0.0
                 };
 
                 let correction_vector = if index > 0 {
-                    distance_between_elements.mul(0.5 * difference)
+                    relative_position_between_elements.mul(0.5 * difference)
                 } else {
-                    distance_between_elements.mul(difference)
+                    relative_position_between_elements.mul(difference)
                 };
 
                 // UPDATING POSITIONS
