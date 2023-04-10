@@ -2,8 +2,7 @@ use bevy::prelude::*;
 use crate::{ physics, resources, spacecraft };
 use bevy::math::DVec3;
 use std::ops::{ Mul };
-
-// Figure out please why when I deactivate verlet_simulation the esail elements are 35000 pixels away from the center
+use uom::si::length::meter;
 
 pub fn verlet_simulation(
     time:                       Res<Time>, 
@@ -20,40 +19,39 @@ pub fn verlet_simulation(
 
     for _ in 0..timesteps { 
 
-        // VERLET INTEGRATION: Forces are calculated and applied for each esail element
+        // VERLET INTEGRATION
 
-        for element in esail.elements.iter() {  // Iterating over esail elements, in order.
+        for element in esail.elements.iter().skip(1) {  // Iterating over esail elements, in order, skipping the first.
 
             let mut verlet_object = verlet_query.get_mut(*element).expect("No sail element found");
 
             verlet_integration(&mut simulation_parameters, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
+            //println!("Verlet integration");
         }
+        //println!("------------");
 
-        // CONSTRAINT LOOP. All operations in pixels, I'm pretty sure.
+        // CONSTRAINT LOOP
 
         for _ in 0..simulation_parameters.iterations {
 
-            for index in 0..esail.elements.len() {  
+            for index in 1..esail.elements.len() {  // Skipping first item
 
-                // Relative position between element and preceding element
-                let relative_position_between_elements = esail.vector_to_previous_element(index, &verlet_query);    // Now is a PositionVector
+                // Relative position between element and preceding element, as a PositionVector
+                let relative_position_between_elements = esail.vector_to_previous_element(index, &verlet_query);
 
-                // Desired distance between elements (in METERS TOO)
+                let distance_between_elements = relative_position_between_elements.clone().length().get::<meter>();
+
+                // Desired distance between elements (in meters)
                 let desired_relative_position_between_elements = spacecraft_parameters.segment_length();
 
-                // If difference is zero then I can skip all the rest, right? Perfect spot for an early return.
-
-                let difference = if relative_position_between_elements.clone().length().value > 0.0 {
-                    (desired_relative_position_between_elements.value - relative_position_between_elements.clone().length().value) / relative_position_between_elements.clone().length().value
+                let difference = if distance_between_elements > 0.0 {
+                    //(desired_relative_position_between_elements.value -     // Add the get meter thing
+                    (desired_relative_position_between_elements.get::<meter>() - distance_between_elements) / distance_between_elements
                 } else {
                     0.0
                 };
 
-                let correction_vector = if index > 0 {
-                    relative_position_between_elements.mul(0.5 * difference)
-                } else {
-                    relative_position_between_elements.mul(difference)
-                };
+                let correction_vector = relative_position_between_elements.mul(0.5 * difference);
 
                 // UPDATING POSITIONS
                 
@@ -63,12 +61,14 @@ pub fn verlet_simulation(
 
                 // Also change previous to preceding wherever needed
 
-                if index > 0 {
-                    //let preceding_sail_element   = esail.elements[index - 1];
+                //if index > 0 {  // If this is skipping the first already then the drift doesn't come from here...
+                if index > 1 {  // If this is skipping the first already then the drift doesn't come from here...
                     let mut preceding_verlet_object = verlet_query.get_mut(esail.elements[index - 1]).expect("No previous sail element found");
                     preceding_verlet_object.correct_current_coordinates(correction_vector.mul(-1.0));
+                    println!("Correction made");
                 }
             }
+            println!("--------------");
         }
     }
 }

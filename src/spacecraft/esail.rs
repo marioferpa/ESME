@@ -18,9 +18,6 @@ pub struct ESail {
 
 impl ESail {
 
-    // I need that the first element does not stay at a distance of the origin, but stays at that
-    // point instead.
-
     pub fn vector_to_previous_element (
         &self, index: usize, verlet_query: &Query<&mut physics::verlet_object::VerletObject>) 
         -> physics::position_vector::PositionVector {
@@ -28,6 +25,7 @@ impl ESail {
         let element_position = &verlet_query.get(self.elements[index]).expect("").current_coordinates;
 
         //let preceding_element_position = 
+        //    // Going now to change verlet sim so that index 0 isn't simulated, that would make this obsolete
         //    if index > 0 {
         //        &verlet_query.get(self.elements[index-1]).expect("").current_coordinates
         //    } else {
@@ -64,14 +62,10 @@ pub fn spawn_esail(
 
     let esail_origin_x = spacecraft_parameters.esail_origin.x().get::<meter>();
 
-    let esail_entity = commands.spawn(PbrBundle {
-            mesh: meshes.add(Mesh::from(shape::Cube { size: 5.0, ..default() })),
-            material: materials.add(Color::rgb(1.0, 0.0, 0.0).into()),
-            transform: Transform::from_xyz(
-                esail_origin_x as f32 * simulation_parameters.pixels_per_meter as f32, 0.0, 0.0),
-                visibility: Visibility{ is_visible: true },
-            ..default()
-        }).id();
+    let esail_entity = commands.spawn((
+        Name::new("E-sail"),
+        SpatialBundle{ visibility: Visibility{ is_visible: true }, ..Default::default() }
+    )).id();
 
     // User defines length of sail and resolution, elements are calculated from those.
     let number_of_elements = spacecraft_parameters.number_of_esail_elements();
@@ -97,6 +91,15 @@ pub fn spawn_esail(
 
     element_vector.push(
         spawn_endmass(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), ENDMASS_MASS)
+        );
+
+    // Why does it drift slightly when I add a second... Oh, I know, the constraint is moving both objects
+    element_vector.insert(0,
+        spawn_esail_element(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass())
+        );
+
+    element_vector.insert(0,
+        spawn_esail_element(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass())
         );
 
     commands.entity(esail_entity)

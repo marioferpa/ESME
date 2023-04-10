@@ -24,7 +24,6 @@ impl PositionVector {
     }
 
     /// Returns the length of the PositionVector
-    /// Untested
     pub fn length(self) -> quantities::Length {
         
         let x = self.0[0] * self.0[0];
