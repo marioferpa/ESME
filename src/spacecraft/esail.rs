@@ -5,7 +5,7 @@ use uom::si::*;
 use uom::si::length::meter;
 use uom::lib::marker::PhantomData;  // Consts in uom are not very well supported
 
-use crate::{ physics, components, resources };
+use crate::{ physics, components, spacecraft, resources };
 
 const ENDMASS_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.05};
 
@@ -50,6 +50,29 @@ impl ESail {
     }
 }
 
+pub fn click(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    spacecraft_parameters: Res<super::SpacecraftParameters>,
+    mut esail_query: Query<&mut spacecraft::esail::ESail>,  
+    keyboard: Res<Input<KeyCode>>,
+    ) {
+
+    let mut esail = esail_query.single_mut();
+
+    if keyboard.just_pressed(KeyCode::Up) {
+
+        println!("Deploy!");
+
+        let element = spawn_esail_element(
+            &mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass()
+            );
+
+        esail.add_element(element);
+    }
+}
+
 pub fn spawn_esail(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -89,18 +112,17 @@ pub fn spawn_esail(
     //    element_vector.push(element);
     //}
 
-    element_vector.push(
-        spawn_endmass(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), ENDMASS_MASS)
-        );
+    let endmass = spawn_endmass(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), ENDMASS_MASS);
 
-    // Why does it drift slightly when I add a second... Oh, I know, the constraint is moving both objects
-    element_vector.insert(0,
-        spawn_esail_element(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass())
-        );
+    element_vector.push(endmass);
 
-    element_vector.insert(0,
-        spawn_esail_element(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass())
-        );
+    //element_vector.insert(0,
+    //    spawn_esail_element(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass())
+    //    );
+
+    //element_vector.insert(0,
+    //    spawn_esail_element(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass())
+    //    );
 
     commands.entity(esail_entity)
         .insert(Name::new("E-sail"))
