@@ -68,6 +68,7 @@ pub fn verlet_simulation(
                     let mut preceding_verlet_object = verlet_query.get_mut(esail.elements[index - 1]).expect("No previous sail element found");
                     //preceding_verlet_object.correct_current_coordinates(correction_vector.mul(-1.0));
                     if preceding_verlet_object.is_deployed {
+                        // Maybe a method to give the negative?
                         preceding_verlet_object.correct_current_coordinates(correction_vector.mul(-1.0));
                     }
                 }

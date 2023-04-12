@@ -8,11 +8,12 @@ use crate::{ physics, components };
 
 const ENDMASS_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.05};
 
+// I may need a test that ensures that only elements with the verlet_query component get added
+
 #[derive(Component, Debug)]
 pub struct ESail {
     pub origin:     physics::position_vector::PositionVector, 
     pub elements:   Vec<Entity>,
-    // Do I need another vector for elements ready to be deployed?
 }
 
 impl ESail {
@@ -31,10 +32,12 @@ impl ESail {
         }
     }
 
-    /// Adds an esail element (near the cubesat)
-    fn add_element(&mut self, esail_element: Entity) {
-        self.elements.insert(0, esail_element); 
-    }
+    // I need a function for deploying new elements, but accessing the verlet_object of the
+    // elements is not straightforward, I need a query... So it has to be a system...
+    // I don't know if I should store the index of the last deployed element somewhere, or if it
+    // should go over all of them and ensure that a certain amount of them are deployed...
+    // I will have to show somewhere the amount of esail deployed, so maybe storing the index
+    // inside ESail is not a bad idea.
 }
 
 pub fn spawn_esail(

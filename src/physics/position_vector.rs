@@ -43,6 +43,12 @@ impl PositionVector {
         vector.extend(vec![zero, zero, zero]);
         return Self(vector);
     }
+
+    // Returns the opposite vector
+    // Don't know why it fails
+    //pub fn negative() -> Self {
+    //    return Self.mul(-1.0);
+    //}
 }
 
 
