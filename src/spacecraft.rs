@@ -1,11 +1,10 @@
 use bevy::prelude::*;
 use uom::si::f64 as quantities;
 use uom::si::*;
-use uom::si::length::meter;
 use bevy::math::DVec3;
 use std::f64::consts;
 
-use crate::{ physics, components, resources };
+use crate::{ physics };
 use physics::position_vector::PositionVector;
 
 pub mod axes;
@@ -27,17 +26,9 @@ impl Plugin for SpacecraftPlugin {
                     .with_system(body::spawn_cubesat)
                     .with_system(center_mass::spawn_center_mass)
             )
-            //.add_system(esail::click) // This should run before the simulation I guess
-            //.add_system_set(
-            //    SystemSet::new()
-            //        .label("Deploy")
-            //        .with_system(esail::click)
-            //        .before("VerletSimulation")
-            //)
             ;
     }
 }
-
 
 #[derive(Resource)]
 pub struct SpacecraftParameters {

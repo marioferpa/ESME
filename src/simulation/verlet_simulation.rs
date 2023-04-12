@@ -95,7 +95,6 @@ fn verlet_integration(
 
     let coulomb_force = physics::force_vector::ForceVector::from_direction(coulomb_force_magnitude, solar_wind.direction); 
 
-
     //// Total force
 
     let total_force = coulomb_force + centrifugal_force;    // This is a ForceVector containing uom quantities

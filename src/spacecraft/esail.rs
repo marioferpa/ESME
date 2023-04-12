@@ -2,10 +2,9 @@ use bevy::prelude::*;
 
 use uom::si::f64 as quantities;
 use uom::si::*;
-use uom::si::length::meter;
 use uom::lib::marker::PhantomData;  // Consts in uom are not very well supported
 
-use crate::{ physics, components, spacecraft, resources };
+use crate::{ physics, components };
 
 const ENDMASS_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.05};
 
@@ -38,58 +37,27 @@ impl ESail {
     }
 }
 
-//pub fn click(
-//    mut commands: Commands,
-//    mut meshes: ResMut<Assets<Mesh>>,
-//    mut materials: ResMut<Assets<StandardMaterial>>,
-//    spacecraft_parameters: Res<super::SpacecraftParameters>,
-//    mut esail_query: Query<&mut spacecraft::esail::ESail>,  
-//    keyboard: Res<Input<KeyCode>>,
-//    ) {
-//
-//    let mut esail = esail_query.single_mut();
-//
-//    if keyboard.just_pressed(KeyCode::Up) {
-//
-//        println!("Deploy!");
-//
-//        let element = spawn_esail_element(
-//            &mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass()
-//            );
-//
-//        esail.add_element(element);
-//    }
-//}
-
 pub fn spawn_esail(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    simulation_parameters: Res<resources::SimulationParameters>,
     spacecraft_parameters: Res<super::SpacecraftParameters>,
     ) {
 
     let mut element_vector: Vec<Entity> = Vec::new();
-
-    let esail_origin_x = spacecraft_parameters.esail_origin.x().get::<meter>();
 
     let esail_entity = commands.spawn((
         Name::new("E-sail"),
         SpatialBundle{ visibility: Visibility{ is_visible: true }, ..Default::default() }
     )).id();
 
-    // User defines length of sail and resolution, elements are calculated from those.
+    // User defines length of sail and resolution, number of elements is calculated from those.
     let number_of_elements = spacecraft_parameters.number_of_esail_elements();
-    let distance_between_elements = 1.0 / spacecraft_parameters.wire_resolution.value;  // Using get for linear density would get weird
-
 
     // E-sail elements
     for number in 0.. number_of_elements - 1 {
 
-        //let x = esail_origin_x + ( number as f64 + 1.0 ) * distance_between_elements;
-        //println!("Element {}, x = {} meters", number, x);
         println!("Element {} spawned", number);
-        
         
         let element = spawn_esail_element(
             &mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass());
@@ -134,9 +102,9 @@ fn spawn_endmass (
 
     let zero = quantities::Length::new::<length::meter>(0.0);
 
-    // No mass component?
     commands.entity(endmass)
         .insert(Name::new("Endmass")) 
+        .insert(components::Mass(mass))
         .insert(physics::verlet_object::VerletObject { 
             previous_coordinates:   physics::position_vector::PositionVector::new(x, zero, zero),
             current_coordinates:    physics::position_vector::PositionVector::new(x, zero, zero),

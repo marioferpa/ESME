@@ -4,12 +4,9 @@
 // Problem, maybe: The simulation seems to be idle for the two first frames
 
 use bevy::prelude::*;
-use bevy::math::DVec3;
 use crate::{ components, resources, spacecraft };
 
 use uom::si::*;
-
-use std::ops::{ Mul };
 
 pub mod position_vector;
 pub mod force_vector;

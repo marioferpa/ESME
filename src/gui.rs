@@ -21,11 +21,10 @@ impl Plugin for GUIPlugin {
 impl GUIPlugin {
 
     fn sidebar(
-        mut egui_ctx: ResMut<EguiContext>,
+        mut egui_ctx:               ResMut<EguiContext>,
         mut sim_params:             ResMut<resources::SimulationParameters>,
-        mut solar_wind:             ResMut<resources::SolarWindParameters>, 
+        solar_wind:                 ResMut<resources::SolarWindParameters>, 
         mut spacecraft_parameters:  ResMut<spacecraft::SpacecraftParameters>,
-        //mut esail_query:            Query<(&spacecraft::esail::ESail2, &mut Transform)>,
         ) {
 
         //let (esail2, mut esail2_transform) = esail_query.single_mut();

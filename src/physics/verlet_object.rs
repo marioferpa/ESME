@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy_inspector_egui::Inspectable;
 
 // The problem with elements going to 35000 pixels has to be here, the units must be wrong
 // initially or something.

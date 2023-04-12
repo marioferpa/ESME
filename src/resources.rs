@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy::math::DVec3;
-use std::f64::consts;
 
 // UOM package, for physical units
 use uom::si::f64 as quantities;

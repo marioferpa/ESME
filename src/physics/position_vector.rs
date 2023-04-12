@@ -1,11 +1,7 @@
 use uom::si::f64 as quantities;  
 use uom::si::*;
-use bevy_inspector_egui::Inspectable;
 
 use std::ops::{ Add, Sub, Mul };
-
-// I can't implement Copy because quantities don't implement it.
-// I'm solving it by using clone() everywhere.
 
 #[derive(Debug, Clone)]
 pub struct PositionVector ( pub Vec<quantities::Length> );
@@ -19,6 +15,7 @@ impl PositionVector {
         return Self(vector);
     }
 
+    #[allow(dead_code)]
     pub fn empty() -> Self {
         return PositionVector( Vec::new() );    // Make it capacity 3
     }

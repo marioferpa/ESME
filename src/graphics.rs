@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use uom::si::length::meter;
 
-use crate::{ physics, spacecraft, components, resources };
+use crate::{ physics, spacecraft, resources };
 
 pub struct GraphicsPlugin;
 
@@ -53,7 +53,7 @@ impl GraphicsPlugin {
 
     fn update_rotation_axes (
         mut axes_query:         Query<&mut Transform, (With<spacecraft::axes::Axes>, Without<spacecraft::body::SatelliteBody>)>,   
-        mut satellite_query:    Query<&mut Transform, (With<spacecraft::body::SatelliteBody>, Without<spacecraft::axes::Axes>)>,
+        satellite_query:    Query<&Transform, (With<spacecraft::body::SatelliteBody>, Without<spacecraft::axes::Axes>)>,
         ) {
 
         let mut axes_transform  = axes_query.single_mut();
