@@ -51,16 +51,24 @@ pub fn spawn_esail(
         SpatialBundle{ visibility: Visibility{ is_visible: true }, ..Default::default() }
     )).id();
 
-    // User defines length of sail and resolution, number of elements is calculated from those.
     let number_of_elements = spacecraft_parameters.number_of_esail_elements();
+    println!("Number of elements: {}", number_of_elements);
 
     // E-sail elements
     for number in 0.. number_of_elements - 1 {
 
-        println!("Element {} spawned", number);
+        // Deploy all except the first one
+        //let deployment_state = if number == 0 { false } else { true };
+
+        // Don't deploy any
+        let deployment_state = false;
+
+        println!("Element {} spawned, deployment_state: {}", number, deployment_state);
         
         let element = spawn_esail_element(
-            &mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass());
+            &mut commands, &mut meshes, &mut materials, 
+            spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass(), 
+            deployment_state);
         element_vector.push(element);
     }
 
@@ -119,7 +127,7 @@ fn spawn_esail_element(
     commands:   &mut Commands,
     meshes:     &mut ResMut<Assets<Mesh>>,
     materials:  &mut ResMut<Assets<StandardMaterial>>,
-    x: quantities::Length, mass: quantities::Mass,
+    x: quantities::Length, mass: quantities::Mass, deployment: bool,
     ) -> Entity {
 
     let radius = 5.0; // 5.0 what? Apples? Oranges? 
@@ -142,7 +150,7 @@ fn spawn_esail_element(
         .insert(physics::verlet_object::VerletObject { 
             previous_coordinates: physics::position_vector::PositionVector::new(x, zero, zero),
             current_coordinates:  physics::position_vector::PositionVector::new(x, zero, zero),
-            is_deployed:          true,
+            is_deployed:          deployment,
         })
         .insert(components::ElectricallyCharged{ ..Default::default() })
         ;

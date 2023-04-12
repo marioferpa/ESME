@@ -22,11 +22,14 @@ pub fn verlet_simulation(
 
         // VERLET INTEGRATION
 
-        for element in esail.elements.iter().skip(1) {  // Iterating over esail elements, in order, skipping the first.
+        //for element in esail.elements.iter().skip(1) {  // Iterating over esail elements, in order, skipping the first.
+        for element in esail.elements.iter() {  // Iterating over esail elements, in order
 
             let mut verlet_object = verlet_query.get_mut(*element).expect("No sail element found");
 
-            verlet_integration(&mut simulation_parameters, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
+            if verlet_object.is_deployed {
+                verlet_integration(&mut simulation_parameters, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
+            }
         }
 
         // CONSTRAINT LOOP
@@ -60,9 +63,13 @@ pub fn verlet_simulation(
                 current_verlet_object.correct_current_coordinates(correction_vector.clone());
 
                 // Changing previous element if previous element is not the first.
-                if index > 1 {
+                //if index > 1 {
+                if index > 0 {
                     let mut preceding_verlet_object = verlet_query.get_mut(esail.elements[index - 1]).expect("No previous sail element found");
-                    preceding_verlet_object.correct_current_coordinates(correction_vector.mul(-1.0));
+                    //preceding_verlet_object.correct_current_coordinates(correction_vector.mul(-1.0));
+                    if preceding_verlet_object.is_deployed {
+                        preceding_verlet_object.correct_current_coordinates(correction_vector.mul(-1.0));
+                    }
                 }
             }
         }
