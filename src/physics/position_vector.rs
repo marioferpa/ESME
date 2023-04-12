@@ -38,6 +38,14 @@ impl PositionVector {
     pub fn x(&self) -> quantities::Length {
         return self.0[0];
     }
+
+    /// Returns a new position vector with zero values
+    pub fn zero() -> Self {
+        let zero = quantities::Length::new::<length::meter>(0.0);
+        let mut vector = Vec::with_capacity(3);
+        vector.extend(vec![zero, zero, zero]);
+        return Self(vector);
+    }
 }
 
 

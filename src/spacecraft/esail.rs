@@ -13,7 +13,7 @@ const ENDMASS_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData,
 pub struct ESail {
     pub origin:     physics::position_vector::PositionVector, 
     pub elements:   Vec<Entity>,
-    //Should length go here and not on the spacecraft parameters?
+    // Do I need another vector for elements ready to be deployed?
 }
 
 impl ESail {
@@ -24,23 +24,11 @@ impl ESail {
 
         let element_position = &verlet_query.get(self.elements[index]).expect("").current_coordinates;
 
-        //let preceding_element_position = 
-        //    // Going now to change verlet sim so that index 0 isn't simulated, that would make this obsolete
-        //    if index > 0 {
-        //        &verlet_query.get(self.elements[index-1]).expect("").current_coordinates
-        //    } else {
-        //        &self.origin
-        //    };
-
-        //let relative_vector = element_position.clone() - preceding_element_position.clone();
-        //return relative_vector;
-
         if index > 0 {
-            let preceding_element_position = &verlet_query.get(self.elements[index-1]).expect("").current_coordinates;
+            let preceding_element_position = &verlet_query.get(self.elements[index-1]).expect("Element not found").current_coordinates;
             return element_position.clone() - preceding_element_position.clone();
         } else {
-            let zero = quantities::Length::new::<length::meter>(0.0);
-            return physics::position_vector::PositionVector::new(zero, zero, zero);
+            return physics::position_vector::PositionVector::zero();
         }
     }
 
@@ -50,28 +38,28 @@ impl ESail {
     }
 }
 
-pub fn click(
-    mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    spacecraft_parameters: Res<super::SpacecraftParameters>,
-    mut esail_query: Query<&mut spacecraft::esail::ESail>,  
-    keyboard: Res<Input<KeyCode>>,
-    ) {
-
-    let mut esail = esail_query.single_mut();
-
-    if keyboard.just_pressed(KeyCode::Up) {
-
-        println!("Deploy!");
-
-        let element = spawn_esail_element(
-            &mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass()
-            );
-
-        esail.add_element(element);
-    }
-}
+//pub fn click(
+//    mut commands: Commands,
+//    mut meshes: ResMut<Assets<Mesh>>,
+//    mut materials: ResMut<Assets<StandardMaterial>>,
+//    spacecraft_parameters: Res<super::SpacecraftParameters>,
+//    mut esail_query: Query<&mut spacecraft::esail::ESail>,  
+//    keyboard: Res<Input<KeyCode>>,
+//    ) {
+//
+//    let mut esail = esail_query.single_mut();
+//
+//    if keyboard.just_pressed(KeyCode::Up) {
+//
+//        println!("Deploy!");
+//
+//        let element = spawn_esail_element(
+//            &mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass()
+//            );
+//
+//        esail.add_element(element);
+//    }
+//}
 
 pub fn spawn_esail(
     mut commands: Commands,
@@ -94,35 +82,24 @@ pub fn spawn_esail(
     let number_of_elements = spacecraft_parameters.number_of_esail_elements();
     let distance_between_elements = 1.0 / spacecraft_parameters.wire_resolution.value;  // Using get for linear density would get weird
 
-    //for number in 0..= number_of_elements - 1 {
 
-    //    let x = esail_origin_x + ( number as f64 + 1.0 ) * distance_between_elements;
+    // E-sail elements
+    for number in 0.. number_of_elements - 1 {
 
-    //    println!("Element {}, x = {} meters", number, x);
-    //    
-    //    let element = if number == number_of_elements - 1 {
-    //        // Endmass
-    //        spawn_endmass(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), ENDMASS_MASS)
-    //    } else {
-    //        // Sail segment
-    //        //spawn_esail_element(&mut commands, &mut meshes, &mut materials, x, 0.0, 0.0, 5.0, spacecraft_parameters.segment_mass(), false)
-    //        spawn_esail_element(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass())
-    //    };
+        //let x = esail_origin_x + ( number as f64 + 1.0 ) * distance_between_elements;
+        //println!("Element {}, x = {} meters", number, x);
+        println!("Element {} spawned", number);
+        
+        
+        let element = spawn_esail_element(
+            &mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass());
+        element_vector.push(element);
+    }
 
-    //    element_vector.push(element);
-    //}
-
-    let endmass = spawn_endmass(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), ENDMASS_MASS);
-
-    element_vector.push(endmass);
-
-    //element_vector.insert(0,
-    //    spawn_esail_element(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass())
-    //    );
-
-    //element_vector.insert(0,
-    //    spawn_esail_element(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass())
-    //    );
+    // Endmass
+    println!("Plus one endmass");
+    let endmass_element = spawn_endmass(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), ENDMASS_MASS);
+    element_vector.push(endmass_element);
 
     commands.entity(esail_entity)
         .insert(Name::new("E-sail"))
@@ -157,11 +134,13 @@ fn spawn_endmass (
 
     let zero = quantities::Length::new::<length::meter>(0.0);
 
+    // No mass component?
     commands.entity(endmass)
         .insert(Name::new("Endmass")) 
         .insert(physics::verlet_object::VerletObject { 
-            previous_coordinates: physics::position_vector::PositionVector::new(x, zero, zero),
-            current_coordinates:  physics::position_vector::PositionVector::new(x, zero, zero),
+            previous_coordinates:   physics::position_vector::PositionVector::new(x, zero, zero),
+            current_coordinates:    physics::position_vector::PositionVector::new(x, zero, zero),
+            is_deployed:            true,
         });
 
     return endmass;
@@ -190,11 +169,12 @@ fn spawn_esail_element(
     let zero = quantities::Length::new::<length::meter>(0.0);
 
     commands.entity(sail_element)
-        .insert(Name::new("E-sail element"))    // Add index to the name!
+        .insert(Name::new("E-sail element")) 
         .insert(components::Mass(mass))
         .insert(physics::verlet_object::VerletObject { 
             previous_coordinates: physics::position_vector::PositionVector::new(x, zero, zero),
             current_coordinates:  physics::position_vector::PositionVector::new(x, zero, zero),
+            is_deployed:          true,
         })
         .insert(components::ElectricallyCharged{ ..Default::default() })
         ;

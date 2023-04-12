@@ -15,6 +15,7 @@ pub fn verlet_simulation(
 
     let esail = esail_query.single();
 
+    // Timesteps since last frame
     let timesteps = timestep_calculation(&time, &mut simulation_parameters);
 
     for _ in 0..timesteps { 
@@ -26,15 +27,14 @@ pub fn verlet_simulation(
             let mut verlet_object = verlet_query.get_mut(*element).expect("No sail element found");
 
             verlet_integration(&mut simulation_parameters, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
-            //println!("Verlet integration");
         }
-        //println!("------------");
 
         // CONSTRAINT LOOP
 
         for _ in 0..simulation_parameters.iterations {
 
-            for index in 1..esail.elements.len() {  // Skipping first item
+            //for index in 1..esail.elements.len() {  // Skipping first item
+            for index in 0..esail.elements.len() {  // Why are these two the same!?
 
                 // Relative position between element and preceding element, as a PositionVector
                 let relative_position_between_elements = esail.vector_to_previous_element(index, &verlet_query);
@@ -49,6 +49,8 @@ pub fn verlet_simulation(
                     0.0
                 };
 
+                // I think there is a mistake in the logic here. If the distance between two
+                // elements is exactly zero then the correction is... Zero... Wait that's alright.
                 let correction_vector = relative_position_between_elements.mul(0.5 * difference);
 
                 // UPDATING POSITIONS
@@ -56,8 +58,6 @@ pub fn verlet_simulation(
                 let mut current_verlet_object = verlet_query.get_mut(esail.elements[index]).expect("No previous sail element found");
 
                 current_verlet_object.correct_current_coordinates(correction_vector.clone());
-
-                // Also change previous to preceding wherever needed
 
                 // Changing previous element if previous element is not the first.
                 if index > 1 {
@@ -83,6 +83,7 @@ fn verlet_integration(
 
     let centrifugal_force_magnitude = spacecraft_parameters.segment_mass() * verlet_object.current_coordinates.clone().length()
                                         * spacecraft_parameters.angular_velocity() * spacecraft_parameters.angular_velocity();
+    //println!("Centrifugal force: {}", centrifugal_force_magnitude.value);
 
     let centrifugal_force_direction = DVec3::new(1.0, 0.0, 0.0);
 

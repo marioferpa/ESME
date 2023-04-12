@@ -28,11 +28,12 @@ impl Plugin for SpacecraftPlugin {
                     .with_system(center_mass::spawn_center_mass)
             )
             //.add_system(esail::click) // This should run before the simulation I guess
-            .add_system_set(
-                SystemSet::new()
-                    .label("Deploy")
-                    .with_system(esail::click)
-            )
+            //.add_system_set(
+            //    SystemSet::new()
+            //        .label("Deploy")
+            //        .with_system(esail::click)
+            //        .before("VerletSimulation")
+            //)
             ;
     }
 }
