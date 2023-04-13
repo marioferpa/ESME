@@ -26,6 +26,7 @@ impl Plugin for SpacecraftPlugin {
                     .with_system(body::spawn_cubesat)
                     .with_system(center_mass::spawn_center_mass)
             )
+            .add_system(esail::click)
             ;
     }
 }

@@ -14,13 +14,17 @@ const ENDMASS_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData,
 pub struct ESail {
     pub origin:     physics::position_vector::PositionVector, 
     pub elements:   Vec<Entity>,
+    pub undeployed_elements:    Vec<Entity>,
+    pub deployed_elements:      Vec<Entity>,
 }
 
 impl ESail {
 
     pub fn vector_to_previous_element (
-        &self, index: usize, verlet_query: &Query<&mut physics::verlet_object::VerletObject>) 
-        -> physics::position_vector::PositionVector {
+        &self, 
+        index: usize, 
+        verlet_query: &Query<&mut physics::verlet_object::VerletObject>
+        ) -> physics::position_vector::PositionVector {
 
         let element_position = &verlet_query.get(self.elements[index]).expect("").current_coordinates;
 
@@ -32,12 +36,60 @@ impl ESail {
         }
     }
 
-    // I need a function for deploying new elements, but accessing the verlet_object of the
-    // elements is not straightforward, I need a query... So it has to be a system...
-    // I don't know if I should store the index of the last deployed element somewhere, or if it
-    // should go over all of them and ensure that a certain amount of them are deployed...
-    // I will have to show somewhere the amount of esail deployed, so maybe storing the index
-    // inside ESail is not a bad idea.
+    pub fn deploy_esail ( &mut self, amount: usize ) {
+
+        let count = std::cmp::min(amount, self.undeployed_elements.len());
+
+        for _ in 0..count {
+            let entity = self.undeployed_elements.pop().unwrap();
+            self.deployed_elements.insert(0, entity);
+        }
+    }
+
+    pub fn retract_esail (&mut self, amount: usize) {
+
+        let count = std::cmp::min(amount, self.deployed_elements.len());
+
+        for _ in 0..count {
+            let entity = self.deployed_elements.remove(0);
+            self.undeployed_elements.push(entity);
+        }
+    }
+
+    // Temporary
+    pub fn print_elements (&self) {
+        println!("Undeployed elements: {:?}", self.undeployed_elements);
+        println!("Deployed elements: {:?}", self.deployed_elements);
+    }
+}
+
+pub fn click(
+    //mut commands: Commands,
+    //spacecraft_parameters: Res<super::SpacecraftParameters>,
+    mut esail_query: Query<&mut super::esail::ESail>,  
+    keyboard: Res<Input<KeyCode>>,
+    ) {
+
+    let mut esail = esail_query.single_mut();
+
+    if keyboard.just_pressed(KeyCode::Up) {
+
+        println!("Deploying!");
+
+        esail.deploy_esail(1);
+
+        esail.print_elements();
+
+    }
+
+    if keyboard.just_pressed(KeyCode::Down) {
+
+        println!("Retracting!");
+
+        esail.retract_esail(1);
+
+        esail.print_elements();
+    }
 }
 
 pub fn spawn_esail(
@@ -48,6 +100,10 @@ pub fn spawn_esail(
     ) {
 
     let mut element_vector: Vec<Entity> = Vec::new();
+
+    //Test
+    let mut undeployed_elements:    Vec<Entity> = Vec::new();
+    let mut deployed_elements:      Vec<Entity> = Vec::new();
 
     let esail_entity = commands.spawn((
         Name::new("E-sail"),
@@ -63,7 +119,7 @@ pub fn spawn_esail(
         // Deploy all except the first one
         //let deployment_state = if number == 0 { false } else { true };
 
-        // Don't deploy any
+        // Don't deploy any (only the endmass)
         let deployment_state = false;
 
         println!("Element {} spawned, deployment_state: {}", number, deployment_state);
@@ -73,12 +129,23 @@ pub fn spawn_esail(
             spacecraft_parameters.esail_origin.x(), spacecraft_parameters.segment_mass(), 
             deployment_state);
         element_vector.push(element);
+        
+        if deployment_state == false { 
+            undeployed_elements.push(element); // Is the order correct?
+        } else {
+            deployed_elements.push(element);
+        }
     }
 
     // Endmass
     println!("Plus one endmass");
     let endmass_element = spawn_endmass(&mut commands, &mut meshes, &mut materials, spacecraft_parameters.esail_origin.x(), ENDMASS_MASS);
     element_vector.push(endmass_element);
+    // ??
+    deployed_elements.push(endmass_element);
+
+    println!("Undeployed elements: {:?}", undeployed_elements);
+    println!("Deployed elements: {:?}", deployed_elements);
 
     commands.entity(esail_entity)
         .insert(Name::new("E-sail"))
@@ -88,6 +155,8 @@ pub fn spawn_esail(
                             quantities::Length::new::<length::meter>(0.0), 
                             quantities::Length::new::<length::meter>(0.0)),
             elements:   element_vector,     
+            undeployed_elements:    undeployed_elements,
+            deployed_elements:      deployed_elements,
         })
     ;
 
