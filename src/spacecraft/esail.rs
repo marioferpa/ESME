@@ -38,7 +38,7 @@ impl ESail {
 
     pub fn deploy_esail ( &mut self, amount: usize ) {
 
-        let count = std::cmp::min(amount, self.undeployed_elements.len());
+        let count = std::cmp::min(amount, self.undeployed_elements.len() - 1);
 
         for _ in 0..count {
             let entity = self.undeployed_elements.pop().unwrap();

@@ -22,14 +22,12 @@ pub fn verlet_simulation(
 
         // VERLET INTEGRATION
 
-        //for element in esail.elements.iter().skip(1) {  // Iterating over esail elements, in order, skipping the first.
-        for element in esail.elements.iter() {  // Iterating over esail elements, in order
+        for entity in esail.deployed_elements.iter() {  // Iterating over esail DEPLOYED elements, in order.
 
-            let mut verlet_object = verlet_query.get_mut(*element).expect("No sail element found");
+            let mut verlet_object = verlet_query.get_mut(*entity).expect("No sail element found");
 
-            if verlet_object.is_deployed {
-                verlet_integration(&mut simulation_parameters, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
-            }
+            verlet_integration(&mut simulation_parameters, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
+
         }
 
         // CONSTRAINT LOOP
