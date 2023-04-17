@@ -45,10 +45,6 @@ impl GUIPlugin {
                 ui.label( format!("Deployed wire length: {} m", spacecraft_parameters.wire_length.get::<length::meter>()));
             });
 
-            //ui.horizontal(|ui| {
-            //    ui.add(egui::Slider::new(&mut esail2_transform.translation.x, 0.0..=500.0).text("Deployed ESail2 (pixels?)"));
-            //});
-
             ui.separator();
 
             ui.label("SOLAR WIND");
@@ -68,7 +64,7 @@ impl GUIPlugin {
             ui.label("SIMULATION");
 
             ui.horizontal(|ui| { ui.label("Constraint iterations per timestep"); });
-            ui.add(egui::Slider::new(&mut sim_params.iterations, 1..=100).text("Iterations"));
+            ui.add(egui::Slider::new(&mut sim_params.iterations, 1..=1000).text("Iterations"));
 
 
             ui.horizontal(|ui| { 

@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy::gltf::Gltf;
+
 use uom::si::length::meter;
 
 use crate::{ physics, spacecraft, resources };
@@ -8,6 +10,7 @@ pub struct GraphicsPlugin;
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app
+            .add_startup_system_to_stage(StartupStage::PreStartup, Self::load_models)
             .add_system(Self::gizmo_visibility)
             .add_system(Self::update_transform_verlets)     // Updates the position of the graphics
             .add_system(Self::update_rotation_axes)
@@ -15,7 +18,20 @@ impl Plugin for GraphicsPlugin {
     }
 }
 
+#[derive(Resource)]
+pub struct MeshHandles(pub Handle<Gltf>);
+
 impl GraphicsPlugin {
+
+    fn load_models (
+        mut commands: Commands,
+        assets: Res<AssetServer>,
+        ) {
+
+        let cubesat_model = assets.load("cubesat.glb");
+        commands.insert_resource(MeshHandles(cubesat_model));
+        println!("Mesh loaded");
+    }
 
     // At some point I think that physics.rs will update a component containing the rotation, and
     // this will adapt the Transform to the value of that component.
@@ -42,14 +58,12 @@ impl GraphicsPlugin {
         for (verlet_object, mut transform) in verlet_query.iter_mut() {
             // Should I use get<meter> in these cases?
             transform.translation.x = verlet_object.current_coordinates.0[0].get::<meter>() as f32 * simulation_parameters.pixels_per_meter as f32;
-            //transform.translation.x = verlet_object.current_coordinates.0[0].value as f32;  
             transform.translation.y = verlet_object.current_coordinates.0[1].get::<meter>() as f32 * simulation_parameters.pixels_per_meter as f32;
             transform.translation.z = verlet_object.current_coordinates.0[2].get::<meter>() as f32 * simulation_parameters.pixels_per_meter as f32;
 
             //println!("Transform X: {}", transform.translation.x);
         }
     } 
-
 
     fn update_rotation_axes (
         mut axes_query:         Query<&mut Transform, (With<spacecraft::axes::Axes>, Without<spacecraft::body::SatelliteBody>)>,   
