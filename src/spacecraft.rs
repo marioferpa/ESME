@@ -50,11 +50,12 @@ impl Default for SpacecraftParameters {
         SpacecraftParameters {
             rpm:                quantities::Frequency::new::<frequency::cycle_per_minute>(0.0),
             rotation_axis:      DVec3::new(0.0, 0.0, 1.0),  // Is it correct? I think so, right hand rule
-            wire_length:        quantities::Length::new::<length::meter>(0.5),
+            wire_length:        quantities::Length::new::<length::meter>(1.0),
             wire_radius:        quantities::Length::new::<length::micrometer>(10.0),
             wire_density:       quantities::MassDensity::new::<mass_density::gram_per_cubic_centimeter>(2.7),
             wire_potential:     quantities::ElectricPotential::new::<electric_potential::kilovolt>(0.0),
             wire_resolution:    quantities::LinearNumberDensity::new::<linear_number_density::per_meter>(20.0),
+            //wire_resolution:    quantities::LinearNumberDensity::new::<linear_number_density::per_meter>(50.0),
             body_size:          quantities::Length::new::<length::meter>(0.15),
             esail_origin:       PositionVector::new(
                                     quantities::Length::new::<length::meter>(0.15 / 2.0),

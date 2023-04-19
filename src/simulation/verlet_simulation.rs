@@ -3,36 +3,39 @@ use crate::{ physics, resources, spacecraft };
 use bevy::math::DVec3;
 use std::ops::{ Mul };
 use uom::si::length::meter;
+use uom::si::mass::kilogram;
+
+use physics::force_vector::ForceVector as ForceVector;
+use physics::position_vector::PositionVector as PositionVector;
 
 pub fn verlet_simulation(
-    time:                       Res<Time>, 
-    esail_query:                Query<&spacecraft::esail::ESail>,  
-    solar_wind_parameters:      Res<resources::SolarWindParameters>,
-    spacecraft_parameters:      Res<spacecraft::SpacecraftParameters>,
-    mut verlet_query:           Query<&mut physics::verlet_object::VerletObject>,
-    mut simulation_parameters:  ResMut<resources::SimulationParameters>,
+    time:                   Res<Time>, 
+    esail_query:            Query<&spacecraft::esail::ESail>,  
+    solar_wind_parameters:  Res<resources::SolarWindParameters>,
+    craft_params:  Res<spacecraft::SpacecraftParameters>,
+    mut verlet_query:       Query<&mut physics::verlet_object::VerletObject>,
+    mut sim_params:         ResMut<resources::SimulationParameters>,
     ) {
 
     let esail = esail_query.single();
 
     // Timesteps since last frame
-    let timesteps = timestep_calculation(&time, &mut simulation_parameters);
+    let timesteps = timestep_calculation(&time, &mut sim_params);
 
     for _ in 0..timesteps { 
 
-        // VERLET INTEGRATION
+        // VERLET INTEGRATION: Forces are calculated for every element
 
         for entity in esail.deployed_elements.iter() {  // Iterating over esail DEPLOYED elements, in order.
 
             let mut verlet_object = verlet_query.get_mut(*entity).expect("No sail element found");
 
-            verlet_integration(&mut simulation_parameters, &mut verlet_object, &spacecraft_parameters, &solar_wind_parameters);
-
+            verlet_integration(&mut sim_params, &mut verlet_object, &craft_params, &solar_wind_parameters);
         }
 
         // CONSTRAINT LOOP
 
-        for _ in 0..simulation_parameters.iterations {
+        for _ in 0..sim_params.iterations {
 
             //for index in 1..esail.elements.len() {  // Skipping first item
             for index in 0..esail.elements.len() {  // Why are these two the same!?
@@ -42,7 +45,7 @@ pub fn verlet_simulation(
                 let distance_between_elements = relative_position_between_elements.clone().length().get::<meter>();
 
                 // Desired distance between elements (in meters)
-                let desired_relative_position_between_elements = spacecraft_parameters.segment_length();
+                let desired_relative_position_between_elements = craft_params.segment_length();
 
                 let difference = if distance_between_elements > 0.0 {
                     (desired_relative_position_between_elements.get::<meter>() - distance_between_elements) / distance_between_elements
@@ -50,8 +53,6 @@ pub fn verlet_simulation(
                     0.0
                 };
 
-                // I think there is a mistake in the logic here. If the distance between two
-                // elements is exactly zero then the correction is... Zero... Wait that's alright.
                 let correction_vector = relative_position_between_elements.mul(0.5 * difference);
 
                 // UPDATING POSITIONS
@@ -77,9 +78,9 @@ pub fn verlet_simulation(
 
 /// Updates the position of a verlet object
 fn verlet_integration(
-    simulation_parameters:  &mut ResMut<resources::SimulationParameters>,
+    sim_params:  &mut ResMut<resources::SimulationParameters>,
     verlet_object:          &mut physics::verlet_object::VerletObject,
-    spacecraft_parameters:  &Res<spacecraft::SpacecraftParameters>,
+    craft_params:  &Res<spacecraft::SpacecraftParameters>,
     solar_wind:             &Res<resources::SolarWindParameters>,
     ){
 
@@ -87,58 +88,61 @@ fn verlet_integration(
 
     //// Centrifugal force (Along x for now, this needs to change)
 
-    let centrifugal_force_magnitude = spacecraft_parameters.segment_mass() * verlet_object.current_coordinates.clone().length()
-                                        * spacecraft_parameters.angular_velocity() * spacecraft_parameters.angular_velocity();
-    //println!("Centrifugal force: {}", centrifugal_force_magnitude.value);
+    let centrifugal_force_magnitude = craft_params.segment_mass() * verlet_object.current_coordinates.clone().length() 
+        * craft_params.angular_velocity() * craft_params.angular_velocity();
 
     let centrifugal_force_direction = DVec3::new(1.0, 0.0, 0.0);
 
-    let centrifugal_force = physics::force_vector::ForceVector::from_direction(centrifugal_force_magnitude, centrifugal_force_direction);
+    let centrifugal_force = ForceVector::from_direction(centrifugal_force_magnitude, centrifugal_force_direction);
 
     //// Coulomb drag force
     
-    let coulomb_force_magnitude= coulomb_force_per_meter(&solar_wind, &spacecraft_parameters) * spacecraft_parameters.segment_length();
+    let coulomb_force_magnitude= coulomb_force_per_meter(&solar_wind, &craft_params) * craft_params.segment_length();
 
-    let coulomb_force = physics::force_vector::ForceVector::from_direction(coulomb_force_magnitude, solar_wind.direction); 
+    let coulomb_force = ForceVector::from_direction(coulomb_force_magnitude, solar_wind.direction); 
 
     //// Total force
 
     let total_force = coulomb_force + centrifugal_force;    // This is a ForceVector containing uom quantities
 
+    let total_acc = total_force.clone() / craft_params.segment_mass().get::<kilogram>();    // What quantity is this? It's force!!
+
+    let x_acc = total_force.x() / craft_params.segment_mass();
+    let y_acc = total_force.y() / craft_params.segment_mass();
+    let z_acc = total_force.z() / craft_params.segment_mass();
+
     // Not making an acceleration uom vector just for this if the result is a position vector anyways
-    let x_acceleration = total_force.x() / spacecraft_parameters.segment_mass() * simulation_parameters.timestep_s * simulation_parameters.timestep_s;
-    let y_acceleration = total_force.y() / spacecraft_parameters.segment_mass() * simulation_parameters.timestep_s * simulation_parameters.timestep_s;
-    let z_acceleration = total_force.z() / spacecraft_parameters.segment_mass() * simulation_parameters.timestep_s * simulation_parameters.timestep_s;
+    // Need a better name for this
+    let x_acceleration = total_force.x() / craft_params.segment_mass() * sim_params.timestep_s * sim_params.timestep_s;
+    let y_acceleration = total_force.y() / craft_params.segment_mass() * sim_params.timestep_s * sim_params.timestep_s;
+    let z_acceleration = total_force.z() / craft_params.segment_mass() * sim_params.timestep_s * sim_params.timestep_s;
 
     // Wondering if these units are correct
-    let position_from_acceleration = physics::position_vector::PositionVector::new(x_acceleration, y_acceleration, z_acceleration);
+    let position_from_acceleration = PositionVector::new(x_acceleration, y_acceleration, z_acceleration);
 
     // Next position calculation (formula from here: https://www.algorithm-archive.org/contents/verlet_integration/verlet_integration.html)
     let next_coordinates = verlet_object.current_coordinates.clone().mul(2.0) - verlet_object.previous_coordinates.clone() + position_from_acceleration;
 
+    // Damping here, before the update of coordinates?
+
     
     // Updating verlet coordinates
     verlet_object.update_coordinates(next_coordinates);
-
-    //println!("{}: {:?}", "Force per segment", force_per_segment);    
-    //// And force per meter?
-    //println!("{}: {:?}", "Total force", force_per_segment * spacecraft_parameters.wire_resolution.value * spacecraft_parameters.wire_length.value);
-    //println!("-------------------------");
 
 }
 
 /// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.
 fn timestep_calculation(
     time: &Res<Time>,
-    simulation_parameters: &mut ResMut<resources::SimulationParameters>,
+    sim_params: &mut ResMut<resources::SimulationParameters>,
     ) -> i32 {
 
-    let elapsed_time = time.delta_seconds() as f64 + simulation_parameters.leftover_time; // Elapsed time + leftover time from previous frame
+    let elapsed_time = time.delta_seconds() as f64 + sim_params.leftover_time; // Elapsed time + leftover time from previous frame
 
-    let timesteps = (elapsed_time / simulation_parameters.timestep).floor() as i32; // Number of timesteps for the current frame
+    let timesteps = (elapsed_time / sim_params.timestep).floor() as i32; // Number of timesteps for the current frame
 
-    let leftover_time = elapsed_time - timesteps as f64 * simulation_parameters.timestep;  // Leftover time saved for next frame
-    simulation_parameters.leftover_time = leftover_time;
+    let leftover_time = elapsed_time - timesteps as f64 * sim_params.timestep;  // Leftover time saved for next frame
+    sim_params.leftover_time = leftover_time;
 
     return timesteps;
 }

@@ -21,7 +21,6 @@ impl VerletObject {
 
     /// Previous position if forgotten, current coordinates become previous coordinates, and next coordinates become current coordinates.
     pub fn update_coordinates(&mut self, next_coordinates: super::position_vector::PositionVector) {
-        //self.previous_coordinates = self.current_coordinates;
         let current_coordinates = self.current_coordinates.clone();
         self.previous_coordinates = current_coordinates;
         self.current_coordinates  = next_coordinates;

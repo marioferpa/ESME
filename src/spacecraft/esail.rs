@@ -101,9 +101,10 @@ pub fn spawn_esail(
 
     let mut element_vector: Vec<Entity> = Vec::new();
 
-    //Test
-    let mut undeployed_elements:    Vec<Entity> = Vec::new();
-    let mut deployed_elements:      Vec<Entity> = Vec::new();
+    //let mut undeployed_elements:    Vec<Entity> = Vec::new();
+    //let mut deployed_elements:      Vec<Entity> = Vec::new();
+    let mut undeployed_elements:    Vec<Entity> = Vec::with_capacity(50);   // Not working, why?
+    let mut deployed_elements:      Vec<Entity> = Vec::with_capacity(50);
 
     let esail_entity = commands.spawn((
         Name::new("E-sail"),
@@ -121,6 +122,9 @@ pub fn spawn_esail(
 
         // Don't deploy any (only the endmass)
         let deployment_state = false;
+
+        // Deploy endmass and one more
+        //let deployment_state = if number == 8 { true } else { false };
 
         println!("Element {} spawned, deployment_state: {}", number, deployment_state);
         

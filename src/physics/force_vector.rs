@@ -2,7 +2,7 @@ use uom::si::f64 as quantities;
 use bevy::math::DVec3;
 use uom::si::force::newton;
 
-use std::ops::{ Add };
+use std::ops::{ Add, Div };
 
 #[derive(Debug, Clone)]
 pub struct ForceVector ( pub Vec<quantities::Force> );
@@ -12,9 +12,6 @@ impl ForceVector {
     /// Creates a new ForceVector of capacity 3 with the requested values
     pub fn new(x: quantities::Force, y: quantities::Force, z: quantities::Force) -> Self {
         let mut vector = Vec::with_capacity(3);
-        //vector.push(x);
-        //vector.push(y);
-        //vector.push(z);
         vector.extend(vec![x, y, z]);
         return Self(vector);
     }
@@ -54,5 +51,16 @@ impl Add for ForceVector {
         let y = self.0[1] + other.0[1];
         let z = self.0[2] + other.0[2];
         return Self::new(x, y, z);
+    }
+}
+
+impl Div<f64> for ForceVector {
+    type Output = Self;
+
+    fn div(self, value: f64) -> Self {
+        let x = self.0[0] / value;
+        let y = self.0[1] / value;
+        let z = self.0[2] / value;
+        return Self::new(x, y, z);   // Just for now
     }
 }
