@@ -20,6 +20,15 @@ impl PositionVector {
         return PositionVector( Vec::new() );    // Make it capacity 3
     }
 
+    pub fn from_acceleration(acceleration: super::acceleration_vector::AccelerationVector, time: quantities::Time) -> Self {
+
+        let pos_x = acceleration.x() * time * time;
+        let pos_y = acceleration.y() * time * time;
+        let pos_z = acceleration.z() * time * time;
+
+        return Self::new(pos_x, pos_y, pos_z);
+    }
+
     /// Returns the length of the PositionVector
     pub fn length(self) -> quantities::Length {
         
@@ -44,11 +53,6 @@ impl PositionVector {
         return Self(vector);
     }
 
-    // Returns the opposite vector
-    // Don't know why it fails
-    //pub fn negative() -> Self {
-    //    return Self.mul(-1.0);
-    //}
 }
 
 

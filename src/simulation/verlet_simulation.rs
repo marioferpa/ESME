@@ -4,9 +4,11 @@ use bevy::math::DVec3;
 use std::ops::{ Mul };
 use uom::si::length::meter;
 use uom::si::mass::kilogram;
+use uom::si::time::second;
 
 use physics::force_vector::ForceVector as ForceVector;
 use physics::position_vector::PositionVector as PositionVector;
+use physics::acceleration_vector::AccelerationVector as AccelerationVector;
 
 pub fn verlet_simulation(
     time:                   Res<Time>, 
@@ -86,7 +88,7 @@ fn verlet_integration(
 
     // Forces per verlet (so, per segment)
 
-    //// Centrifugal force (Along x for now, this needs to change)
+    // Centrifugal force (Along x for now, this needs to change)
 
     let centrifugal_force_magnitude = craft_params.segment_mass() * verlet_object.current_coordinates.clone().length() 
         * craft_params.angular_velocity() * craft_params.angular_velocity();
@@ -95,33 +97,23 @@ fn verlet_integration(
 
     let centrifugal_force = ForceVector::from_direction(centrifugal_force_magnitude, centrifugal_force_direction);
 
-    //// Coulomb drag force
+    // Coulomb drag force
     
     let coulomb_force_magnitude= coulomb_force_per_meter(&solar_wind, &craft_params) * craft_params.segment_length();
 
     let coulomb_force = ForceVector::from_direction(coulomb_force_magnitude, solar_wind.direction); 
 
-    //// Total force
+    // Total force
 
     let total_force = coulomb_force + centrifugal_force;    // This is a ForceVector containing uom quantities
 
-    let total_acc = total_force.clone() / craft_params.segment_mass().get::<kilogram>();    // What quantity is this? It's force!!
+    let acc_vector = AccelerationVector::from_force(total_force.clone(), craft_params.segment_mass());
 
-    let x_acc = total_force.x() / craft_params.segment_mass();
-    let y_acc = total_force.y() / craft_params.segment_mass();
-    let z_acc = total_force.z() / craft_params.segment_mass();
-
-    // Not making an acceleration uom vector just for this if the result is a position vector anyways
-    // Need a better name for this
-    let x_acceleration = total_force.x() / craft_params.segment_mass() * sim_params.timestep_s * sim_params.timestep_s;
-    let y_acceleration = total_force.y() / craft_params.segment_mass() * sim_params.timestep_s * sim_params.timestep_s;
-    let z_acceleration = total_force.z() / craft_params.segment_mass() * sim_params.timestep_s * sim_params.timestep_s;
-
-    // Wondering if these units are correct
-    let position_from_acceleration = PositionVector::new(x_acceleration, y_acceleration, z_acceleration);
+    let delta_from_acc = PositionVector::from_acceleration(acc_vector, sim_params.timestep_s);
+ 
 
     // Next position calculation (formula from here: https://www.algorithm-archive.org/contents/verlet_integration/verlet_integration.html)
-    let next_coordinates = verlet_object.current_coordinates.clone().mul(2.0) - verlet_object.previous_coordinates.clone() + position_from_acceleration;
+    let next_coordinates = verlet_object.current_coordinates.clone().mul(2.0) - verlet_object.previous_coordinates.clone() + delta_from_acc;
 
     // Damping here, before the update of coordinates?
 

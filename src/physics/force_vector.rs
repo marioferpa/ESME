@@ -1,4 +1,5 @@
 use uom::si::f64 as quantities;  
+use uom::si::*;
 use bevy::math::DVec3;
 use uom::si::force::newton;
 
@@ -6,6 +7,8 @@ use std::ops::{ Add, Div };
 
 #[derive(Debug, Clone)]
 pub struct ForceVector ( pub Vec<quantities::Force> );
+
+// Can I / should I implement a division of force over mass and getting acceleration?
 
 impl ForceVector {
 
@@ -40,6 +43,22 @@ impl ForceVector {
     pub fn z(&self) -> quantities::Force {
         self.0[2]
     }
+
+    /// Returns the length of the ForceVector
+    pub fn length(self) -> quantities::Length {
+        
+        let x = self.0[0] * self.0[0];
+        let y = self.0[1] * self.0[1];
+        let z = self.0[2] * self.0[2];
+
+        let length = (x.value + y.value + z.value).sqrt();
+
+        return quantities::Length::new::<length::meter>(length);    // Finish this
+    }
+
+    //pub fn direction(&self) -> DVec3 {
+
+    //}
 
 }
 
