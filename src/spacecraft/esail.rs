@@ -13,7 +13,7 @@ const ENDMASS_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData,
 #[derive(Component, Debug)]
 pub struct ESail {
     pub origin:     physics::position_vector::PositionVector, 
-    pub elements:   Vec<Entity>,
+    pub elements:   Vec<Entity>,    // Is this in use?  // Yes, but I could fix that 
     pub undeployed_elements:    Vec<Entity>,
     pub deployed_elements:      Vec<Entity>,
 }
@@ -101,10 +101,10 @@ pub fn spawn_esail(
 
     let mut element_vector: Vec<Entity> = Vec::new();
 
-    //let mut undeployed_elements:    Vec<Entity> = Vec::new();
-    //let mut deployed_elements:      Vec<Entity> = Vec::new();
-    let mut undeployed_elements:    Vec<Entity> = Vec::with_capacity(50);   // Not working, why?
-    let mut deployed_elements:      Vec<Entity> = Vec::with_capacity(50);
+    let mut undeployed_elements:    Vec<Entity> = Vec::new();
+    let mut deployed_elements:      Vec<Entity> = Vec::new();
+    //let mut undeployed_elements:    Vec<Entity> = Vec::with_capacity(50);
+    //let mut deployed_elements:      Vec<Entity> = Vec::with_capacity(50);
 
     let esail_entity = commands.spawn((
         Name::new("E-sail"),
@@ -122,9 +122,6 @@ pub fn spawn_esail(
 
         // Don't deploy any (only the endmass)
         let deployment_state = false;
-
-        // Deploy endmass and one more
-        //let deployment_state = if number == 8 { true } else { false };
 
         println!("Element {} spawned, deployment_state: {}", number, deployment_state);
         
@@ -178,7 +175,7 @@ fn spawn_endmass (
         commands.spawn ( 
             PbrBundle {
                 mesh: meshes.add(Mesh::from(shape::Cube { size: 15.0 })),
-                material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+                material: materials.add(Color::rgb(0.5, 0.5, 0.5).into()),
                 transform: Transform::from_xyz(0.0, 0.0, 0.0),
                 ..default()
             }
@@ -206,13 +203,22 @@ fn spawn_esail_element(
     x: quantities::Length, mass: quantities::Mass, deployment: bool,
     ) -> Entity {
 
-    let radius = 5.0; // 5.0 what? Apples? Oranges? 
+    //let radius = 5.0; // 5.0 what? Apples? Oranges? 
+    let radius = 2.5;
 
     let sail_element =
         commands.spawn ( 
             PbrBundle {
                 mesh: meshes.add(Mesh::from(shape::UVSphere { radius: radius, ..default() })),
-                material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+                //material: materials.add(Color::rgb(0.8, 0.7, 0.6).into()),
+                material: materials.add(
+                    StandardMaterial {
+                        base_color: Color::rgb(0.0, 0.0, 1.0), // Set to bright blue
+                        emissive: Color::rgb(0.03, 0.57, 0.82), // Set to bright blue
+                        ..Default::default()
+                    }
+                    .into(),
+                ),
                 transform: Transform::from_xyz(0.0, 0.0, 0.0),
                 ..default()
             }
