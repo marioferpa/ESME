@@ -44,13 +44,15 @@ pub fn verlet_simulation(
 
                 // Relative position between element and preceding element, as a PositionVector
                 let relative_position_between_elements = esail.vector_to_previous_element(index, &verlet_query);
-                let distance_between_elements = relative_position_between_elements.clone().length().get::<meter>();
+
+                let distance_between_elements = relative_position_between_elements.clone().length();
 
                 // Desired distance between elements (in meters)
                 let desired_relative_position_between_elements = craft_params.segment_length();
 
-                let difference = if distance_between_elements > 0.0 {
-                    (desired_relative_position_between_elements.get::<meter>() - distance_between_elements) / distance_between_elements
+                let difference = if distance_between_elements.get::<meter>() > 0.0 {
+                    (desired_relative_position_between_elements.get::<meter>() - distance_between_elements.get::<meter>())
+                        / distance_between_elements.get::<meter>()
                 } else {
                     0.0
                 };
@@ -64,10 +66,8 @@ pub fn verlet_simulation(
                 current_verlet_object.correct_current_coordinates(correction_vector.clone());
 
                 // Changing previous element if previous element is not the first.
-                //if index > 1 {
                 if index > 0 {
                     let mut preceding_verlet_object = verlet_query.get_mut(esail.elements[index - 1]).expect("No previous sail element found");
-                    //preceding_verlet_object.correct_current_coordinates(correction_vector.mul(-1.0));
                     if preceding_verlet_object.is_deployed {
                         // Maybe a method to give the negative?
                         preceding_verlet_object.correct_current_coordinates(correction_vector.mul(-1.0));
