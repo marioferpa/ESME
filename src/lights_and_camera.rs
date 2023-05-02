@@ -31,7 +31,6 @@ impl LightsAndCameraPlugin {
         let radius = translation.length();
 
         // 3D camera 
-        // I think quaternions can be used
         commands.spawn((
             Camera3dBundle { transform: Transform::from_translation(translation).looking_at(Vec3::ZERO, Vec3::Y), ..default() },
             components::PanOrbitCamera { radius, ..Default::default() },
