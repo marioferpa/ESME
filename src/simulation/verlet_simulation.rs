@@ -111,8 +111,8 @@ fn verlet_integration(
 
     // Stiffness reaction force here?
     // A function on verlet_object should do this? passing a verlet query? Not verlet_object, wait. ESail maybe?
-    let angle = esail.deflection_angle(5, &verlet_object); 
-    println!("Angle for element 5: {}", angle);
+    //let angle = esail.deflection_angle(5, &verlet_object); 
+    //println!("Angle for element 5: {}", angle);
     
 
     // Total force
