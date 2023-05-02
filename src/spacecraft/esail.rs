@@ -36,6 +36,30 @@ impl ESail {
         }
     }
 
+    // Test
+    pub fn deflection_angle (
+        &self,
+        index: usize,
+        verlet_query: &Query<&mut physics::verlet_object::VerletObject>
+        ) -> f64 {
+
+
+        // I need the position of the current element and the TWO previous.
+            // What's up with those very close to the origin?
+                // First isn't deployed. Second could use the first and the center of the cubesat maybe?
+
+        let current_element_position =      &verlet_query.get(self.elements[index]).expect("").current_coordinates;
+        let preceding_element_position =    &verlet_query.get(self.elements[index-1]).expect("No preceding element").current_coordinates;
+        let prepreceding_element_position = &verlet_query.get(self.elements[index-2]).expect("No pre-preceding element").current_coordinates;
+
+        let current_to_prev  = current_element_position.clone() - preceding_element_position.clone();
+        let prev_to_prevprev = preceding_element_position.clone() - prepreceding_element_position.clone();
+
+        let angle_between = physics::position_vector::angle_between(&current_to_prev, &prev_to_prevprev);
+
+        return angle_between;
+    }
+
     pub fn deploy_esail ( &mut self, amount: usize ) {
 
         let count = std::cmp::min(amount, self.undeployed_elements.len() - 1);
@@ -46,6 +70,7 @@ impl ESail {
         }
     }
 
+    // Unused?
     pub fn retract_esail (&mut self, amount: usize) {
 
         let count = std::cmp::min(amount, self.deployed_elements.len());
@@ -103,8 +128,6 @@ pub fn spawn_esail(
 
     let mut undeployed_elements:    Vec<Entity> = Vec::new();
     let mut deployed_elements:      Vec<Entity> = Vec::new();
-    //let mut undeployed_elements:    Vec<Entity> = Vec::with_capacity(50);
-    //let mut deployed_elements:      Vec<Entity> = Vec::with_capacity(50);
 
     let esail_entity = commands.spawn((
         Name::new("E-sail"),

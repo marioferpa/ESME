@@ -32,7 +32,9 @@ pub fn verlet_simulation(
 
             let mut verlet_object = verlet_query.get_mut(*entity).expect("No sail element found");
 
-            verlet_integration(&mut sim_params, &mut verlet_object, &craft_params, &solar_wind_parameters);
+            verlet_integration(&mut sim_params, &mut verlet_object, &craft_params, &solar_wind_parameters, &esail_query);
+
+            // DO THE ANGLE THING HERE!!
         }
 
         // CONSTRAINT LOOP
@@ -80,11 +82,15 @@ pub fn verlet_simulation(
 
 /// Updates the position of a verlet object
 fn verlet_integration(
-    sim_params:  &mut ResMut<resources::SimulationParameters>,
-    verlet_object:          &mut physics::verlet_object::VerletObject,
-    craft_params:  &Res<spacecraft::SpacecraftParameters>,
-    solar_wind:             &Res<resources::SolarWindParameters>,
+    sim_params:     &mut ResMut<resources::SimulationParameters>,
+    verlet_object:  &mut physics::verlet_object::VerletObject,
+    craft_params:   &Res<spacecraft::SpacecraftParameters>,
+    solar_wind:     &Res<resources::SolarWindParameters>,
+    mut esail_query: &Query<&spacecraft::esail::ESail>,  
+    // Verlet query missing as well...
     ){
+
+    let esail = esail_query.single();
 
     // Forces per verlet (so, per segment)
 
@@ -102,6 +108,12 @@ fn verlet_integration(
     let coulomb_force_magnitude= coulomb_force_per_meter(&solar_wind, &craft_params) * craft_params.segment_length();
 
     let coulomb_force = ForceVector::from_direction(coulomb_force_magnitude, solar_wind.direction); 
+
+    // Stiffness reaction force here?
+    // A function on verlet_object should do this? passing a verlet query? Not verlet_object, wait. ESail maybe?
+    let angle = esail.deflection_angle(5, &verlet_object); 
+    println!("Angle for element 5: {}", angle);
+    
 
     // Total force
 

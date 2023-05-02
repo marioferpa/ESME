@@ -1,7 +1,32 @@
 use uom::si::f64 as quantities;  
 use uom::si::*;
+use uom::si::length::meter;
 
 use std::ops::{ Add, Sub, Mul };
+use std::f64::consts::PI;
+
+// Maybe a function here, outside of the PositionVector struct, could return the angle between two PositionVectors
+
+// Testing
+pub fn dot_product(first: &PositionVector, second: &PositionVector) -> f64 {
+    
+    let result_x = first.x().get::<meter>() * second.x().get::<meter>();
+    let result_y = first.y().get::<meter>() * second.y().get::<meter>();
+    let result_z = first.z().get::<meter>() * second.z().get::<meter>();
+
+    return result_x + result_y + result_z;
+}
+
+// Testing as well
+pub fn angle_between(first: &PositionVector, second: &PositionVector) -> f64 {
+
+    let dot_product = dot_product(&first, &second);
+    let magnitudes_product = first.clone().length().get::<meter>() * second.clone().length().get::<meter>();
+
+    let cos_theta = dot_product / magnitudes_product;
+
+    return cos_theta.acos() * 180.0 / PI; //Should it return an uom angle?? Probably!!
+}
 
 #[derive(Debug, Clone)]
 pub struct PositionVector ( pub Vec<quantities::Length> );
@@ -45,6 +70,14 @@ impl PositionVector {
         return self.0[0];
     }
 
+    pub fn y(&self) -> quantities::Length {
+        return self.0[1];
+    }
+
+    pub fn z(&self) -> quantities::Length {
+        return self.0[2];
+    }
+
     /// Returns a new position vector with zero values
     pub fn zero() -> Self {
         let zero = quantities::Length::new::<length::meter>(0.0);
@@ -53,6 +86,14 @@ impl PositionVector {
         return Self(vector);
     }
 
+    //pub fn dot(&self, other: &Self) -> f64 {
+    //    
+    //    let result_x = self.x().get::<meter>() * other.x().get::<meter>();
+    //    let result_y = self.y().get::<meter>() * other.y().get::<meter>();
+    //    let result_z = self.z().get::<meter>() * other.z().get::<meter>();
+
+    //    return result_x + result_y + result_z;
+    //}
 }
 
 
