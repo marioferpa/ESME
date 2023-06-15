@@ -1,7 +1,8 @@
 use bevy::prelude::*;
-use crate::{ physics, resources, spacecraft };
+use crate::{ physics, resources, solar_wind, spacecraft };
 use bevy::math::DVec3;
 use std::ops::{ Mul };
+
 use uom::si::length::meter;
 use uom::si::mass::kilogram;
 use uom::si::time::second;
@@ -10,11 +11,39 @@ use physics::force_vector::ForceVector as ForceVector;
 use physics::position_vector::PositionVector as PositionVector;
 use physics::acceleration_vector::AccelerationVector as AccelerationVector;
 
+pub fn new_verlet_simulation (
+    time:               Res<Time>, 
+    new_esail_query:    Query<&spacecraft::new_esail::NewESail>,
+    solar_wind:         Res<solar_wind::SolarWind>,
+    craft_params:       Res<spacecraft::SpacecraftParameters>,
+    mut sim_params:     ResMut<resources::SimulationParameters>,
+) {
+
+    let new_esail = new_esail_query.single();
+
+    let timesteps = timestep_calculation(&time, &mut sim_params);
+
+    //println!("Timesteps: {}", timesteps);
+
+    for _ in 0..timesteps { 
+
+        // VERLET INTEGRATION: Forces are calculated for every element
+
+        for mut verlet_object in new_esail.deployed_elements.iter() {  // Iterating over esail DEPLOYED elements, in order.
+
+            println!("(New ESail) Current position: {:?}", verlet_object.current_coordinates);
+
+            //verlet_integration(&mut sim_params, &mut verlet_object, &craft_params, &solar_wind_params);
+            //println!("Verlet force: {:?}", verlet_object.current_force);
+        }
+    }
+}
+
 pub fn verlet_simulation(
     time:                   Res<Time>, 
     esail_query:            Query<&spacecraft::esail::ESail>,  
-    solar_wind_parameters:  Res<resources::SolarWindParameters>,
-    craft_params:  Res<spacecraft::SpacecraftParameters>,
+    solar_wind:             Res<solar_wind::SolarWind>,
+    craft_params:           Res<spacecraft::SpacecraftParameters>,
     mut verlet_query:       Query<&mut physics::verlet_object::VerletObject>,
     mut sim_params:         ResMut<resources::SimulationParameters>,
     ) {
@@ -32,9 +61,9 @@ pub fn verlet_simulation(
 
             let mut verlet_object = verlet_query.get_mut(*entity).expect("No sail element found");
 
-            verlet_integration(&mut sim_params, &mut verlet_object, &craft_params, &solar_wind_parameters, &esail_query);
+            verlet_integration(&mut sim_params, &mut verlet_object, &craft_params, &solar_wind);
 
-            // DO THE ANGLE THING HERE!!
+            //println!("Verlet force: {:?}", verlet_object.current_force);
         }
 
         // CONSTRAINT LOOP
@@ -47,10 +76,11 @@ pub fn verlet_simulation(
                 // Relative position between element and preceding element, as a PositionVector
                 let relative_position_between_elements = esail.vector_to_previous_element(index, &verlet_query);
 
-                let distance_between_elements = relative_position_between_elements.clone().length();
-
                 // Desired distance between elements (in meters)
                 let desired_relative_position_between_elements = craft_params.segment_length();
+
+                // Correction calculation
+                let distance_between_elements = relative_position_between_elements.clone().length();
 
                 let difference = if distance_between_elements.get::<meter>() > 0.0 {
                     (desired_relative_position_between_elements.get::<meter>() - distance_between_elements.get::<meter>())
@@ -63,7 +93,7 @@ pub fn verlet_simulation(
 
                 // UPDATING POSITIONS
                 
-                let mut current_verlet_object = verlet_query.get_mut(esail.elements[index]).expect("No previous sail element found");
+                let mut current_verlet_object = verlet_query.get_mut(esail.elements[index]).expect("No sail element found");
 
                 current_verlet_object.correct_current_coordinates(correction_vector.clone());
 
@@ -85,12 +115,8 @@ fn verlet_integration(
     sim_params:     &mut ResMut<resources::SimulationParameters>,
     verlet_object:  &mut physics::verlet_object::VerletObject,
     craft_params:   &Res<spacecraft::SpacecraftParameters>,
-    solar_wind:     &Res<resources::SolarWindParameters>,
-    mut esail_query: &Query<&spacecraft::esail::ESail>,  
-    // Verlet query missing as well...
+    solar_wind:     &Res<solar_wind::SolarWind>,
     ){
-
-    let esail = esail_query.single();
 
     // Forces per verlet (so, per segment)
 
@@ -111,13 +137,15 @@ fn verlet_integration(
 
     // Stiffness reaction force here?
     // A function on verlet_object should do this? passing a verlet query? Not verlet_object, wait. ESail maybe?
-    //let angle = esail.deflection_angle(5, &verlet_object); 
+    //let angle = esail.deflection_angle(5, &verlet_query); 
     //println!("Angle for element 5: {}", angle);
     
 
     // Total force
 
     let total_force = coulomb_force + centrifugal_force;    // This is a ForceVector containing uom quantities
+
+    verlet_object.current_force = total_force.clone();
 
     let acc_vector = AccelerationVector::from_force(total_force.clone(), craft_params.segment_mass());
 
@@ -155,7 +183,7 @@ fn timestep_calculation(
 // Should this go inside the physics folder, in its own file?
 #[allow(non_snake_case)]
 pub fn coulomb_force_per_meter( 
-    solar_wind:         &Res<resources::SolarWindParameters>, 
+    solar_wind:         &Res<solar_wind::SolarWind>, 
     spacecraft:         &Res<spacecraft::SpacecraftParameters>,
     ) -> uom::si::f64::RadiantExposure {    // Radiant exposure is [mass][time]⁻²
 

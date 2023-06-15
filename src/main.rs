@@ -21,6 +21,7 @@ mod spacecraft;
 use spacecraft::SpacecraftPlugin;
 mod simulation;
 use simulation::SimulationPlugin;
+mod solar_wind;
 
 extern crate uom;
 
@@ -41,7 +42,7 @@ fn main() {
         .add_plugin(UserInputPlugin)
         .add_plugin(SpacecraftPlugin)
         .add_plugin(SimulationPlugin)
-        .insert_resource(resources::SolarWindParameters{..Default::default()})
+        .insert_resource(solar_wind::SolarWind{..Default::default()})
         .insert_resource(resources::SimulationParameters{..Default::default()})
         .run();
 }

@@ -8,6 +8,8 @@ pub struct VerletObject {
     pub previous_coordinates:   super::position_vector::PositionVector, 
     pub current_coordinates:    super::position_vector::PositionVector,
     pub is_deployed:            bool,
+    // Test, not sure about this
+    pub current_force:          super::force_vector::ForceVector, 
 }
 
 impl VerletObject {

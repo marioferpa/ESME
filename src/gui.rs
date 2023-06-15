@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContext};
 
-use crate::{ resources, spacecraft };
+use crate::{ resources, solar_wind, spacecraft };
 
 use uom::si::*;
 
@@ -23,11 +23,9 @@ impl GUIPlugin {
     fn sidebar(
         mut egui_ctx:               ResMut<EguiContext>,
         mut sim_params:             ResMut<resources::SimulationParameters>,
-        solar_wind:                 ResMut<resources::SolarWindParameters>, 
+        solar_wind:                 ResMut<solar_wind::SolarWind>, 
         mut spacecraft_parameters:  ResMut<spacecraft::SpacecraftParameters>,
         ) {
-
-        //let (esail2, mut esail2_transform) = esail_query.single_mut();
 
         egui::SidePanel::left("side_panel")
         .default_width(200.0)
@@ -85,10 +83,6 @@ impl GUIPlugin {
             ui.horizontal(|ui| { 
                 ui.label( format!("Total coulomb force: "));
             });
-
-            //if ui.add(egui::Button::new("Reset")).clicked() {
-            //   println!("Hey");
-            //}
         });
     }
 }

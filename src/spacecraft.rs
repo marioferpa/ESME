@@ -9,6 +9,7 @@ use physics::position_vector::PositionVector;
 
 pub mod axes;
 pub mod esail;
+pub mod new_esail;
 pub mod body;
 pub mod center_mass; 
 
@@ -23,6 +24,7 @@ impl Plugin for SpacecraftPlugin {
                     .label("spawn_elements")
                     .with_system(axes::spawn_axes)
                     .with_system(esail::spawn_esail)
+                    .with_system(new_esail::spawn_new_esail)
                     .with_system(body::spawn_cubesat)
                     .with_system(center_mass::spawn_center_mass)
             )
@@ -55,7 +57,7 @@ impl Default for SpacecraftParameters {
             wire_density:       quantities::MassDensity::new::<mass_density::gram_per_cubic_centimeter>(2.7),
             wire_potential:     quantities::ElectricPotential::new::<electric_potential::kilovolt>(0.0),
             wire_resolution:    quantities::LinearNumberDensity::new::<linear_number_density::per_meter>(20.0),
-            //wire_resolution:    quantities::LinearNumberDensity::new::<linear_number_density::per_meter>(50.0),
+            //wire_resolution:    quantities::LinearNumberDensity::new::<linear_number_density::per_meter>(100.0),
             body_size:          quantities::Length::new::<length::meter>(0.15),
             esail_origin:       PositionVector::new(
                                     quantities::Length::new::<length::meter>(0.15 / 2.0),

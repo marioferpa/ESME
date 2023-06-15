@@ -19,6 +19,11 @@ impl ForceVector {
         return Self(vector);
     }
 
+    /// Creates a new ForceVector with all zeros.
+    pub fn empty() -> Self {
+        return Self( Vec::with_capacity(3) );
+    }
+
     /// Creates a new ForceVector of capacity 3 along a direction vector
     pub fn from_direction(magnitude: quantities::Force, direction: DVec3) -> Self {
 
@@ -45,6 +50,7 @@ impl ForceVector {
     }
 
     /// Returns the length of the ForceVector
+    // Should be called "magnitude" maybe
     pub fn length(self) -> quantities::Length {
         
         let x = self.0[0] * self.0[0];
@@ -57,7 +63,6 @@ impl ForceVector {
     }
 
     //pub fn direction(&self) -> DVec3 {
-
     //}
 
 }

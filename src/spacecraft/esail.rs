@@ -12,10 +12,12 @@ const ENDMASS_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData,
 
 #[derive(Component, Debug)]
 pub struct ESail {
-    pub origin:     physics::position_vector::PositionVector, 
-    pub elements:   Vec<Entity>,    // Is this in use?  // Yes, but I could fix that 
+    pub origin:                 physics::position_vector::PositionVector, 
+    pub elements:               Vec<Entity>,    // Is this in use?  // Yes, but I could fix that 
     pub undeployed_elements:    Vec<Entity>,
     pub deployed_elements:      Vec<Entity>,
+    // Testing, not sure about it.
+    pub total_force:            physics::force_vector::ForceVector,
 }
 
 impl ESail {
@@ -88,6 +90,7 @@ impl ESail {
     }
 }
 
+// Shouldn't this go in user input?
 pub fn click(
     //mut commands: Commands,
     //spacecraft_parameters: Res<super::SpacecraftParameters>,
@@ -181,6 +184,7 @@ pub fn spawn_esail(
             elements:   element_vector,     
             undeployed_elements:    undeployed_elements,
             deployed_elements:      deployed_elements,
+            total_force:            physics::force_vector::ForceVector::empty(),
         })
     ;
 
@@ -213,6 +217,7 @@ fn spawn_endmass (
             previous_coordinates:   physics::position_vector::PositionVector::new(x, zero, zero),
             current_coordinates:    physics::position_vector::PositionVector::new(x, zero, zero),
             is_deployed:            true,
+            current_force:          physics::force_vector::ForceVector::empty(),
         });
 
     return endmass;
@@ -253,9 +258,10 @@ fn spawn_esail_element(
         .insert(Name::new("E-sail element")) 
         .insert(components::Mass(mass))
         .insert(physics::verlet_object::VerletObject { 
-            previous_coordinates: physics::position_vector::PositionVector::new(x, zero, zero),
-            current_coordinates:  physics::position_vector::PositionVector::new(x, zero, zero),
-            is_deployed:          deployment,
+            previous_coordinates:   physics::position_vector::PositionVector::new(x, zero, zero),
+            current_coordinates:    physics::position_vector::PositionVector::new(x, zero, zero),
+            is_deployed:            deployment,
+            current_force:          physics::force_vector::ForceVector::empty(),
         })
         .insert(components::ElectricallyCharged{ ..Default::default() })
         ;
