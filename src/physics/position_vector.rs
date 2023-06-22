@@ -5,9 +5,6 @@ use uom::si::length::meter;
 use std::ops::{ Add, Sub, Mul };
 use std::f64::consts::PI;
 
-// Maybe a function here, outside of the PositionVector struct, could return the angle between two PositionVectors
-
-// Testing
 pub fn dot_product(first: &PositionVector, second: &PositionVector) -> f64 {
     
     let result_x = first.x().get::<meter>() * second.x().get::<meter>();
@@ -17,7 +14,6 @@ pub fn dot_product(first: &PositionVector, second: &PositionVector) -> f64 {
     return result_x + result_y + result_z;
 }
 
-// Testing as well
 pub fn angle_between(first: &PositionVector, second: &PositionVector) -> f64 {
 
     let dot_product = dot_product(&first, &second);
@@ -43,6 +39,19 @@ impl PositionVector {
     #[allow(dead_code)]
     pub fn empty() -> Self {
         return PositionVector( Vec::new() );    // Make it capacity 3
+    }
+
+    // Untested
+    pub fn from_a_to_b (
+        point_a: Self,
+        point_b: Self,
+    ) -> Self {
+
+        let x = point_b.x() - point_a.x();
+        let y = point_b.y() - point_a.y();
+        let z = point_b.z() - point_a.z();
+
+        return Self::new(x, y, z);
     }
 
     pub fn from_acceleration(acceleration: super::acceleration_vector::AccelerationVector, time: quantities::Time) -> Self {
@@ -85,15 +94,6 @@ impl PositionVector {
         vector.extend(vec![zero, zero, zero]);
         return Self(vector);
     }
-
-    //pub fn dot(&self, other: &Self) -> f64 {
-    //    
-    //    let result_x = self.x().get::<meter>() * other.x().get::<meter>();
-    //    let result_y = self.y().get::<meter>() * other.y().get::<meter>();
-    //    let result_z = self.z().get::<meter>() * other.z().get::<meter>();
-
-    //    return result_x + result_y + result_z;
-    //}
 }
 
 

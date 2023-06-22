@@ -13,80 +13,79 @@ use physics::force_vector::ForceVector as ForceVector;
 use physics::position_vector::PositionVector as PositionVector;
 use physics::acceleration_vector::AccelerationVector as AccelerationVector;
 
+pub fn new_verlet_simulation (
+    time:               Res<Time>, 
+    mut new_esail_query:    Query<&mut spacecraft::new_esail::NewESail>,
+    solar_wind:         Res<solar_wind::SolarWind>,
+    craft_params:       Res<spacecraft::SpacecraftParameters>,
+    mut sim_params:     ResMut<resources::SimulationParameters>,
+) {
 
-pub fn verlet_simulation(
-    time:                   Res<Time>, 
-    esail_query:            Query<&spacecraft::esail::ESail>,  
-    solar_wind:             Res<solar_wind::SolarWind>,
-    craft_params:           Res<spacecraft::SpacecraftParameters>,
-    mut verlet_query:       Query<&mut physics::verlet_object::VerletObject>,
-    mut sim_params:         ResMut<resources::SimulationParameters>,
-    ) {
+    let mut new_esail = new_esail_query.single_mut();
 
-    let esail = esail_query.single();
-
-    // Timesteps since last frame
-    let timesteps = timestep_calculation(&time, &mut sim_params);
-
-    for _ in 0..timesteps { 
+    for _ in 0..timestep_calculation(&time, &mut sim_params) {
 
         // VERLET INTEGRATION: Forces are calculated for every element
 
-        for entity in esail.deployed_elements.iter() {  // Iterating over esail DEPLOYED elements, in order.
+        for verlet_object in new_esail.deployed_elements.iter_mut() {
 
-            let mut verlet_object = verlet_query.get_mut(*entity).expect("No sail element found");
-
-            verlet_integration(&mut sim_params, &mut verlet_object, &craft_params, &solar_wind);
-
-            //println!("Verlet force: {:?}", verlet_object.current_force);
+            //println!("(New ESail) Current position: {:?}", verlet_object.current_coordinates);
+            new_verlet_integration(&mut sim_params, verlet_object, &craft_params, &solar_wind);
         }
 
         // CONSTRAINT LOOP
 
+        let desired_distance_between_elements = craft_params.segment_length();
+
         for _ in 0..sim_params.iterations {
 
-            //for index in 1..esail.elements.len() {  // Skipping first item
-            for index in 0..esail.elements.len() {  // Why are these two the same!?
+            for index in 0..new_esail.deployed_elements.len() {
 
-                // Relative position between element and preceding element, as a PositionVector
-                let relative_position_between_elements = esail.vector_to_previous_element(index, &verlet_query);
+                let current_element_coordinates = new_esail.deployed_elements[index]
+                                                           .current_coordinates
+                                                           .clone();
 
-                // Desired distance between elements (in meters)
-                let desired_relative_position_between_elements = craft_params.segment_length();
+                let preceding_element_coordinates = if index == 0 {
+                    &new_esail.origin
+                } else {
+                    &new_esail.deployed_elements[index-1]
+                              .current_coordinates
+                };
+                
+                let vector_between_elements = PositionVector::from_a_to_b(
+                                                current_element_coordinates,
+                                                preceding_element_coordinates.clone(),
+                                                );
 
-                // Correction calculation
-                let distance_between_elements = relative_position_between_elements.clone().length();
+                let distance_between_elements = vector_between_elements.clone().length();
 
                 let difference = if distance_between_elements.get::<meter>() > 0.0 {
-                    (desired_relative_position_between_elements.get::<meter>() - distance_between_elements.get::<meter>())
+                    (desired_distance_between_elements.get::<meter>() - distance_between_elements.get::<meter>())
                         / distance_between_elements.get::<meter>()
                 } else {
                     0.0
                 };
 
-                let correction_vector = relative_position_between_elements.mul(0.5 * difference);
+                //println!("Index: {} | Distance to previous: {:?} | Difference: {:?}", index, distance_between_elements, difference);   // Weird...
 
-                // UPDATING POSITIONS
-                
-                let mut current_verlet_object = verlet_query.get_mut(esail.elements[index]).expect("No sail element found");
+                let correction_vector = vector_between_elements.mul(0.5 * difference);
 
-                current_verlet_object.correct_current_coordinates(correction_vector.clone());
+                //println!("(Index {}) New correction vector: {:?}", index, correction_vector);
 
-                // Changing previous element if previous element is not the first.
-                if index > 0 {
-                    let mut preceding_verlet_object = verlet_query.get_mut(esail.elements[index - 1]).expect("No previous sail element found");
-                    if preceding_verlet_object.is_deployed {
-                        // Maybe a method to give the negative?
-                        preceding_verlet_object.correct_current_coordinates(correction_vector.mul(-1.0));
-                    }
-                }
+                // Correction vector: NaN. WTF
+                //new_esail.deployed_elements[index].correct_current_coordinates(correction_vector);
+
+                // And correct the previous too?
+
+                // Render some meshes before continuing
+
             }
         }
     }
 }
 
 /// Updates the position of a verlet object
-fn verlet_integration(
+fn new_verlet_integration(
     sim_params:     &mut ResMut<resources::SimulationParameters>,
     verlet_object:  &mut physics::verlet_object::VerletObject,
     craft_params:   &Res<spacecraft::SpacecraftParameters>,
@@ -135,7 +134,6 @@ fn verlet_integration(
     
     // Updating verlet coordinates
     verlet_object.update_coordinates(next_coordinates);
-
 }
 
 /// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.

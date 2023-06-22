@@ -2,6 +2,7 @@
 use bevy::prelude::*;
 
 mod verlet_simulation;
+mod new_verlet_simulation;
 mod voltage;
 
 pub struct SimulationPlugin;   // Plugins are structs, therefore they can hold data!
@@ -14,7 +15,7 @@ impl Plugin for SimulationPlugin {
                     .label("VerletSimulation")
                     .after("Deploy"),    // I don't know if this is working
             )
-            .add_system(verlet_simulation::new_verlet_simulation)
+            .add_system(new_verlet_simulation::new_verlet_simulation)
             .add_system(voltage::update_esail_voltage)
             //.add_system(Self::update_center_of_mass)        // Updates position of the center of mass
             ;

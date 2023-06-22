@@ -30,7 +30,7 @@ impl GraphicsPlugin {
 
         let cubesat_model = assets.load("cubesat.glb");
         commands.insert_resource(MeshHandles(cubesat_model));
-        println!("Mesh loaded");
+        println!("Cubesat mesh loaded");
     }
 
     // At some point I think that physics.rs will update a component containing the rotation, and
