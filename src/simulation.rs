@@ -5,7 +5,7 @@ mod verlet_simulation;
 mod new_verlet_simulation;
 mod voltage;
 
-pub struct SimulationPlugin;   // Plugins are structs, therefore they can hold data!
+pub struct SimulationPlugin;
 
 impl Plugin for SimulationPlugin {
     fn build(&self, app: &mut App) {

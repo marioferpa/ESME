@@ -23,42 +23,40 @@ impl Plugin for PhysicsPlugin {
         app
             .add_systems(
                 Update,
-                Self::update_center_of_mass
+                update_center_of_mass
             )
         ;
     }
 }
 
-impl PhysicsPlugin {
+/// Updates position and visibility of the center of mass
+/// Maybe this should calculate its position, and graphics.rs should update the transform
 
-    /// Updates position and visibility of the center of mass
-    /// Maybe this should calculate its position, and graphics.rs should update the transform
-    fn update_center_of_mass(
-        simulation_parameters:     Res<resources::SimulationParameters>,
-        mass_query:     Query<(&Transform, &components::Mass), Without<spacecraft::center_mass::CenterOfMass>>,
-        mut com_query:  Query<&mut Transform, With<spacecraft::center_mass::CenterOfMass>>, 
-        ){
+fn update_center_of_mass(
+    simulation_parameters:     Res<resources::SimulationParameters>,
+    mass_query:     Query<(&Transform, &components::Mass), Without<spacecraft::center_mass::CenterOfMass>>,
+    mut com_query:  Query<&mut Transform, With<spacecraft::center_mass::CenterOfMass>>, 
+    ){
 
-        let mut total_mass:     f32 = 0.0;  // In this particular case I don't think I should use physical units.
-                                            // Transform will be in pixels, and mass units are cancelled out.
-        let mut center_mass_x:  f32 = 0.0;
-        let mut center_mass_y:  f32 = 0.0;
+    let mut total_mass:     f32 = 0.0;  // In this particular case I don't think I should use physical units.
+                                        // Transform will be in pixels, and mass units are cancelled out.
+    let mut center_mass_x:  f32 = 0.0;
+    let mut center_mass_y:  f32 = 0.0;
 
-        for (transform, object_mass) in mass_query.iter() {
-            total_mass    += object_mass.0.value as f32; 
-            center_mass_x += transform.translation.x * object_mass.0.value as f32;
-            center_mass_y += transform.translation.y * object_mass.0.value as f32;
-        }
-
-        if simulation_parameters.debug {
-            println!("Total mass: {} | Center of mass: ({},{})", total_mass, center_mass_x, center_mass_y);
-        }
-
-        //let (mut com_transform, mut com_visibility) = com_query.single_mut();
-        let mut com_transform = com_query.single_mut();
-
-        com_transform.translation.x = center_mass_x;
-        com_transform.translation.y = center_mass_y;
-
+    for (transform, object_mass) in mass_query.iter() {
+        total_mass    += object_mass.0.value as f32; 
+        center_mass_x += transform.translation.x * object_mass.0.value as f32;
+        center_mass_y += transform.translation.y * object_mass.0.value as f32;
     }
+
+    if simulation_parameters.debug {
+        println!("Total mass: {} | Center of mass: ({},{})", total_mass, center_mass_x, center_mass_y);
+    }
+
+    //let (mut com_transform, mut com_visibility) = com_query.single_mut();
+    let mut com_transform = com_query.single_mut();
+
+    com_transform.translation.x = center_mass_x;
+    com_transform.translation.y = center_mass_y;
+
 }

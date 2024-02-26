@@ -14,6 +14,7 @@ pub struct SolarWind {
 }
 
 impl Default for SolarWind {
+
     fn default() -> SolarWind {
         SolarWind {
             n_0:        quantities::VolumetricNumberDensity::new::<volumetric_number_density::per_cubic_centimeter>(7.3),
