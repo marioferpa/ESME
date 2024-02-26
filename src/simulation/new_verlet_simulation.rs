@@ -7,7 +7,6 @@ use std::ops::{ Mul };
 
 use uom::si::length::meter;
 use uom::si::mass::kilogram;
-use uom::si::time::second;
 
 use physics::force_vector::ForceVector as ForceVector;
 use physics::position_vector::PositionVector as PositionVector;

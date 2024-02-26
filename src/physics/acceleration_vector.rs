@@ -1,9 +1,7 @@
 use uom::si::f64 as quantities;  
 use bevy::math::DVec3;
 use uom::si::acceleration::meter_per_second_squared;
-use uom::si::force::newton;
-use uom::si::mass::kilogram;
-use std::ops::{ Div, Mul };
+use std::ops::{ Mul };
 
 #[derive(Debug, Clone)]
 pub struct AccelerationVector ( pub Vec<quantities::Acceleration> );

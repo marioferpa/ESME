@@ -1,7 +1,5 @@
 use bevy::prelude::*;
-use bevy::math::DVec3;
 
-// UOM package, for physical units
 use uom::si::f64 as quantities;
 use uom::si::*;
 
