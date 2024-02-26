@@ -11,8 +11,11 @@ pub struct UserInputPlugin;
 impl Plugin for UserInputPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_system(Self::pan_orbit_camera)  
-            ;
+            .add_systems(
+                Update,
+                Self::pan_orbit_camera
+            )  
+        ;
     }
 }
 

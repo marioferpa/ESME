@@ -13,8 +13,11 @@ pub struct GUIPlugin;
 impl Plugin for GUIPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_system(Self::sidebar)
-            ;
+            .add_systems(
+                Update, 
+                Self::sidebar
+            )
+        ;
     }
 }
 

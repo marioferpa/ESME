@@ -10,12 +10,14 @@ pub struct GraphicsPlugin;
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            //.add_startup_system_to_stage(StartupStage::PreStartup, Self::load_models)
-            .add_startup_system(Self::load_models.in_base_set(StartupSet::PreStartup))
-            .add_system(Self::gizmo_visibility)
-            .add_system(Self::update_transform_verlets)     // Updates the position of the graphics
-            .add_system(Self::update_rotation_axes)
-            ;
+            .add_systems(PreStartup, Self::load_models)
+            .add_systems(
+                Update, (
+                    Self::gizmo_visibility,
+                    Self::update_transform_verlets,
+                    Self::update_rotation_axes
+                )
+            );
     }
 }
 

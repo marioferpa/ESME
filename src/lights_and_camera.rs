@@ -11,9 +11,12 @@ pub struct LightsAndCameraPlugin;
 impl Plugin for LightsAndCameraPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_startup_system(Self::spawn_camera)
-            .add_startup_system(Self::spawn_light)
-            ;
+            .add_systems(
+                Startup, (
+                    Self::spawn_camera,
+                    Self::spawn_light,
+                )
+            );
     }
 }
 

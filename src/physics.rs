@@ -21,8 +21,11 @@ pub struct PhysicsPlugin;   // Plugins are structs, therefore they can hold data
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_system(Self::update_center_of_mass)        // Updates position of the center of mass
-            ;
+            .add_systems(
+                Update,
+                Self::update_center_of_mass
+            )
+        ;
     }
 }
 
