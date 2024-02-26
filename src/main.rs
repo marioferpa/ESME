@@ -1,9 +1,7 @@
 //https://gamedevelopment.tutsplus.com/tutorials/simulate-tearable-cloth-and-ragdolls-with-simple-verlet-integration--gamedev-519
 
 use bevy::prelude::*;
-//use bevy_prototype_lyon::prelude::*;
 use bevy_egui::EguiPlugin;
-//use bevy_inspector_egui::WorldInspectorPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 mod components;
@@ -31,7 +29,6 @@ fn main() {
         .add_plugins(gui::GUIPlugin)
         .add_plugins(physics::PhysicsPlugin)
         .add_plugins(lights_and_camera::LightsAndCameraPlugin)
-        //.add_plugins(ShapePlugin)
         .add_plugins(simulation::SimulationPlugin)
         .add_plugins(spacecraft::SpacecraftPlugin)
         .add_plugins(user_input::UserInputPlugin)

@@ -1,16 +1,17 @@
 use bevy::prelude::*;
-use bevy::gltf::Gltf;
 
 use uom::si::length::meter;
 
 use crate::{ physics, spacecraft, resources };
+
+mod load_models;
 
 pub struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(PreStartup, Self::load_models)
+            .add_systems(PreStartup, load_models::load_models)
             .add_systems(
                 Update, (
                     Self::gizmo_visibility,
@@ -21,20 +22,9 @@ impl Plugin for GraphicsPlugin {
     }
 }
 
-#[derive(Resource)]
-pub struct MeshHandles(pub Handle<Gltf>);
 
 impl GraphicsPlugin {
 
-    fn load_models (
-        mut commands: Commands,
-        assets: Res<AssetServer>,
-        ) {
-
-        let cubesat_model = assets.load("cubesat.glb");
-        commands.insert_resource(MeshHandles(cubesat_model));
-        println!("Cubesat mesh loaded");
-    }
 
     // At some point I think that physics.rs will update a component containing the rotation, and
     // this will adapt the Transform to the value of that component.
