@@ -19,16 +19,15 @@ impl Plugin for SpacecraftPlugin {
     fn build(&self, app: &mut App) {
         app
             .insert_resource(SpacecraftParameters{..Default::default()})
-            .add_startup_system_set(
-                SystemSet::new()
-                    .label("spawn_elements")
-                    .with_system(axes::spawn_axes)
-                    .with_system(esail::spawn_esail)
-                    .with_system(new_esail::spawn_new_esail)
-                    .with_system(new_esail::draw_new_esail)
-                    .with_system(body::spawn_cubesat)
-                    .with_system(center_mass::spawn_center_mass)
-            )
+
+            .add_startup_systems((
+                axes::spawn_axes,
+                esail::spawn_esail,
+                new_esail::spawn_new_esail,
+                new_esail::draw_new_esail,
+                body::spawn_cubesat,
+                center_mass::spawn_center_mass,
+            ))
             .add_system(esail::click)
             .add_system(new_esail::update_new_esail_graphics);
             ;

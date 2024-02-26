@@ -134,7 +134,11 @@ pub fn spawn_esail(
 
     let esail_entity = commands.spawn((
         Name::new("E-sail"),
-        SpatialBundle{ visibility: Visibility{ is_visible: true }, ..Default::default() }
+        SpatialBundle{ 
+            //visibility: Visibility{ is_visible: true }, 
+            visibility: Visibility::Visible,
+            ..Default::default() 
+        }
     )).id();
 
     let number_of_elements = spacecraft_parameters.number_of_esail_elements();

@@ -14,6 +14,8 @@ pub fn spawn_cubesat(
     assets:                 Res<AssetServer>,
     ) {
 
+    println!("Cero"); // Not running
+
     let cubesat_size = spacecraft_parameters.body_size.get::<meter>() * simulation_parameters.pixels_per_meter as f64;
 
     //let cubesat_entity = commands.spawn(PbrBundle {
@@ -31,6 +33,8 @@ pub fn spawn_cubesat(
     //        ..Default::default()
     //    });
     //}
+
+    println!("Uno");
 
     let my_gltf = assets.load("cubesat.glb#Scene0");
 

@@ -15,7 +15,10 @@ pub fn spawn_axes (
     // one. Then I could rotate the parent and the children would follow.
 
     let axes_entity = commands.spawn(
-        SpatialBundle { visibility: Visibility { is_visible: true }, ..Default::default() })
+        SpatialBundle { 
+            visibility: Visibility::Visible,
+            ..Default::default() 
+        })
         .insert(Name::new("Axes"))
         .insert(Axes)
         .id(); 

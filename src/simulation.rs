@@ -12,8 +12,8 @@ impl Plugin for SimulationPlugin {
         app
             .add_system(
                 verlet_simulation::verlet_simulation
-                    .label("VerletSimulation")
-                    .after("Deploy"),    // I don't know if this is working
+                    //.label("VerletSimulation")
+                    //.after("Deploy"),    // I don't know if this is working
             )
             .add_system(new_verlet_simulation::new_verlet_simulation)
             .add_system(voltage::update_esail_voltage)

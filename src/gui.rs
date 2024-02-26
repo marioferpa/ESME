@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_egui::{egui, EguiContext};
+use bevy_egui::{egui, EguiContexts};
 
 use crate::{ resources, solar_wind, spacecraft };
 
@@ -21,7 +21,8 @@ impl Plugin for GUIPlugin {
 impl GUIPlugin {
 
     fn sidebar(
-        mut egui_ctx:               ResMut<EguiContext>,
+        //mut egui_ctx:               ResMut<EguiContext>,
+        mut egui_ctx:               EguiContexts,
         mut sim_params:             ResMut<resources::SimulationParameters>,
         solar_wind:                 ResMut<solar_wind::SolarWind>, 
         mut spacecraft_parameters:  ResMut<spacecraft::SpacecraftParameters>,

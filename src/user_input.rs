@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use bevy::input::mouse::MouseMotion;
 use bevy::input::mouse::MouseWheel;
 
+use bevy::window::PrimaryWindow;
+
 use crate::{ components, lights_and_camera };
 
 pub struct UserInputPlugin;
@@ -20,7 +22,8 @@ impl UserInputPlugin {
     /// Pan the camera with middle mouse click, zoom with scroll wheel, orbit with right mouse click.
     /// From the Bevy cheatbook
     fn pan_orbit_camera(
-        windows: Res<Windows>,
+        //windows: Res<Windows>,
+        window_query: Query<&Window, With<PrimaryWindow>>,
         mut ev_motion: EventReader<MouseMotion>,
         mut ev_scroll: EventReader<MouseWheel>,
         input_mouse: Res<Input<MouseButton>>,
@@ -63,7 +66,8 @@ impl UserInputPlugin {
             let mut any = false;
             if rotation_move.length_squared() > 0.0 {
                 any = true;
-                let window = lights_and_camera::get_primary_window_size(&windows);
+                //let window = lights_and_camera::get_primary_window_size(&windows);
+                let window = lights_and_camera::get_primary_window_size(&window_query);
                 let delta_x = {
                     let delta = rotation_move.x / window.x * std::f32::consts::PI * 2.0;
                     if pan_orbit.upside_down { -delta } else { delta }
@@ -76,7 +80,8 @@ impl UserInputPlugin {
             } else if pan.length_squared() > 0.0 {
                 any = true;
                 // make panning distance independent of resolution and FOV,
-                let window = lights_and_camera::get_primary_window_size(&windows);
+                //let window = lights_and_camera::get_primary_window_size(&windows);
+                let window = lights_and_camera::get_primary_window_size(&window_query);
                 if let Projection::Perspective(projection) = projection {
                     pan *= Vec2::new(projection.fov * projection.aspect_ratio, projection.fov) / window;
                 }

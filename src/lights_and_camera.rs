@@ -1,12 +1,8 @@
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 
 use crate::{ components };
 
-pub fn get_primary_window_size(windows: &Res<Windows>) -> Vec2 {
-    let window = windows.get_primary().unwrap();
-    let window = Vec2::new(window.width() as f32, window.height() as f32);
-    window
-}
 
 // -------------------------- Camera plugin ---------------------------------------
 
@@ -21,6 +17,19 @@ impl Plugin for LightsAndCameraPlugin {
     }
 }
 
+//pub fn get_primary_window_size(windows: &Res<Windows>) -> Vec2 {
+pub fn get_primary_window_size (
+    window_query: &Query<&Window, With<PrimaryWindow>>
+) -> Vec2 {
+
+    let window = window_query.get_single().unwrap();
+
+    let window_size = Vec2::new(window.width() as f32, window.height() as f32);
+
+    return window_size;
+}
+
+// TODO Take these out of the impl block
 impl LightsAndCameraPlugin {
 
     fn spawn_camera(

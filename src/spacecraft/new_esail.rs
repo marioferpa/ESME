@@ -50,9 +50,7 @@ pub fn spawn_new_esail (
 
     let esail_entity = commands.spawn(
         SpatialBundle { 
-            visibility: Visibility {
-                is_visible: true 
-            }, 
+            visibility: Visibility::Visible,
             ..Default::default() 
         })
         .insert(Name::new("New E-sail"))
@@ -93,7 +91,7 @@ pub fn spawn_new_esail (
             }
         );
 
-    println!("E-sail spawned");
+    println!("(New) E-sail spawned");
 }
 
 // This should be moved to graphics or something

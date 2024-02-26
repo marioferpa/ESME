@@ -10,7 +10,8 @@ pub struct GraphicsPlugin;
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_startup_system_to_stage(StartupStage::PreStartup, Self::load_models)
+            //.add_startup_system_to_stage(StartupStage::PreStartup, Self::load_models)
+            .add_startup_system(Self::load_models.in_base_set(StartupSet::PreStartup))
             .add_system(Self::gizmo_visibility)
             .add_system(Self::update_transform_verlets)     // Updates the position of the graphics
             .add_system(Self::update_rotation_axes)
@@ -42,11 +43,21 @@ impl GraphicsPlugin {
         simulation_parameters:  Res<resources::SimulationParameters>,
         ) {
 
-        let mut com_entity  = com_query.single_mut();
-        let mut axes_entity = axes_query.single_mut();
+        let mut com_visibility  = com_query.single_mut();
+        let mut axes_visibility = axes_query.single_mut();
 
-        com_entity.is_visible = simulation_parameters.com_visibility;
-        axes_entity.is_visible = simulation_parameters.axes_visibility;
+        if simulation_parameters.com_visibility {
+            *com_visibility = Visibility::Visible
+        } else {
+            *com_visibility = Visibility::Hidden
+        }
+
+        //axes_entity.is_visible = simulation_parameters.axes_visibility;
+        if simulation_parameters.axes_visibility {
+            *axes_visibility = Visibility::Visible
+        } else {
+            *axes_visibility = Visibility::Hidden
+        }
     }
 
     /// Updates the transform of the verlet objects after the simulation, so that the graphics get updated.
