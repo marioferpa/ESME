@@ -6,22 +6,15 @@ use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::WorldInspectorPlugin;
 
 mod components;
-mod resources;
-mod graphics;
-use graphics::GraphicsPlugin;
-mod physics;
-use physics::PhysicsPlugin;
-mod gui;
-use gui::GUIPlugin;
 mod lights_and_camera;
-use lights_and_camera::LightsAndCameraPlugin;
-mod user_input;
-use user_input::UserInputPlugin;
-mod spacecraft;
-use spacecraft::SpacecraftPlugin;
+mod graphics;
+mod gui;
+mod physics;
+mod resources;
 mod simulation;
-use simulation::SimulationPlugin;
 mod solar_wind;
+mod spacecraft;
+mod user_input;
 
 extern crate uom;
 
@@ -32,16 +25,16 @@ fn main() {
         .insert_resource(Msaa { samples: 4 })   // "Multi-Sample Anti-Aliasing"
         .insert_resource(ClearColor(BACKGROUND_COLOR))
         .add_plugins(DefaultPlugins)
-        .add_plugin(ShapePlugin)
-        .add_plugin(GraphicsPlugin)
-        .add_plugin(PhysicsPlugin)
         .add_plugin(EguiPlugin)
+        .add_plugin(graphics::GraphicsPlugin)
+        .add_plugin(gui::GUIPlugin)
+        .add_plugin(physics::PhysicsPlugin)
+        .add_plugin(lights_and_camera::LightsAndCameraPlugin)
+        .add_plugin(ShapePlugin)
+        .add_plugin(simulation::SimulationPlugin)
+        .add_plugin(spacecraft::SpacecraftPlugin)
+        .add_plugin(user_input::UserInputPlugin)
         .add_plugin(WorldInspectorPlugin::new())
-        .add_plugin(GUIPlugin)
-        .add_plugin(LightsAndCameraPlugin)
-        .add_plugin(UserInputPlugin)
-        .add_plugin(SpacecraftPlugin)
-        .add_plugin(SimulationPlugin)
         .insert_resource(solar_wind::SolarWind{..Default::default()})
         .insert_resource(resources::SimulationParameters{..Default::default()})
         .run();
