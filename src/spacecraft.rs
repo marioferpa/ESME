@@ -30,12 +30,12 @@ impl Plugin for SpacecraftPlugin {
                     center_mass::spawn_center_mass,
                 )
             )
-            .add_systems(
-                Update, (
-                    esail::click,
-                    //new_esail::update_new_esail_graphics
-                )
-            )
+            //.add_systems(
+            //    Update, (
+            //        esail::click,
+            //        //new_esail::update_new_esail_graphics
+            //    )
+            //)
         ;
     }
 }

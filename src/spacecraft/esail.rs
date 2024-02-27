@@ -8,12 +8,16 @@ use crate::{ physics, components };
 
 const ENDMASS_MASS: quantities::Mass = quantities::Mass {dimension: PhantomData, units: PhantomData, value: 0.05};
 
+// I think that what NewEsail did was to have vectors of VerletObject instead of Entities, and that
+// seems to make sense
+
+
 // I may need a test that ensures that only elements with the verlet_query component get added
 
 #[derive(Component, Debug)]
 pub struct ESail {
     pub origin:                 physics::position_vector::PositionVector, 
-    pub elements:               Vec<Entity>,    // Is this in use?  // Yes, but I could fix that 
+    pub elements:               Vec<Entity>,
     pub undeployed_elements:    Vec<Entity>,
     pub deployed_elements:      Vec<Entity>,
     // Testing, not sure about it.
@@ -26,14 +30,23 @@ impl ESail {
         &self, 
         index: usize, 
         verlet_query: &Query<&mut physics::verlet_object::VerletObject>
-        ) -> physics::position_vector::PositionVector {
+    ) -> physics::position_vector::PositionVector {
 
-        let element_position = &verlet_query.get(self.elements[index]).expect("").current_coordinates;
+        let element_position = &verlet_query.get(self.elements[index])
+                                            .expect("")
+                                            .current_coordinates;
 
         if index > 0 {
-            let preceding_element_position = &verlet_query.get(self.elements[index-1]).expect("Element not found").current_coordinates;
+
+            let preceding_element_position = 
+                &verlet_query.get(self.elements[index-1])
+                             .expect("Element not found")
+                             .current_coordinates;
+
             return element_position.clone() - preceding_element_position.clone();
+
         } else {
+
             return physics::position_vector::PositionVector::zero();
         }
     }
@@ -90,35 +103,6 @@ impl ESail {
     }
 }
 
-// Shouldn't this go in user input?
-pub fn click(
-    //mut commands: Commands,
-    //spacecraft_parameters: Res<super::SpacecraftParameters>,
-    mut esail_query: Query<&mut super::esail::ESail>,  
-    keyboard: Res<Input<KeyCode>>,
-    ) {
-
-    let mut esail = esail_query.single_mut();
-
-    if keyboard.just_pressed(KeyCode::Up) {
-
-        println!("Deploying!");
-
-        esail.deploy_esail(1);
-
-        esail.print_elements();
-
-    }
-
-    if keyboard.just_pressed(KeyCode::Down) {
-
-        println!("Retracting!");
-
-        esail.retract_esail(1);
-
-        esail.print_elements();
-    }
-}
 
 pub fn spawn_esail(
     mut commands: Commands,
