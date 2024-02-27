@@ -5,7 +5,6 @@ use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 mod components;
-mod lights_and_camera;
 mod graphics;
 mod gui;
 mod physics;
@@ -28,7 +27,6 @@ fn main() {
         .add_plugins(graphics::GraphicsPlugin)
         .add_plugins(gui::GUIPlugin)
         .add_plugins(physics::PhysicsPlugin)
-        .add_plugins(lights_and_camera::LightsAndCameraPlugin)
         .add_plugins(simulation::SimulationPlugin)
         .add_plugins(spacecraft::SpacecraftPlugin)
         .add_plugins(user_input::UserInputPlugin)

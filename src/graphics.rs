@@ -1,9 +1,12 @@
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 
 use uom::si::length::meter;
 
 use crate::{ physics, spacecraft, resources };
 
+pub mod camera;
+mod lights;
 mod load_models;
 
 pub struct GraphicsPlugin;
@@ -11,7 +14,16 @@ pub struct GraphicsPlugin;
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(PreStartup, load_models::load_models)
+            .add_systems(
+                PreStartup, 
+                load_models::load_models
+            )
+            .add_systems(
+                Startup, (
+                    camera::spawn_camera,
+                    lights::spawn_light,
+                )
+            )
             .add_systems(
                 Update, (
                     gizmo_visibility,
@@ -79,4 +91,15 @@ fn update_rotation_axes (
     let satellite_transform = satellite_query.single();
 
     axes_transform.rotation = satellite_transform.rotation;
+}
+
+pub fn get_primary_window_size (
+    window_query: &Query<&Window, With<PrimaryWindow>>
+) -> Vec2 {
+
+    let window = window_query.get_single().unwrap();
+
+    let window_size = Vec2::new(window.width() as f32, window.height() as f32);
+
+    return window_size;
 }

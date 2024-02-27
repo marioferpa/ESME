@@ -4,7 +4,7 @@ use bevy::input::mouse::MouseWheel;
 
 use bevy::window::PrimaryWindow;
 
-use crate::{ components, lights_and_camera, spacecraft };
+use crate::{ components, graphics, spacecraft };
 
 pub struct UserInputPlugin;
 
@@ -57,7 +57,7 @@ fn pan_orbit_camera(
     mut ev_motion:      EventReader<MouseMotion>,
     mut ev_scroll:      EventReader<MouseWheel>,
     input_mouse:        Res<Input<MouseButton>>,
-    mut camera_query:   Query<(&mut components::PanOrbitCamera, &mut Transform, &Projection)>,
+    mut camera_query:   Query<(&mut graphics::camera::Camera, &mut Transform, &Projection)>,
 ) {
 
     // change input mapping for orbit and panning here
@@ -98,7 +98,7 @@ fn pan_orbit_camera(
         if rotation_move.length_squared() > 0.0 {
             any = true;
             //let window = lights_and_camera::get_primary_window_size(&windows);
-            let window = lights_and_camera::get_primary_window_size(&window_query);
+            let window = graphics::get_primary_window_size(&window_query);
             let delta_x = {
                 let delta = rotation_move.x / window.x * std::f32::consts::PI * 2.0;
                 if pan_orbit.upside_down { -delta } else { delta }
@@ -112,7 +112,7 @@ fn pan_orbit_camera(
             any = true;
             // make panning distance independent of resolution and FOV,
             //let window = lights_and_camera::get_primary_window_size(&windows);
-            let window = lights_and_camera::get_primary_window_size(&window_query);
+            let window = graphics::get_primary_window_size(&window_query);
             if let Projection::Perspective(projection) = projection {
                 pan *= Vec2::new(projection.fov * projection.aspect_ratio, projection.fov) / window;
             }
