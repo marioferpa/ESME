@@ -9,7 +9,7 @@ use physics::position_vector::PositionVector;
 
 pub mod axes;
 pub mod esail;
-pub mod new_esail;
+//pub mod new_esail;
 pub mod body;
 pub mod center_mass; 
 
@@ -24,8 +24,8 @@ impl Plugin for SpacecraftPlugin {
                 Startup, (
                     axes::spawn_axes,
                     esail::spawn_esail,
-                    new_esail::spawn_new_esail,
-                    new_esail::draw_new_esail,
+                    //new_esail::spawn_new_esail,
+                    //new_esail::draw_new_esail,
                     body::spawn_cubesat,
                     center_mass::spawn_center_mass,
                 )
@@ -33,7 +33,7 @@ impl Plugin for SpacecraftPlugin {
             .add_systems(
                 Update, (
                     esail::click,
-                    new_esail::update_new_esail_graphics
+                    //new_esail::update_new_esail_graphics
                 )
             )
         ;
