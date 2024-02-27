@@ -26,6 +26,7 @@ pub fn verlet_simulation(
     // Timesteps since last frame
     let timesteps = timestep_calculation(&time, &mut sim_params);
 
+
     for _ in 0..timesteps { 
 
         // VERLET INTEGRATION: Forces are calculated for every element
