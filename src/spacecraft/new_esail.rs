@@ -1,9 +1,11 @@
 use bevy::prelude::*;
 
 use uom::si::*;
-use uom::si::f64 as quantities;
+use uom::si::f64 as quantities;  
+use uom::si::length::meter;
 
-use crate::{ physics };
+use crate::{ physics, resources };
+
 use physics::force_vector::ForceVector as ForceVector;
 use physics::verlet_object::VerletObject as VerletObject;
 use physics::position_vector::PositionVector as PositionVector;
@@ -15,37 +17,13 @@ pub struct NewESail {
     pub deployed_elements:      Vec<VerletObject>,
 }
 
-pub fn update_new_esail_graphics (
-    mut new_esail_query:    Query<&mut NewESail>,
-) {
-
-    let new_esail = new_esail_query.single();
-
-    //for (verlet_object, mut transform) in verlet_query.iter_mut() {
-    //    // Should I use get<meter> in these cases?
-    //    transform.translation.x = verlet_object.current_coordinates.0[0].get::<meter>() as f32 * simulation_parameters.pixels_per_meter as f32;
-    //    transform.translation.y = verlet_object.current_coordinates.0[1].get::<meter>() as f32 * simulation_parameters.pixels_per_meter as f32;
-    //    transform.translation.z = verlet_object.current_coordinates.0[2].get::<meter>() as f32 * simulation_parameters.pixels_per_meter as f32;
-
-    //    //println!("Transform X: {}", transform.translation.x);
-    //}
-
-    // So previously every object on the sail had verlet coordinates and a transform, and the
-    // transform was updated every frame to that of the verlet object. Now I can't do that.
-    // Now I have to go over all the verlets, and all the spheres (I need to store them somewhere
-    // too, ugh), and match their positions in pairs.
-
-    for verlet_object in &new_esail.deployed_elements {
-        //println!("Current coordinates: {:?}", verlet_object.current_coordinates);
-    } 
-}
 
 
 pub fn spawn_new_esail (
-    mut commands:   Commands,
-    mut meshes:     ResMut<Assets<Mesh>>,
-    mut materials:  ResMut<Assets<StandardMaterial>>,
-    spacecraft_parameters: Res<super::SpacecraftParameters>,
+    mut commands:           Commands,
+    mut meshes:             ResMut<Assets<Mesh>>,
+    mut materials:          ResMut<Assets<StandardMaterial>>,
+    spacecraft_parameters:  Res<super::SpacecraftParameters>,
 ) {
 
     let esail_entity = commands.spawn(
@@ -57,9 +35,9 @@ pub fn spawn_new_esail (
         .id();
 
     //let number_of_elements = spacecraft_parameters.number_of_esail_elements();
-    let number_of_elements = 2; 
+    let number_of_elements = 10; 
 
-    let mut deployed_elements:    Vec<VerletObject> = Vec::new();
+    let mut deployed_elements: Vec<VerletObject> = Vec::new();
 
     let zero =  quantities::Length::new::<length::meter>(0.0);
 
@@ -77,54 +55,74 @@ pub fn spawn_new_esail (
         deployed_elements.push(verlet);
     }
 
-    println!("New ESail: {:?}", deployed_elements);
+    //println!("New ESail: {:?}", deployed_elements);
 
     commands.entity(esail_entity)
         .insert(NewESail {
             origin: PositionVector::new(
                 spacecraft_parameters.esail_origin.x(),
-                quantities::Length::new::<length::meter>(0.0), 
-                quantities::Length::new::<length::meter>(0.0)
+                zero,
+                zero
             ),
-            //undeployed_elements:    Vec::new(),
             deployed_elements:      deployed_elements,
-            }
-        );
+        }
+    );
 
     println!("(New) E-sail spawned");
 }
 
+
+
 // This should be moved to graphics or something
 pub fn draw_new_esail (
-    mut commands:   Commands,
-    mut meshes:     ResMut<Assets<Mesh>>,
-    mut materials:  ResMut<Assets<StandardMaterial>>,
+    mut commands:           Commands,
+    mut meshes:             ResMut<Assets<Mesh>>,
+    mut materials:          ResMut<Assets<StandardMaterial>>,
+    simulation_parameters:  Res<resources::SimulationParameters>,
+    new_esail_query:        Query<&NewESail>,
 ) {
+
+    // Test
+    let new_esail = new_esail_query.get_single().unwrap();
     
     let sphere_radius = 2.5;   // 2.5 what?
 
     //let number_of_elements = spacecraft_parameters.number_of_esail_elements();
-    let number_of_elements = 2;     // Unused!
+    //let number_of_elements = 2;     // Unused!
 
     let mut sphere_storage: Vec<Entity> = Vec::new();
     
-    for number in 0.. number_of_elements - 1 {
+    //for number in 0.. number_of_elements - 1 {
+    //for number in 0.. new_esail.deployed_elements.len() - 1 {
+    for verlet_object in new_esail.deployed_elements.iter() {
+
+        println!(
+            "Verlet's x: {:?}", 
+            verlet_object.current_coordinates.x().get::<meter>() as f32, 
+        );
 
         let sphere =
             commands.spawn ( 
+
                 PbrBundle {
                     mesh: meshes.add(Mesh::from(shape::UVSphere { radius: sphere_radius, ..default() })),
                     material: materials.add(
                         StandardMaterial {
-                            base_color: Color::rgb(1.0, 0.0, 0.0), // Set to bright blue
-                            //emissive: Color::rgb(0.03, 0.57, 0.82), // Set to bright blue
+                            base_color: Color::rgb(1.0, 0.0, 0.0),
                             ..Default::default()
                         }
                         .into(),
                     ),
-                    transform: Transform::from_xyz(0.0, 0.0, 0.0),
+                    //transform: Transform::from_xyz(0.0, 0.0, 0.0),
+                    transform: Transform::from_xyz(
+                        verlet_object.current_coordinates.x().get::<meter>() as f32 * 
+                            simulation_parameters.pixels_per_meter as f32, 
+                        0.0,    // TODO
+                        0.0     // TODO
+                    ),
                     ..default()
                 }
+
             ).id();
 
         sphere_storage.push(sphere);
@@ -132,3 +130,33 @@ pub fn draw_new_esail (
         // And now where can I store the sphere_storage?
     }
 }
+
+
+
+//pub fn update_new_esail_graphics (
+//    mut new_esail_query:    Query<&mut NewESail>,
+//) {
+//
+//    let new_esail = new_esail_query.single();
+//
+//    //for (verlet_object, mut transform) in verlet_query.iter_mut() {
+//    //    // Should I use get<meter> in these cases?
+//    //    transform.translation.x = verlet_object.current_coordinates.0[0].get::<meter>() as f32 * simulation_parameters.pixels_per_meter as f32;
+//    //    transform.translation.y = verlet_object.current_coordinates.0[1].get::<meter>() as f32 * simulation_parameters.pixels_per_meter as f32;
+//    //    transform.translation.z = verlet_object.current_coordinates.0[2].get::<meter>() as f32 * simulation_parameters.pixels_per_meter as f32;
+//
+//    //    //println!("Transform X: {}", transform.translation.x);
+//    //}
+//
+//    // So previously every object on the sail had verlet coordinates and a transform, and the
+//    // transform was updated every frame to that of the verlet object. Now I can't do that.
+//    // Now I have to go over all the verlets, and all the spheres (I need to store them somewhere
+//    // too, ugh), and match their positions in pairs.
+//
+//    for verlet_object in &new_esail.deployed_elements {
+//        //println!("Current coordinates: {:?}", verlet_object.current_coordinates);
+//    } 
+//}
+//
+//
+//
