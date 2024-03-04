@@ -8,7 +8,7 @@ pub struct Mass (
     pub quantities::Mass,
 );
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct ElectricallyCharged {
     pub potential:  quantities::ElectricPotential,
 }

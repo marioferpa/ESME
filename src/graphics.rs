@@ -8,6 +8,7 @@ use crate::{ physics, spacecraft, resources };
 pub mod camera;
 mod lights;
 mod load_models;
+mod new_esail;
 
 pub struct GraphicsPlugin;
 
@@ -22,6 +23,7 @@ impl Plugin for GraphicsPlugin {
                 Startup, (
                     camera::spawn_camera,
                     lights::spawn_light,
+                    new_esail::draw_new_esail,
                 )
             )
             .add_systems(

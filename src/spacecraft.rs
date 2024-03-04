@@ -25,11 +25,12 @@ impl Plugin for SpacecraftPlugin {
                     new_esail::spawn_new_esail,
                 )
             )
+            // TODO At least some of these should go to graphics.rs
             .add_systems(
                 Startup, (
                     axes::spawn_axes,
                     //esail::spawn_esail,
-                    new_esail::draw_new_esail,
+                    //new_esail::draw_new_esail,
                     body::spawn_cubesat,
                     center_mass::spawn_center_mass,
                 )

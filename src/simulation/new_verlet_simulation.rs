@@ -12,6 +12,9 @@ use physics::force_vector::ForceVector as ForceVector;
 use physics::position_vector::PositionVector as PositionVector;
 use physics::acceleration_vector::AccelerationVector as AccelerationVector;
 
+// I wondered if I wasn't seeing movement with solar wind because I hadn't added
+// the electrical component, now I think that it wasn't in use...
+
 pub fn new_verlet_simulation (
     time:               Res<Time>, 
     mut esail_query:    Query<&mut spacecraft::new_esail::NewESail>,
@@ -30,7 +33,9 @@ pub fn new_verlet_simulation (
         for verlet_object in esail.deployed_elements.iter_mut() {
 
             //println!("(New ESail) Current position: {:?}", verlet_object.current_coordinates);
-            new_verlet_integration(&mut sim_params, verlet_object, &craft_params, &solar_wind);
+            new_verlet_integration(
+                &mut sim_params, verlet_object, &craft_params, &solar_wind
+            );
         }
 
 
@@ -47,9 +52,12 @@ pub fn new_verlet_simulation (
             for index in 0..esail.deployed_elements.len() {
 
                 let current_element_coordinates = 
-                    esail.deployed_elements[index]
-                         .current_coordinates
-                         .clone();
+                    esail.deployed_elements[index].current_coordinates.clone();
+
+                if index == 5 {
+                    // TODO These are all NaN, wtf
+                    //println!("Fifth element coordinates: {:?}", current_element_coordinates);
+                }
 
                 let preceding_element_coordinates = if index == 0 {
                     &esail.origin
@@ -81,9 +89,17 @@ pub fn new_verlet_simulation (
                 };
 
 
+                // I could calculate here the angle between elements and limit
+                // it. But limit it to how much? I just wrote that verlet should
+                // simulate free floating particles and the constraints should
+                // deal with the stiffness, but now that I'm here I understand
+                // why I was considering the other way.
+
+
+
                 let correction_vector = vector_between_elements.mul(0.5 * difference);
 
-                println!("(Index {}) New correction vector: {:?}", index, correction_vector);
+                //println!("(Index {}) New correction vector: {:?}", index, correction_vector);
 
                 esail.deployed_elements[index].correct_current_coordinates(correction_vector);
 
@@ -96,51 +112,80 @@ pub fn new_verlet_simulation (
 }
 
 /// Updates the position of a verlet object
-fn new_verlet_integration(
+fn new_verlet_integration (
     sim_params:     &mut ResMut<resources::SimulationParameters>,
     verlet_object:  &mut physics::verlet_object::VerletObject,
     craft_params:   &Res<spacecraft::SpacecraftParameters>,
     solar_wind:     &Res<solar_wind::SolarWind>,
-    ){
+) {
 
-    // Forces per verlet (so, per segment)
+    // Centrifugal force -------------------------------------------------------
 
-    // Centrifugal force (Along x for now, this needs to change)
-
-    let centrifugal_force_magnitude = craft_params.segment_mass() * verlet_object.current_coordinates.clone().length() 
-        * craft_params.angular_velocity() * craft_params.angular_velocity();
+    let centrifugal_force_magnitude = 
+        craft_params.segment_mass() * 
+        verlet_object.current_coordinates.clone().length() *
+        craft_params.angular_velocity() *
+        craft_params.angular_velocity();
 
     let centrifugal_force_direction = DVec3::new(1.0, 0.0, 0.0);
 
-    let centrifugal_force = ForceVector::from_direction(centrifugal_force_magnitude, centrifugal_force_direction);
+    let centrifugal_force = 
+        ForceVector::from_direction(
+            centrifugal_force_magnitude, 
+            centrifugal_force_direction
+        );
 
-    // Coulomb drag force
+
+
+
+    // Coulomb drag force ------------------------------------------------------
     
-    let coulomb_force_magnitude= coulomb_force_per_meter(&solar_wind, &craft_params) * craft_params.segment_length();
+    let coulomb_force_magnitude = 
+        coulomb_force_per_meter(&solar_wind, &craft_params) * 
+        craft_params.segment_length();
 
-    let coulomb_force = ForceVector::from_direction(coulomb_force_magnitude, solar_wind.direction); 
+    let coulomb_force = 
+        ForceVector::from_direction(
+            coulomb_force_magnitude, 
+            solar_wind.direction
+        ); 
+
 
     // Stiffness reaction force here?
-    // A function on verlet_object should do this? passing a verlet query? Not verlet_object, wait. ESail maybe?
-    //let angle = esail.deflection_angle(5, &verlet_query); 
-    //println!("Angle for element 5: {}", angle);
+    // On the one hand it makes sense to put it here, on the other I feel that
+    // the idea of verlet integration is to calculate the movement of the free
+    // particle and then add the constraint. If I modeled the perpendicular
+    // stiffness as a force, why not modelling the longitudinal as a force too,
+    // and the verlet would stop making sense
     
 
-    // Total force
 
-    let total_force = coulomb_force + centrifugal_force;    // This is a ForceVector containing uom quantities
+
+    // Total force -------------------------------------------------------------
+
+    let total_force = coulomb_force + centrifugal_force;
 
     verlet_object.current_force = total_force.clone();
 
-    let acc_vector = AccelerationVector::from_force(total_force.clone(), craft_params.segment_mass());
+    let acc_vector = 
+        AccelerationVector::from_force(
+            total_force.clone(), 
+            craft_params.segment_mass()
+        );
 
-    let delta_from_acc = PositionVector::from_acceleration(acc_vector, sim_params.timestep_s);
+    let delta_from_acc = 
+        PositionVector::from_acceleration(
+            acc_vector, 
+            sim_params.timestep_s
+        );
  
 
-    // Next position calculation (formula from here: https://www.algorithm-archive.org/contents/verlet_integration/verlet_integration.html)
-    let next_coordinates = verlet_object.current_coordinates.clone().mul(2.0) - verlet_object.previous_coordinates.clone() + delta_from_acc;
-
-    // Damping here, before the update of coordinates?
+    // Next position calculation 
+    // formula from https://www.algorithm-archive.org/contents/verlet_integration/verlet_integration.html
+    let next_coordinates = 
+        verlet_object.current_coordinates.clone().mul(2.0) - 
+        verlet_object.previous_coordinates.clone() 
+        + delta_from_acc;
 
     
     // Updating verlet coordinates
@@ -148,13 +193,15 @@ fn new_verlet_integration(
 }
 
 
+
 // From janhunen2007, equation 8. Corroborate all the results. And recheck the equations too.
 // Should this go inside the physics folder, in its own file?
+// Move to physics?
 #[allow(non_snake_case)]
 pub fn coulomb_force_per_meter( 
     solar_wind:         &Res<solar_wind::SolarWind>, 
     spacecraft:         &Res<spacecraft::SpacecraftParameters>,
-    ) -> uom::si::f64::RadiantExposure {    // Radiant exposure is [mass][time]⁻²
+) -> uom::si::f64::RadiantExposure {    // Radiant exposure is [mass][time]⁻²
 
     // First: r_0, distance at which the potential vanishes
     let r0_numerator    = resources::EPSILON_0 * solar_wind.T_e;

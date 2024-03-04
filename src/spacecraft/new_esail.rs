@@ -4,7 +4,7 @@ use uom::si::*;
 use uom::si::f64 as quantities;  
 use uom::si::length::meter;
 
-use crate::{ physics, resources };
+use crate::{ components, physics, resources };
 
 use physics::force_vector::ForceVector as ForceVector;
 use physics::verlet_object::VerletObject as VerletObject;
@@ -41,6 +41,9 @@ pub fn spawn_new_esail (
 
     let zero =  quantities::Length::new::<length::meter>(0.0);
 
+
+    // TODO First element should be undeployed? Or do I have an anchor?
+
     for number in 0.. number_of_elements {
 
         let x = spacecraft_parameters.esail_origin.x() + 
@@ -59,78 +62,25 @@ pub fn spawn_new_esail (
     //println!("New ESail: {:?}", deployed_elements);
 
     commands.entity(esail_entity)
-        .insert(NewESail {
-            origin: PositionVector::new(
-                spacecraft_parameters.esail_origin.x(),
-                zero,
-                zero
-            ),
-            deployed_elements:      deployed_elements,
-        }
-    );
+        .insert(
+            NewESail {
+                origin: PositionVector::new(
+                    spacecraft_parameters.esail_origin.x(),
+                    zero,
+                    zero
+                ),
+                deployed_elements:      deployed_elements,
+            }
+        )
+        // TODO This was meant for individual verlets, maybe won't work here
+        .insert(components::ElectricallyCharged{ ..Default::default() })
+        ;
 
     println!("(New) E-sail spawned");
 }
 
 
 
-// This should be moved to graphics or something
-pub fn draw_new_esail (
-    mut commands:           Commands,
-    mut meshes:             ResMut<Assets<Mesh>>,
-    mut materials:          ResMut<Assets<StandardMaterial>>,
-    simulation_parameters:  Res<resources::SimulationParameters>,
-    new_esail_query:        Query<&NewESail>,
-) {
-
-    // Test
-    let new_esail = new_esail_query.get_single().unwrap();
-    
-    let sphere_radius = 2.5;   // 2.5 what?
-
-    //let number_of_elements = spacecraft_parameters.number_of_esail_elements();
-    //let number_of_elements = 2;     // Unused!
-
-    let mut sphere_storage: Vec<Entity> = Vec::new();
-    
-    //for number in 0.. number_of_elements - 1 {
-    //for number in 0.. new_esail.deployed_elements.len() - 1 {
-    for verlet_object in new_esail.deployed_elements.iter() {
-
-        println!(
-            "Verlet's x: {:?}", 
-            verlet_object.current_coordinates.x().get::<meter>() as f32, 
-        );
-
-        let sphere =
-            commands.spawn ( 
-
-                PbrBundle {
-                    mesh: meshes.add(Mesh::from(shape::UVSphere { radius: sphere_radius, ..default() })),
-                    material: materials.add(
-                        StandardMaterial {
-                            base_color: Color::rgb(1.0, 0.0, 0.0),
-                            ..Default::default()
-                        }
-                        .into(),
-                    ),
-                    //transform: Transform::from_xyz(0.0, 0.0, 0.0),
-                    transform: Transform::from_xyz(
-                        verlet_object.current_coordinates.x().get::<meter>() as f32 * 
-                            simulation_parameters.pixels_per_meter as f32, 
-                        0.0,    // TODO
-                        0.0     // TODO
-                    ),
-                    ..default()
-                }
-
-            ).id();
-
-        sphere_storage.push(sphere);
-
-        // And now where can I store the sphere_storage?
-    }
-}
 
 
 
