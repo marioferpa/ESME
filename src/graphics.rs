@@ -5,6 +5,7 @@ use uom::si::length::meter;
 
 use crate::{ physics, spacecraft, resources };
 
+mod axes;
 pub mod camera;
 mod lights;
 mod load_models;
@@ -21,6 +22,7 @@ impl Plugin for GraphicsPlugin {
             )
             .add_systems(
                 Startup, (
+                    axes::spawn_axes,
                     camera::spawn_camera,
                     lights::spawn_light,
                     new_esail::draw_new_esail,
@@ -42,8 +44,8 @@ impl Plugin for GraphicsPlugin {
 // this will adapt the Transform to the value of that component.
 
 fn gizmo_visibility (
-    mut com_query:          Query<&mut Visibility, (With<spacecraft::center_mass::CenterOfMass>, Without<spacecraft::axes::Axes>)>, 
-    mut axes_query:         Query<&mut Visibility, (With<spacecraft::axes::Axes>, Without<spacecraft::center_mass::CenterOfMass>)>,   
+    mut com_query:          Query<&mut Visibility, (With<spacecraft::center_mass::CenterOfMass>, Without<axes::Axes>)>, 
+    mut axes_query:         Query<&mut Visibility, (With<axes::Axes>, Without<spacecraft::center_mass::CenterOfMass>)>,   
     simulation_parameters:  Res<resources::SimulationParameters>,
     ) {
 
@@ -85,8 +87,8 @@ fn update_transform_verlets (
 
 
 fn update_rotation_axes (
-    mut axes_query:         Query<&mut Transform, (With<spacecraft::axes::Axes>, Without<spacecraft::body::SatelliteBody>)>,   
-    satellite_query:    Query<&Transform, (With<spacecraft::body::SatelliteBody>, Without<spacecraft::axes::Axes>)>,
+    mut axes_query:         Query<&mut Transform, (With<axes::Axes>, Without<spacecraft::body::SatelliteBody>)>,   
+    satellite_query:    Query<&Transform, (With<spacecraft::body::SatelliteBody>, Without<axes::Axes>)>,
 ) {
 
     let mut axes_transform  = axes_query.single_mut();

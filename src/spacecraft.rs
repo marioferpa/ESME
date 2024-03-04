@@ -7,7 +7,6 @@ use std::f64::consts;
 use crate::{ physics };
 use physics::position_vector::PositionVector;
 
-pub mod axes;
 pub mod esail;
 pub mod new_esail;
 pub mod body;
@@ -28,7 +27,7 @@ impl Plugin for SpacecraftPlugin {
             // TODO At least some of these should go to graphics.rs
             .add_systems(
                 Startup, (
-                    axes::spawn_axes,
+                    //axes::spawn_axes,
                     //esail::spawn_esail,
                     //new_esail::draw_new_esail,
                     body::spawn_cubesat,
