@@ -24,7 +24,8 @@ pub fn new_verlet_simulation (
 
     for _ in 0..time::timestep_calculation(&time, &mut sim_params) {
 
-        // VERLET INTEGRATION: Forces are calculated for every element
+
+        // Verlet integration --------------------------------------------------
 
         for verlet_object in esail.deployed_elements.iter_mut() {
 
@@ -32,17 +33,23 @@ pub fn new_verlet_simulation (
             new_verlet_integration(&mut sim_params, verlet_object, &craft_params, &solar_wind);
         }
 
-        // CONSTRAINT LOOP
+
+
+
+        // Constraints ---------------------------------------------------------
+
 
         let desired_distance_between_elements = craft_params.segment_length();
+
 
         for _ in 0..sim_params.iterations {
 
             for index in 0..esail.deployed_elements.len() {
 
-                let current_element_coordinates = esail.deployed_elements[index]
-                                                           .current_coordinates
-                                                           .clone();
+                let current_element_coordinates = 
+                    esail.deployed_elements[index]
+                         .current_coordinates
+                         .clone();
 
                 let preceding_element_coordinates = if index == 0 {
                     &esail.origin
@@ -51,12 +58,20 @@ pub fn new_verlet_simulation (
                               .current_coordinates
                 };
                 
-                let vector_between_elements = PositionVector::from_a_to_b(
-                                                current_element_coordinates,
-                                                preceding_element_coordinates.clone(),
-                                                );
+                let vector_between_elements = 
+                    PositionVector::from_a_to_b(
+                        current_element_coordinates,
+                        preceding_element_coordinates.clone(),
+                    );
 
                 let distance_between_elements = vector_between_elements.clone().length();
+
+
+                // Currently only checking for distance between elements. 
+                // Two extra things need to be implemented
+                // * Perpendicular angle limitation, stiffness, so the thing curves
+                // * Maybe not important yet, but longitudinal stiffness should exist too
+
 
                 let difference = if distance_between_elements.get::<meter>() > 0.0 {
                     (desired_distance_between_elements.get::<meter>() - distance_between_elements.get::<meter>())
@@ -65,18 +80,15 @@ pub fn new_verlet_simulation (
                     0.0
                 };
 
-                //println!("Index: {} | Distance to previous: {:?} | Difference: {:?}", index, distance_between_elements, difference);   // Weird...
 
                 let correction_vector = vector_between_elements.mul(0.5 * difference);
 
-                //println!("(Index {}) New correction vector: {:?}", index, correction_vector);
+                println!("(Index {}) New correction vector: {:?}", index, correction_vector);
 
-                // Correction vector: NaN. WTF
-                //esail.deployed_elements[index].correct_current_coordinates(correction_vector);
+                esail.deployed_elements[index].correct_current_coordinates(correction_vector);
 
                 // And correct the previous too?
 
-                // Render some meshes before continuing
 
             }
         }
