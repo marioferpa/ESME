@@ -2,7 +2,7 @@
 use bevy::prelude::*;
 
 mod verlet_simulation;
-//mod new_verlet_simulation;
+mod new_verlet_simulation;
 mod voltage;
 
 pub struct SimulationPlugin;
@@ -25,7 +25,7 @@ impl Plugin for SimulationPlugin {
             .add_systems(
                 Update, (
                     verlet_simulation::verlet_simulation,
-                    //new_verlet_simulation::new_verlet_simulation,
+                    new_verlet_simulation::new_verlet_simulation,
                     voltage::update_esail_voltage
                 )
             )

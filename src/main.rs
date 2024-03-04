@@ -12,6 +12,7 @@ mod resources;
 mod simulation;
 mod solar_wind;
 mod spacecraft;
+mod time;
 mod user_input;
 
 extern crate uom;

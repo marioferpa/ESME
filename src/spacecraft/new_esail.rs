@@ -43,12 +43,13 @@ pub fn spawn_new_esail (
 
     for number in 0.. number_of_elements {
 
-        let x = spacecraft_parameters.esail_origin.x() + spacecraft_parameters.segment_length() * number as f64;
+        let x = spacecraft_parameters.esail_origin.x() + 
+            spacecraft_parameters.segment_length() * number as f64;
 
         let verlet = VerletObject {  
             previous_coordinates:   PositionVector::new(x, zero, zero),
             current_coordinates:    PositionVector::new(x, zero, zero),
-            is_deployed:            false,
+            is_deployed:            true,
             current_force:          ForceVector::empty(),
         };
         

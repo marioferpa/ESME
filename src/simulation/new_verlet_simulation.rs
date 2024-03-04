@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::math::DVec3;
 
-use crate::{ physics, resources, solar_wind, spacecraft };
+use crate::{ physics, resources, solar_wind, spacecraft, time };
 
 use std::ops::{ Mul };
 
@@ -14,19 +14,19 @@ use physics::acceleration_vector::AccelerationVector as AccelerationVector;
 
 pub fn new_verlet_simulation (
     time:               Res<Time>, 
-    mut new_esail_query:    Query<&mut spacecraft::new_esail::NewESail>,
+    mut esail_query:    Query<&mut spacecraft::new_esail::NewESail>,
     solar_wind:         Res<solar_wind::SolarWind>,
     craft_params:       Res<spacecraft::SpacecraftParameters>,
     mut sim_params:     ResMut<resources::SimulationParameters>,
 ) {
 
-    let mut new_esail = new_esail_query.single_mut();
+    let mut esail = esail_query.single_mut();
 
-    for _ in 0..timestep_calculation(&time, &mut sim_params) {
+    for _ in 0..time::timestep_calculation(&time, &mut sim_params) {
 
         // VERLET INTEGRATION: Forces are calculated for every element
 
-        for verlet_object in new_esail.deployed_elements.iter_mut() {
+        for verlet_object in esail.deployed_elements.iter_mut() {
 
             //println!("(New ESail) Current position: {:?}", verlet_object.current_coordinates);
             new_verlet_integration(&mut sim_params, verlet_object, &craft_params, &solar_wind);
@@ -38,16 +38,16 @@ pub fn new_verlet_simulation (
 
         for _ in 0..sim_params.iterations {
 
-            for index in 0..new_esail.deployed_elements.len() {
+            for index in 0..esail.deployed_elements.len() {
 
-                let current_element_coordinates = new_esail.deployed_elements[index]
+                let current_element_coordinates = esail.deployed_elements[index]
                                                            .current_coordinates
                                                            .clone();
 
                 let preceding_element_coordinates = if index == 0 {
-                    &new_esail.origin
+                    &esail.origin
                 } else {
-                    &new_esail.deployed_elements[index-1]
+                    &esail.deployed_elements[index-1]
                               .current_coordinates
                 };
                 
@@ -72,7 +72,7 @@ pub fn new_verlet_simulation (
                 //println!("(Index {}) New correction vector: {:?}", index, correction_vector);
 
                 // Correction vector: NaN. WTF
-                //new_esail.deployed_elements[index].correct_current_coordinates(correction_vector);
+                //esail.deployed_elements[index].correct_current_coordinates(correction_vector);
 
                 // And correct the previous too?
 
@@ -135,21 +135,6 @@ fn new_verlet_integration(
     verlet_object.update_coordinates(next_coordinates);
 }
 
-/// Calculates how many timesteps should happen in the current frame, considering any potential unspent time from the previous frame.
-fn timestep_calculation(
-    time: &Res<Time>,
-    sim_params: &mut ResMut<resources::SimulationParameters>,
-    ) -> i32 {
-
-    let elapsed_time = time.delta_seconds() as f64 + sim_params.leftover_time; // Elapsed time + leftover time from previous frame
-
-    let timesteps = (elapsed_time / sim_params.timestep).floor() as i32; // Number of timesteps for the current frame
-
-    let leftover_time = elapsed_time - timesteps as f64 * sim_params.timestep;  // Leftover time saved for next frame
-    sim_params.leftover_time = leftover_time;
-
-    return timesteps;
-}
 
 // From janhunen2007, equation 8. Corroborate all the results. And recheck the equations too.
 // Should this go inside the physics folder, in its own file?
