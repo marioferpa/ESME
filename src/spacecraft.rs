@@ -28,7 +28,7 @@ impl Plugin for SpacecraftPlugin {
             .add_systems(
                 Startup, (
                     axes::spawn_axes,
-                    esail::spawn_esail,
+                    //esail::spawn_esail,
                     new_esail::draw_new_esail,
                     body::spawn_cubesat,
                     center_mass::spawn_center_mass,

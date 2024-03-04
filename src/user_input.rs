@@ -14,7 +14,7 @@ impl Plugin for UserInputPlugin {
             .add_systems(
                 Update, (
                     pan_orbit_camera,
-                    keyboard_input
+                    //keyboard_input
                 )
             )  
         ;
