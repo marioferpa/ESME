@@ -4,53 +4,43 @@ use uom::si::length::meter;
 
 use crate::{ resources, spacecraft };
 
-pub (super) fn update_new_esail (
-    //mut verlet_query:       Query<(&physics::verlet_object::VerletObject, &mut Transform)>,
+pub (super) fn update_esail_graphics (
     esail_query:            Query<&spacecraft::new_esail::NewESail>,
     simulation_parameters:  Res<resources::SimulationParameters>,
     mut transform_query:    Query<&mut Transform>,
     mut balls_resource:     ResMut<super::Balls>,   // Need mut?
 ) {
 
-    // Check current positions of verlets in new_esail
 
     let esail = esail_query.single();
 
-    // Update each ball in balls_resource to those on the esail
-    // Iterate over the verlets, using the index!
     for (index, verlet) in esail.deployed_elements.iter().enumerate() {
 
-        // Check current coordinates of the verlet and Update transform of the
-        // corresponding ball
 
         let mut ball_transform =
             transform_query.get_mut(balls_resource.0[index]).unwrap();
 
         ball_transform.translation.x = 
             verlet.current_coordinates
-                  .0[0].get::<meter>() as f32 * 
+                  .0[0]
+                  .get::<meter>() as f32 * 
+            simulation_parameters.pixels_per_meter as f32;
+
+        ball_transform.translation.y = 
+            verlet.current_coordinates
+                  .0[1]
+                  .get::<meter>() as f32 * 
+            simulation_parameters.pixels_per_meter as f32;
+
+        ball_transform.translation.z = 
+            verlet.current_coordinates
+                  .0[2]
+                  .get::<meter>() as f32 * 
             simulation_parameters.pixels_per_meter as f32;
     }
 
 }
 
-// I think I see the problem that past me was trying to solve. I have a vector
-// of VerletObject, and a sphere needs to be spawned and moved for each Verlet.
-// Problem is that if I just update this function and put a sphere where it
-// belongs, I would be spawning new spheres constantly instead of moving them. I
-// would of course prefer to move them, but then how do I track which sphere
-// should go where?
-
-// If I keep the spheres in a vector, as I was doing, and I know that this
-// vector is as long as the deployed verlets, I can be sure that each index
-// corresponds to the sphere of the same index. Does that work when reeling in
-// and out though?
-//
-// It should be the same I guess. If I add an item to the start of the esail and
-// do the same thing to the spheres then the index should keep working
-
-// This is drawing once, spawning the spheres. I guess I am missing a function
-// that updates it
 pub (super) fn draw_new_esail (
     mut commands:           Commands,
     mut meshes:             ResMut<Assets<Mesh>>,
