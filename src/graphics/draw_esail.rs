@@ -4,6 +4,36 @@ use uom::si::length::meter;
 
 use crate::{ resources, spacecraft };
 
+pub (super) fn update_new_esail (
+    //mut verlet_query:       Query<(&physics::verlet_object::VerletObject, &mut Transform)>,
+    esail_query:            Query<&spacecraft::new_esail::NewESail>,
+    simulation_parameters:  Res<resources::SimulationParameters>,
+    mut transform_query:    Query<&mut Transform>,
+    mut balls_resource:     ResMut<super::Balls>,   // Need mut?
+) {
+
+    // Check current positions of verlets in new_esail
+
+    let esail = esail_query.single();
+
+    // Update each ball in balls_resource to those on the esail
+    // Iterate over the verlets, using the index!
+    for (index, verlet) in esail.deployed_elements.iter().enumerate() {
+
+        // Check current coordinates of the verlet and Update transform of the
+        // corresponding ball
+
+        let mut ball_transform =
+            transform_query.get_mut(balls_resource.0[index]).unwrap();
+
+        ball_transform.translation.x = 
+            verlet.current_coordinates
+                  .0[0].get::<meter>() as f32 * 
+            simulation_parameters.pixels_per_meter as f32;
+    }
+
+}
+
 // I think I see the problem that past me was trying to solve. I have a vector
 // of VerletObject, and a sphere needs to be spawned and moved for each Verlet.
 // Problem is that if I just update this function and put a sphere where it
@@ -26,7 +56,6 @@ pub (super) fn draw_new_esail (
     mut meshes:             ResMut<Assets<Mesh>>,
     mut materials:          ResMut<Assets<StandardMaterial>>,
     simulation_parameters:  Res<resources::SimulationParameters>,
-    // Test
     mut balls_resource:     ResMut<super::Balls>,
     new_esail_query:        Query<&spacecraft::new_esail::NewESail>,
 ) {
@@ -78,7 +107,9 @@ pub (super) fn draw_new_esail (
             ).id();
 
         sphere_storage.push(sphere);
-
-        // And now where can I store the sphere_storage?
     }
+
+    // And now where can I store the sphere_storage?
+    balls_resource.0 = sphere_storage;
+    println!("Balls resource: {:?}", balls_resource);
 }

@@ -59,7 +59,7 @@ pub fn spawn_new_esail (
         deployed_elements.push(verlet);
     }
 
-    println!("New ESail: {:?}", deployed_elements);
+    //println!("New ESail: {:?}", deployed_elements);
 
     commands.entity(esail_entity)
         .insert(

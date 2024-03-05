@@ -12,7 +12,7 @@ mod load_models;
 mod draw_esail;
 
 // Test: storing the esail "balls" in a resource
-#[derive(Resource)]
+#[derive(Debug, Resource)]
 struct Balls (Vec<Entity>); 
 
 pub struct GraphicsPlugin;
@@ -36,9 +36,13 @@ impl Plugin for GraphicsPlugin {
             .add_systems(
                 Update, (
                     gizmo_visibility,
-                    update_transform_verlets,
+                    update_transform_verlets,   //Replaced by update_new_esail?
                     update_rotation_axes
                 )
+            )
+            .add_systems(
+                PostUpdate,
+                draw_esail::update_new_esail
             )
         ;
     }
