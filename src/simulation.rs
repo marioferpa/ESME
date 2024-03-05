@@ -18,7 +18,7 @@ impl Plugin for SimulationPlugin {
                 Update, (
                     //verlet_simulation::verlet_simulation,
                     new_verlet_simulation::new_verlet_simulation,
-                    voltage::update_esail_voltage
+                    //voltage::update_esail_voltage
                 )
             )
         ;

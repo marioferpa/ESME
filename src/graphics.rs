@@ -9,13 +9,18 @@ mod axes;
 pub mod camera;
 mod lights;
 mod load_models;
-mod new_esail;
+mod draw_esail;
+
+// Test: storing the esail "balls" in a resource
+#[derive(Resource)]
+struct Balls (Vec<Entity>); 
 
 pub struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut App) {
         app
+            .insert_resource(Balls(Vec::new()))
             .add_systems(
                 PreStartup, 
                 load_models::load_models
@@ -25,7 +30,7 @@ impl Plugin for GraphicsPlugin {
                     axes::spawn_axes,
                     camera::spawn_camera,
                     lights::spawn_light,
-                    new_esail::draw_new_esail,
+                    draw_esail::draw_new_esail,
                 )
             )
             .add_systems(

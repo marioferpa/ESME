@@ -54,9 +54,16 @@ pub fn new_verlet_simulation (
                 let current_element_coordinates = 
                     esail.deployed_elements[index].current_coordinates.clone();
 
-                if index == 5 {
-                    // TODO These are all NaN, wtf
-                    //println!("Fifth element coordinates: {:?}", current_element_coordinates);
+                if index == 4 {
+                    // TODO For index above 2 they are all NaN, wtf
+                    // Actually it goes down really fast until it's NaN
+                    // No, it doesn't go down, it goes up!
+                    // Deactivated the coordinate correction for now
+                    //println!(
+                    //    "Element {} coordinates: {:?}", 
+                    //    index, 
+                    //    current_element_coordinates
+                    //);
                 }
 
                 let preceding_element_coordinates = if index == 0 {
@@ -101,7 +108,7 @@ pub fn new_verlet_simulation (
 
                 //println!("(Index {}) New correction vector: {:?}", index, correction_vector);
 
-                esail.deployed_elements[index].correct_current_coordinates(correction_vector);
+                //esail.deployed_elements[index].correct_current_coordinates(correction_vector);
 
                 // And correct the previous too?
 

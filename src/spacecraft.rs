@@ -83,7 +83,6 @@ impl SpacecraftParameters {
     }
 
     pub fn segment_length (&self) -> quantities::Length {
-        // This is too hacky for my tastes, but dividing 1.0 over self.wire_resolution gave me errors
         let segment_length: f64 = 1.0 / self.wire_resolution.value;
         return quantities::Length::new::<length::meter>(segment_length);
     }

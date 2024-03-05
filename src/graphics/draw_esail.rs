@@ -26,6 +26,8 @@ pub (super) fn draw_new_esail (
     mut meshes:             ResMut<Assets<Mesh>>,
     mut materials:          ResMut<Assets<StandardMaterial>>,
     simulation_parameters:  Res<resources::SimulationParameters>,
+    // Test
+    mut balls_resource:     ResMut<super::Balls>,
     new_esail_query:        Query<&spacecraft::new_esail::NewESail>,
 ) {
 
@@ -75,7 +77,6 @@ pub (super) fn draw_new_esail (
                 }
             ).id();
 
-        // TODO: What the hell is this?
         sphere_storage.push(sphere);
 
         // And now where can I store the sphere_storage?
