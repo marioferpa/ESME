@@ -49,10 +49,18 @@ pub fn spawn_new_esail (
         let x = spacecraft_parameters.esail_origin.x() + 
             spacecraft_parameters.segment_length() * number as f64;
 
+        let is_deployed = if number == 0 {
+            false 
+        } else {
+            true
+        };
+
+        // TODO: Undeployed elements shouldn't move
+
         let verlet = VerletObject {  
             previous_coordinates:   PositionVector::new(x, zero, zero),
             current_coordinates:    PositionVector::new(x, zero, zero),
-            is_deployed:            true,
+            is_deployed,
             current_force:          ForceVector::empty(),
         };
         

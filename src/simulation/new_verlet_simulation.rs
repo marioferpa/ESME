@@ -12,9 +12,6 @@ use physics::force_vector::ForceVector as ForceVector;
 use physics::position_vector::PositionVector as PositionVector;
 use physics::acceleration_vector::AccelerationVector as AccelerationVector;
 
-// I wondered if I wasn't seeing movement with solar wind because I hadn't added
-// the electrical component, now I think that it wasn't in use...
-
 pub fn new_verlet_simulation (
     time:               Res<Time>, 
     mut esail_query:    Query<&mut spacecraft::new_esail::NewESail>,
@@ -125,6 +122,8 @@ fn new_verlet_integration (
     craft_params:   &Res<spacecraft::SpacecraftParameters>,
     solar_wind:     &Res<solar_wind::SolarWind>,
 ) {
+
+    if verlet_object.is_deployed == false { return };
 
     // Centrifugal force -------------------------------------------------------
 
