@@ -29,7 +29,6 @@ pub fn new_verlet_simulation (
 
         for verlet_object in esail.deployed_elements.iter_mut() {
 
-            //println!("(New ESail) Current position: {:?}", verlet_object.current_coordinates);
             new_verlet_integration(
                 &mut sim_params, verlet_object, &craft_params, &solar_wind
             );
@@ -51,18 +50,6 @@ pub fn new_verlet_simulation (
                 let current_element_coordinates = 
                     esail.deployed_elements[index].current_coordinates.clone();
 
-                if index == 4 {
-                    // TODO For index above 2 they are all NaN, wtf
-                    // Actually it goes down really fast until it's NaN
-                    // No, it doesn't go down, it goes up!
-                    // Deactivated the coordinate correction for now
-                    //println!(
-                    //    "Element {} coordinates: {:?}", 
-                    //    index, 
-                    //    current_element_coordinates
-                    //);
-                }
-
                 let preceding_element_coordinates = if index == 0 {
                     &esail.origin
                 } else {
@@ -78,6 +65,8 @@ pub fn new_verlet_simulation (
 
                 let distance_between_elements = vector_between_elements.clone().length();
 
+                println!("Distance between elements: {:?}", distance_between_elements);
+
 
                 // Currently only checking for distance between elements. 
                 // Two extra things need to be implemented
@@ -86,8 +75,9 @@ pub fn new_verlet_simulation (
 
 
                 let difference = if distance_between_elements.get::<meter>() > 0.0 {
-                    (desired_distance_between_elements.get::<meter>() - distance_between_elements.get::<meter>())
-                        / distance_between_elements.get::<meter>()
+                    (desired_distance_between_elements.get::<meter>() 
+                    - distance_between_elements.get::<meter>())
+                    / distance_between_elements.get::<meter>()
                 } else {
                     0.0
                 };
@@ -100,20 +90,26 @@ pub fn new_verlet_simulation (
                 // why I was considering the other way.
 
 
+                // Test: rounding down the difference number
+                let difference = (difference * 100.0).round() / 100.0;
+
+                println!("Difference to ideal: {}", difference);
 
                 let correction_vector = vector_between_elements.mul(0.5 * difference);
 
-                //println!("(Index {}) New correction vector: {:?}", index, correction_vector);
+                println!("(Index {}) New correction vector: {:?}", index, correction_vector);
 
+                // TODO: why does this yeet all elements after the third, and
+                // all of them when I add the slightest amount of force?
                 //esail.deployed_elements[index].correct_current_coordinates(correction_vector);
-
-                // And correct the previous too?
-
 
             }
         }
     }
 }
+
+// Should be moved to a submodule, and maybe change its name? It's updating the
+// coordinates, maybe something like that
 
 /// Updates the position of a verlet object
 fn new_verlet_integration (
