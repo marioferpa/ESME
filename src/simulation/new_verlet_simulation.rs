@@ -27,8 +27,10 @@ pub fn new_verlet_simulation (
 
         // Verlet integration --------------------------------------------------
 
-        for verlet_object in esail.deployed_elements.iter_mut() {
+        for verlet_object in esail.elements.iter_mut() {
 
+            // TODO Check if there are differences between this and the old
+            // verlet integration
             new_verlet_integration(
                 &mut sim_params, verlet_object, &craft_params, &solar_wind
             );
@@ -45,17 +47,18 @@ pub fn new_verlet_simulation (
 
         for _ in 0..sim_params.iterations {
 
-            for index in 0..esail.deployed_elements.len() {
+            for index in 0..esail.elements.len() {
 
                 let current_element_coordinates = 
-                    esail.deployed_elements[index].current_coordinates.clone();
+                    esail.elements[index].current_coordinates.clone();
 
                 let preceding_element_coordinates = if index == 0 {
                     &esail.origin
                 } else {
-                    &esail.deployed_elements[index-1]
-                              .current_coordinates
+                    &esail.elements[index-1]
+                          .current_coordinates
                 };
+
                 
                 let vector_between_elements = 
                     PositionVector::from_a_to_b(
@@ -103,17 +106,17 @@ pub fn new_verlet_simulation (
                 // TODO: why does this yeet all elements after the third, and
                 // all of them when I add the slightest amount of force?
                 // The correction vector goes bananas after some iterations
-                esail.deployed_elements[index].correct_current_coordinates(correction_vector.clone());
+                esail.elements[index].correct_current_coordinates(correction_vector.clone());
 
 
                 // FROM OLD SIM ------------------------------------------------
 
                 // Changing previous element if previous element is not the first.
                 //if index > 0 {
-                if esail.deployed_elements[index].is_deployed {
+                if esail.elements[index].is_deployed {
 
                     //let mut preceding_verlet_object = verlet_query.get_mut(esail.elements[index - 1]).expect("No previous sail element found");
-                    let mut preceding_verlet = &mut esail.deployed_elements[index - 1];
+                    let mut preceding_verlet = &mut esail.elements[index - 1];
 
                     if preceding_verlet.is_deployed {
                         // Maybe a method to give the negative?

@@ -14,7 +14,7 @@ pub (super) fn update_esail_graphics (
 
     let esail = esail_query.single();
 
-    for (index, verlet) in esail.deployed_elements.iter().enumerate() {
+    for (index, verlet) in esail.elements.iter().enumerate() {
 
 
         let mut ball_transform =
@@ -57,7 +57,7 @@ pub (super) fn draw_new_esail (
 
     let mut sphere_storage: Vec<Entity> = Vec::new();
     
-    for verlet_object in new_esail.deployed_elements.iter() {
+    for verlet_object in new_esail.elements.iter() {
 
         println!(
             "Verlet's x: {:?}", 

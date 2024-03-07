@@ -12,10 +12,10 @@ use physics::position_vector::PositionVector as PositionVector;
 
 #[derive(Component)]
 pub struct NewESail {  
-    pub origin:                 PositionVector, 
-    //pub undeployed_elements:    Vec<VerletObject>,
-    pub deployed_elements:      Vec<VerletObject>,  
+    pub origin:     PositionVector, 
+    //pub deployed_elements:      Vec<VerletObject>,  
     // If the deployed field of the verlet works, change the "deployed_elements" name
+    pub elements:   Vec<VerletObject>,  
 }
 
 
@@ -38,7 +38,7 @@ pub fn spawn_new_esail (
     //let number_of_elements = spacecraft_parameters.number_of_esail_elements();
     let number_of_elements = 10; 
 
-    let mut deployed_elements: Vec<VerletObject> = Vec::new();
+    let mut elements: Vec<VerletObject> = Vec::new();
 
     let zero =  quantities::Length::new::<length::meter>(0.0);
 
@@ -65,7 +65,7 @@ pub fn spawn_new_esail (
             current_force:          ForceVector::empty(),
         };
         
-        deployed_elements.push(verlet);
+        elements.push(verlet);
     }
 
     //println!("New ESail: {:?}", deployed_elements);
@@ -78,7 +78,7 @@ pub fn spawn_new_esail (
                     zero,
                     zero
                 ),
-                deployed_elements:      deployed_elements,
+                elements: elements,
             }
         )
         // TODO This was meant for individual verlets, maybe won't work here
