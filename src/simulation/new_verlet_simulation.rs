@@ -65,7 +65,7 @@ pub fn new_verlet_simulation (
 
                 let distance_between_elements = vector_between_elements.clone().length();
 
-                println!("Distance between elements: {:?}", distance_between_elements);
+                //println!("Distance between elements: {:?}", distance_between_elements);
 
 
                 // Currently only checking for distance between elements. 
@@ -90,19 +90,39 @@ pub fn new_verlet_simulation (
                 // why I was considering the other way.
 
 
-                // Test: rounding down the difference number
+                // Test: rounding down the difference number (not helping)
                 let difference = (difference * 100.0).round() / 100.0;
 
-                println!("Difference to ideal: {}", difference);
+                //println!("Difference to ideal: {}", difference);
 
                 let correction_vector = vector_between_elements.mul(0.5 * difference);
 
-                println!("(Index {}) New correction vector: {:?}", index, correction_vector);
+                // The correction vector value seems reasonable
+                //println!("(Index {}) New correction vector x: {:.2?}", index, correction_vector.x());
 
                 // TODO: why does this yeet all elements after the third, and
                 // all of them when I add the slightest amount of force?
-                //esail.deployed_elements[index].correct_current_coordinates(correction_vector);
+                // The correction vector goes bananas after some iterations
+                esail.deployed_elements[index].correct_current_coordinates(correction_vector.clone());
 
+
+                // FROM OLD SIM ------------------------------------------------
+
+                // Changing previous element if previous element is not the first.
+                //if index > 0 {
+                if esail.deployed_elements[index].is_deployed {
+
+                    //let mut preceding_verlet_object = verlet_query.get_mut(esail.elements[index - 1]).expect("No previous sail element found");
+                    let mut preceding_verlet = &mut esail.deployed_elements[index - 1];
+
+                    if preceding_verlet.is_deployed {
+                        // Maybe a method to give the negative?
+                        println!("Preceding verlet coords: {:?}", preceding_verlet.current_coordinates);
+                        preceding_verlet.correct_current_coordinates(correction_vector.mul(-1.0));
+                    }
+                }
+
+                // -------------------------------------------------------------
             }
         }
     }

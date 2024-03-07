@@ -17,9 +17,16 @@ impl VerletObject {
     ) {
 
         let current_coordinates = self.current_coordinates.clone();
-        let new_coordinates = current_coordinates + correction_vector;
+        let new_coordinates = current_coordinates.clone() + correction_vector;
 
+        //println!(
+        //    "Current: {:?}, new: {:?}", 
+        //    current_coordinates.clone(), 
+        //    new_coordinates
+        //);
         self.current_coordinates = new_coordinates;
+
+
     }
 
 

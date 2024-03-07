@@ -14,7 +14,8 @@ use physics::position_vector::PositionVector as PositionVector;
 pub struct NewESail {  
     pub origin:                 PositionVector, 
     //pub undeployed_elements:    Vec<VerletObject>,
-    pub deployed_elements:      Vec<VerletObject>,
+    pub deployed_elements:      Vec<VerletObject>,  
+    // If the deployed field of the verlet works, change the "deployed_elements" name
 }
 
 
