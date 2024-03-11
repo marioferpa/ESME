@@ -23,32 +23,32 @@ impl Plugin for UserInputPlugin {
 
 
 
-pub fn keyboard_input (
-    mut esail_query: Query<&mut spacecraft::esail::ESail>,  
-    keyboard: Res<Input<KeyCode>>,
-) {
-
-    let mut esail = esail_query.single_mut();
-
-    if keyboard.just_pressed(KeyCode::Up) {
-
-        println!("Deploying!");
-
-        esail.deploy_esail(1);
-
-        esail.print_elements();
-
-    }
-
-    if keyboard.just_pressed(KeyCode::Down) {
-
-        println!("Retracting!");
-
-        esail.retract_esail(1);
-
-        esail.print_elements();
-    }
-}
+//pub fn keyboard_input (
+//    mut esail_query: Query<&mut spacecraft::esail::ESail>,  
+//    keyboard: Res<Input<KeyCode>>,
+//) {
+//
+//    let mut esail = esail_query.single_mut();
+//
+//    if keyboard.just_pressed(KeyCode::Up) {
+//
+//        println!("Deploying!");
+//
+//        esail.deploy_esail(1);
+//
+//        esail.print_elements();
+//
+//    }
+//
+//    if keyboard.just_pressed(KeyCode::Down) {
+//
+//        println!("Retracting!");
+//
+//        esail.retract_esail(1);
+//
+//        esail.print_elements();
+//    }
+//}
 
 
 

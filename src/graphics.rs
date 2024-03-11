@@ -28,7 +28,7 @@ impl Plugin for GraphicsPlugin {
                     axes::spawn_axes,
                     camera::spawn_camera,
                     lights::spawn_light,
-                    draw_esail::draw_new_esail,
+                    draw_esail::draw_esail,
                 )
             )
             .add_systems(

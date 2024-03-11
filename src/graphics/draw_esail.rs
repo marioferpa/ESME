@@ -5,7 +5,7 @@ use uom::si::length::meter;
 use crate::{ resources, spacecraft };
 
 pub (super) fn update_esail_graphics (
-    esail_query:            Query<&spacecraft::new_esail::NewESail>,
+    esail_query:            Query<&spacecraft::esail::ESail>,
     simulation_parameters:  Res<resources::SimulationParameters>,
     mut transform_query:    Query<&mut Transform>,
     balls_resource:         Res<super::Balls>,   // Need mut?
@@ -41,23 +41,23 @@ pub (super) fn update_esail_graphics (
 
 }
 
-pub (super) fn draw_new_esail (
+pub (super) fn draw_esail (
     mut commands:           Commands,
     mut meshes:             ResMut<Assets<Mesh>>,
     mut materials:          ResMut<Assets<StandardMaterial>>,
     simulation_parameters:  Res<resources::SimulationParameters>,
     mut balls_resource:     ResMut<super::Balls>,
-    new_esail_query:        Query<&spacecraft::new_esail::NewESail>,
+    esail_query:            Query<&spacecraft::esail::ESail>,
 ) {
 
-    let new_esail = new_esail_query.get_single().unwrap();
+    let esail = esail_query.get_single().unwrap();
     
     let sphere_radius = 2.5;   // 2.5 what? Apples?
 
 
     let mut sphere_storage: Vec<Entity> = Vec::new();
     
-    for verlet_object in new_esail.elements.iter() {
+    for verlet_object in esail.elements.iter() {
 
         println!(
             "Verlet's x: {:?}", 
