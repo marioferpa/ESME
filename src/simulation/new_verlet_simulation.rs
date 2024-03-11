@@ -49,6 +49,10 @@ pub fn new_verlet_simulation (
 
             for index in 0..esail.elements.len() {
 
+
+
+                // Vector between current and previous elements ----------------
+
                 let current_element_coordinates = 
                     esail.elements[index].current_coordinates.clone();
 
@@ -68,13 +72,10 @@ pub fn new_verlet_simulation (
 
                 let distance_between_elements = vector_between_elements.clone().length();
 
-                //println!("Distance between elements: {:?}", distance_between_elements);
 
 
-                // Currently only checking for distance between elements. 
-                // Two extra things need to be implemented
-                // * Perpendicular angle limitation, stiffness, so the thing curves
-                // * Maybe not important yet, but longitudinal stiffness should exist too
+
+                // Difference to ideal -----------------------------------------
 
 
                 let difference = if distance_between_elements.get::<meter>() > 0.0 {
@@ -86,44 +87,39 @@ pub fn new_verlet_simulation (
                 };
 
 
-                // I could calculate here the angle between elements and limit
-                // it. But limit it to how much? I just wrote that verlet should
-                // simulate free floating particles and the constraints should
-                // deal with the stiffness, but now that I'm here I understand
-                // why I was considering the other way.
+
+                // Correction vector -------------------------------------------
+
+                let correction_vector = 
+                    vector_between_elements.mul(0.5 * difference);
+
+                // Seems reasonable when I don't apply it
+                println!("(Index {}) New correction vector x: {:.5?}", index, correction_vector.x());
+
+                
 
 
-                // Test: rounding down the difference number (not helping)
-                let difference = (difference * 100.0).round() / 100.0;
+                // Applying correction vector ----------------------------------
 
-                //println!("Difference to ideal: {}", difference);
 
-                let correction_vector = vector_between_elements.mul(0.5 * difference);
-
-                // The correction vector value seems reasonable
-                //println!("(Index {}) New correction vector x: {:.2?}", index, correction_vector.x());
-
-                // TODO: why does this yeet all elements after the third, and
-                // all of them when I add the slightest amount of force?
-                // The correction vector goes bananas after some iterations
-                esail.elements[index].correct_current_coordinates(correction_vector.clone());
+                // TODO The correction vector goes bananas after some iterations
+                // Actually it does that even without any forces!
+                //esail.elements[index].correct_current_coordinates(correction_vector.clone());
 
 
                 // FROM OLD SIM ------------------------------------------------
 
-                // Changing previous element if previous element is not the first.
-                //if index > 0 {
-                if esail.elements[index].is_deployed {
+                //if esail.elements[index].is_deployed {
 
-                    //let mut preceding_verlet_object = verlet_query.get_mut(esail.elements[index - 1]).expect("No previous sail element found");
-                    let mut preceding_verlet = &mut esail.elements[index - 1];
+                //    let mut preceding_verlet = &mut esail.elements[index - 1];
 
-                    if preceding_verlet.is_deployed {
-                        // Maybe a method to give the negative?
-                        println!("Preceding verlet coords: {:?}", preceding_verlet.current_coordinates);
-                        preceding_verlet.correct_current_coordinates(correction_vector.mul(-1.0));
-                    }
-                }
+                //    if preceding_verlet.is_deployed {
+
+                //        // Maybe a method to give the negative?
+                //        //println!("Preceding verlet coords: {:?}", preceding_verlet.current_coordinates);
+                //        preceding_verlet.correct_current_coordinates(correction_vector.mul(-1.0));
+                //    }
+                //}
 
                 // -------------------------------------------------------------
             }
@@ -131,9 +127,14 @@ pub fn new_verlet_simulation (
     }
 }
 
+
+
+
+
 // Should be moved to a submodule, and maybe change its name? It's updating the
 // coordinates, maybe something like that
 
+// It's identical to the old integration, so why does it fail?
 /// Updates the position of a verlet object
 fn new_verlet_integration (
     sim_params:     &mut ResMut<resources::SimulationParameters>,
@@ -201,7 +202,7 @@ fn new_verlet_integration (
     let delta_from_acc = 
         PositionVector::from_acceleration(
             acc_vector, 
-            sim_params.timestep_s
+            sim_params.timestep
         );
  
 

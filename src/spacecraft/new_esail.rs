@@ -13,8 +13,6 @@ use physics::position_vector::PositionVector as PositionVector;
 #[derive(Component)]
 pub struct NewESail {  
     pub origin:     PositionVector, 
-    //pub deployed_elements:      Vec<VerletObject>,  
-    // If the deployed field of the verlet works, change the "deployed_elements" name
     pub elements:   Vec<VerletObject>,  
 }
 
@@ -43,8 +41,6 @@ pub fn spawn_new_esail (
     let zero =  quantities::Length::new::<length::meter>(0.0);
 
 
-    // TODO First element should be undeployed? Or do I have an anchor?
-
     for number in 0.. number_of_elements {
 
         let x = spacecraft_parameters.esail_origin.x() + 
@@ -56,7 +52,6 @@ pub fn spawn_new_esail (
             true
         };
 
-        // TODO: Undeployed elements shouldn't move
 
         let verlet = VerletObject {  
             previous_coordinates:   PositionVector::new(x, zero, zero),
@@ -81,42 +76,9 @@ pub fn spawn_new_esail (
                 elements: elements,
             }
         )
-        // TODO This was meant for individual verlets, maybe won't work here
-        .insert(components::ElectricallyCharged{ ..Default::default() })
+        // TODO This doesn't do anything
+        //.insert(components::ElectricallyCharged{ ..Default::default() })
         ;
 
     println!("(New) E-sail spawned");
 }
-
-
-
-
-
-
-//pub fn update_new_esail_graphics (
-//    mut new_esail_query:    Query<&mut NewESail>,
-//) {
-//
-//    let new_esail = new_esail_query.single();
-//
-//    //for (verlet_object, mut transform) in verlet_query.iter_mut() {
-//    //    // Should I use get<meter> in these cases?
-//    //    transform.translation.x = verlet_object.current_coordinates.0[0].get::<meter>() as f32 * simulation_parameters.pixels_per_meter as f32;
-//    //    transform.translation.y = verlet_object.current_coordinates.0[1].get::<meter>() as f32 * simulation_parameters.pixels_per_meter as f32;
-//    //    transform.translation.z = verlet_object.current_coordinates.0[2].get::<meter>() as f32 * simulation_parameters.pixels_per_meter as f32;
-//
-//    //    //println!("Transform X: {}", transform.translation.x);
-//    //}
-//
-//    // So previously every object on the sail had verlet coordinates and a transform, and the
-//    // transform was updated every frame to that of the verlet object. Now I can't do that.
-//    // Now I have to go over all the verlets, and all the spheres (I need to store them somewhere
-//    // too, ugh), and match their positions in pairs.
-//
-//    for verlet_object in &new_esail.deployed_elements {
-//        //println!("Current coordinates: {:?}", verlet_object.current_coordinates);
-//    } 
-//}
-//
-//
-//

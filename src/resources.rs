@@ -13,24 +13,23 @@ pub const EPSILON_0: quantities::ElectricPermittivity = quantities::ElectricPerm
 
 #[derive(Resource)]
 pub struct SimulationParameters {
-    pub iterations:         i32,    // Number of constraint iterations per timestep.
-    pub timestep:           f64,    // Timestep for the physics simulation, in seconds. Should be an uom quantity, right??
-    pub timestep_s:         quantities::Time,   // Update everything to uom seconds later
-    pub leftover_time:      f64,    // Unused time from the previous simulation loop.
-    pub debug:              bool,   // Toggle for printing debug information to console.
-    pub com_visibility:     bool,   // Toggle for showing/hiding the center of mass.
+    pub iterations:         i32,    
+    pub timestep:           quantities::Time,
+    pub leftover_time:      f64,
+    pub debug:              bool,
+    pub com_visibility:     bool,
     pub axes_visibility:    bool,
     pub pixels_per_meter:   i32,
 }
+
+// timestep and timestep_s? Which one am I using?
 
 impl Default for SimulationParameters {
     fn default() -> SimulationParameters {
         SimulationParameters {
             //iterations:         60,
-            iterations:         1,
-            //timestep:           1.0/60.0,   // In seconds (right?)
-            timestep:           1.0/10.0,   // In seconds (right?)
-            timestep_s:         quantities::Time::new::<time::second>(1.0/60.0),
+            iterations:         100,
+            timestep:           quantities::Time::new::<time::second>(1.0/60.0),
             leftover_time:      0.0,
             debug:              false,
             com_visibility:     false,
