@@ -29,8 +29,6 @@ pub fn new_verlet_simulation (
 
         for verlet_object in esail.elements.iter_mut() {
 
-            // TODO Check if there are differences between this and the old
-            // verlet integration
             new_verlet_integration(
                 &mut sim_params, verlet_object, &craft_params, &solar_wind
             );
@@ -102,24 +100,22 @@ pub fn new_verlet_simulation (
                 // Applying correction vector ----------------------------------
 
 
-                // TODO The correction vector goes bananas after some iterations
-                // Actually it does that even without any forces!
-                //esail.elements[index].correct_current_coordinates(correction_vector.clone());
+                // I put the sign backwards and it worked, wtf. FML
+                    // Maybe a method to give the negative?
+                esail.elements[index].correct_current_coordinates(correction_vector.clone().mul(-1.0));
 
 
                 // FROM OLD SIM ------------------------------------------------
 
-                //if esail.elements[index].is_deployed {
+                if esail.elements[index].is_deployed {
 
-                //    let mut preceding_verlet = &mut esail.elements[index - 1];
+                    let mut preceding_verlet = &mut esail.elements[index - 1];
 
-                //    if preceding_verlet.is_deployed {
+                    if preceding_verlet.is_deployed {
 
-                //        // Maybe a method to give the negative?
-                //        //println!("Preceding verlet coords: {:?}", preceding_verlet.current_coordinates);
-                //        preceding_verlet.correct_current_coordinates(correction_vector.mul(-1.0));
-                //    }
-                //}
+                        preceding_verlet.correct_current_coordinates(correction_vector);
+                    }
+                }
 
                 // -------------------------------------------------------------
             }
