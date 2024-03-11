@@ -1,13 +1,13 @@
 use bevy::prelude::*;
 use uom::si::f64 as quantities;  
 use uom::si::electric_potential::volt;
-use uom::si::*;
 
 #[derive(Component, Debug)]
 pub struct Mass (
     pub quantities::Mass,
 );
 
+//TODO Check if this is actually in use
 #[derive(Component, Debug)]
 pub struct ElectricallyCharged {
     pub potential:  quantities::ElectricPotential,

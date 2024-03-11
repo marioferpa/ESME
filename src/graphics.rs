@@ -1,9 +1,7 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
-use uom::si::length::meter;
-
-use crate::{ physics, spacecraft, resources };
+use crate::{ spacecraft, resources };
 
 mod axes;
 pub mod camera;

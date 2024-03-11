@@ -6,7 +6,6 @@ use crate::{ physics, resources, solar_wind, spacecraft, time };
 use std::ops::{ Mul };
 
 use uom::si::length::meter;
-use uom::si::mass::kilogram;
 
 use physics::force_vector::ForceVector as ForceVector;
 use physics::position_vector::PositionVector as PositionVector;
@@ -91,33 +90,19 @@ pub fn new_verlet_simulation (
                 let correction_vector = 
                     vector_between_elements.mul(0.5 * difference);
 
-                // Seems reasonable when I don't apply it
-                println!("(Index {}) New correction vector x: {:.5?}", index, correction_vector.x());
-
-                
-
-
-                // Applying correction vector ----------------------------------
-
-
-                // I put the sign backwards and it worked, wtf. FML
                     // Maybe a method to give the negative?
                 esail.elements[index].correct_current_coordinates(correction_vector.clone().mul(-1.0));
 
 
-                // FROM OLD SIM ------------------------------------------------
-
                 if esail.elements[index].is_deployed {
 
-                    let mut preceding_verlet = &mut esail.elements[index - 1];
+                    let preceding_verlet = &mut esail.elements[index - 1];
 
                     if preceding_verlet.is_deployed {
 
                         preceding_verlet.correct_current_coordinates(correction_vector);
                     }
                 }
-
-                // -------------------------------------------------------------
             }
         }
     }

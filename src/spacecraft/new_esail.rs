@@ -2,9 +2,8 @@ use bevy::prelude::*;
 
 use uom::si::*;
 use uom::si::f64 as quantities;  
-use uom::si::length::meter;
 
-use crate::{ components, physics, resources };
+use crate::{ physics };
 
 use physics::force_vector::ForceVector as ForceVector;
 use physics::verlet_object::VerletObject as VerletObject;
@@ -20,8 +19,6 @@ pub struct NewESail {
 
 pub fn spawn_new_esail (
     mut commands:           Commands,
-    mut meshes:             ResMut<Assets<Mesh>>,
-    mut materials:          ResMut<Assets<StandardMaterial>>,
     spacecraft_parameters:  Res<super::SpacecraftParameters>,
 ) {
 
@@ -33,8 +30,7 @@ pub fn spawn_new_esail (
         .insert(Name::new("New E-sail"))
         .id();
 
-    //let number_of_elements = spacecraft_parameters.number_of_esail_elements();
-    let number_of_elements = 10; 
+    let number_of_elements = spacecraft_parameters.number_of_esail_elements();
 
     let mut elements: Vec<VerletObject> = Vec::new();
 

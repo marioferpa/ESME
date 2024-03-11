@@ -8,7 +8,7 @@ pub (super) fn update_esail_graphics (
     esail_query:            Query<&spacecraft::new_esail::NewESail>,
     simulation_parameters:  Res<resources::SimulationParameters>,
     mut transform_query:    Query<&mut Transform>,
-    mut balls_resource:     ResMut<super::Balls>,   // Need mut?
+    balls_resource:         Res<super::Balls>,   // Need mut?
 ) {
 
 
