@@ -26,9 +26,14 @@ pub fn verlet_simulation (
 
         // Verlet integration --------------------------------------------------
 
-        for verlet_object in esail.elements.iter_mut() {
+        for index in 0..esail.elements.len() {
 
-            new_verlet_integration(
+            println!("Test angle: {}", esail.verlet_angle(index));
+
+            let verlet_object = &mut esail.elements[index];
+
+            // TODO rename to verlet integration
+            verlet_integration(
                 &mut sim_params, verlet_object, &craft_params, &solar_wind
             );
         }
@@ -46,6 +51,7 @@ pub fn verlet_simulation (
 
             for index in 0..esail.elements.len() {
 
+                //println!("Test angle: {}", esail.verlet_angle(index));
 
 
                 // Vector between current and previous elements ----------------
@@ -117,7 +123,7 @@ pub fn verlet_simulation (
 
 // It's identical to the old integration, so why does it fail?
 /// Updates the position of a verlet object
-fn new_verlet_integration (
+fn verlet_integration (
     sim_params:     &mut ResMut<resources::SimulationParameters>,
     verlet_object:  &mut physics::verlet_object::VerletObject,
     craft_params:   &Res<spacecraft::SpacecraftParameters>,
