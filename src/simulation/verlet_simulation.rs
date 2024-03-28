@@ -6,6 +6,7 @@ use crate::{ physics, resources, solar_wind, spacecraft, time };
 use std::ops::{ Mul };
 
 use uom::si::length::meter;
+use uom::si::angle;
 
 use physics::force_vector::ForceVector as ForceVector;
 use physics::position_vector::PositionVector as PositionVector;
@@ -29,13 +30,15 @@ pub fn verlet_simulation (
         for index in 0..esail.elements.len() {
 
             let angle = esail.verlet_angle(index);
-            println!("Test angle: {}", angle);
+            println!("Angle: {}", angle.get::<angle::radian>());
+
+            // Ok, I have the angle now, but not the restoring force direction
 
             let verlet_object = &mut esail.elements[index];
 
             verlet_integration(
                 verlet_object, 
-                angle,
+                angle.get::<angle::radian>(),    // Consider passing UOM directly
                 &mut sim_params, 
                 &craft_params, 
                 &solar_wind

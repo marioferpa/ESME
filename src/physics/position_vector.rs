@@ -1,6 +1,7 @@
 use uom::si::f64 as quantities;  
 use uom::si::*;
 use uom::si::length::meter;
+use uom::si::angle::radian;
 
 use std::ops::{ Add, Sub, Mul };
 use std::f64::consts::PI;
@@ -21,14 +22,19 @@ pub fn dot_product (
 pub fn angle_between (
     first: &PositionVector, 
     second: &PositionVector
-) -> f64 {
+) -> quantities::Angle {
 
     let dot_product = dot_product(&first, &second);
-    let magnitudes_product = first.clone().length().get::<meter>() * second.clone().length().get::<meter>();
+    let magnitudes_product = 
+        first.clone().length().get::<meter>() * 
+        second.clone().length().get::<meter>();
 
     let cos_theta = dot_product / magnitudes_product;
 
-    return cos_theta.acos() * 180.0 / PI; //Should it return an uom angle?? Probably!!
+    //let angle_value = cos_theta.acos() * 180.0 / PI;
+    let angle_value = cos_theta.acos();
+
+    return quantities::Angle::new::<angle::radian>(angle_value);
 }
 
 

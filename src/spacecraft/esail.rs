@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use uom::si::*;
+//use uom::si::angle::radian;
 use uom::si::f64 as quantities;  
 
 use crate::{ physics };
@@ -23,10 +24,12 @@ impl ESail {
 
     // This should return not only the angle but the direction of the restoring
     // force, right?
-    // TODO return radians
-    pub fn verlet_angle (&self, index: usize) -> f64 {  // TODO Use uom quantity
+    // TODO I don't think the calculation is correct. Or maybe it isn't in radians?
+    // Because I'm seeing up to 3 radians when the sail is mostly straight
+    pub fn verlet_angle (&self, index: usize) -> quantities::Angle {
 
-        if index <= 1 { return 0.0 };
+        //if index <= 1 { return 0.0 };
+        if index <= 1 { return quantities::Angle::new::<angle::radian>(0.0) };
 
         let reference_line = PositionVector::from_a_to_b(
             self.elements[index - 2].current_coordinates.clone(),

@@ -9,4 +9,5 @@ edition = "2021"
 bevy = "0.12"
 bevy_egui = "0.23"
 bevy-inspector-egui = "0.21"
-uom = { git = "https://github.com/iliekturtles/uom" }
+#uom = { git = "https://github.com/iliekturtles/uom" }
+uom = "0.36.0"
