@@ -5,8 +5,10 @@ use crate::{ physics, resources, solar_wind, spacecraft, time };
 
 use std::ops::{ Mul };
 
+use uom::si::quantities;
 use uom::si::length::meter;
 use uom::si::angle;
+use uom::si::f64::V;    //??
 
 use physics::force_vector::ForceVector as ForceVector;
 use physics::position_vector::PositionVector as PositionVector;
@@ -38,7 +40,8 @@ pub fn verlet_simulation (
 
             verlet_integration(
                 verlet_object, 
-                angle.get::<angle::radian>(),    // Consider passing UOM directly
+                //angle.get::<angle::radian>(),    // Consider passing UOM directly
+                angle,
                 &mut sim_params, 
                 &craft_params, 
                 &solar_wind
@@ -127,8 +130,8 @@ pub fn verlet_simulation (
 /// Updates the position of a verlet object
 fn verlet_integration (
     verlet_object:  &mut physics::verlet_object::VerletObject,
-    // Test
-    angle:          f64,
+    angle:          quantities::Angle<V>,   // This V made the compiler shut up,
+                                            // but I don't know what it means
     sim_params:     &mut ResMut<resources::SimulationParameters>,
     craft_params:   &Res<spacecraft::SpacecraftParameters>,
     solar_wind:     &Res<solar_wind::SolarWind>,
