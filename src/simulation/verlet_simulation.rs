@@ -28,13 +28,17 @@ pub fn verlet_simulation (
 
         for index in 0..esail.elements.len() {
 
-            println!("Test angle: {}", esail.verlet_angle(index));
+            let angle = esail.verlet_angle(index);
+            println!("Test angle: {}", angle);
 
             let verlet_object = &mut esail.elements[index];
 
-            // TODO rename to verlet integration
             verlet_integration(
-                &mut sim_params, verlet_object, &craft_params, &solar_wind
+                verlet_object, 
+                angle,
+                &mut sim_params, 
+                &craft_params, 
+                &solar_wind
             );
         }
 
@@ -42,7 +46,6 @@ pub fn verlet_simulation (
 
 
         // Constraints ---------------------------------------------------------
-
 
         let desired_distance_between_elements = craft_params.segment_length();
 
@@ -118,14 +121,12 @@ pub fn verlet_simulation (
 
 
 
-// Should be moved to a submodule, and maybe change its name? It's updating the
-// coordinates, maybe something like that
-
-// It's identical to the old integration, so why does it fail?
 /// Updates the position of a verlet object
 fn verlet_integration (
-    sim_params:     &mut ResMut<resources::SimulationParameters>,
     verlet_object:  &mut physics::verlet_object::VerletObject,
+    // Test
+    angle:          f64,
+    sim_params:     &mut ResMut<resources::SimulationParameters>,
     craft_params:   &Res<spacecraft::SpacecraftParameters>,
     solar_wind:     &Res<solar_wind::SolarWind>,
 ) {

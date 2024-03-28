@@ -59,7 +59,7 @@ impl PositionVector {
         return PositionVector( Vec::new() );    // Make it capacity 3
     }
 
-    // Untested
+    // Untested ?
     pub fn from_a_to_b (
         point_a: Self,
         point_b: Self,
@@ -72,7 +72,10 @@ impl PositionVector {
         return Self::new(x, y, z);
     }
 
-    pub fn from_acceleration(acceleration: super::acceleration_vector::AccelerationVector, time: quantities::Time) -> Self {
+    pub fn from_acceleration (
+        acceleration: super::acceleration_vector::AccelerationVector, 
+        time: quantities::Time
+    ) -> Self {
 
         let pos_x = acceleration.x() * time * time;
         let pos_y = acceleration.y() * time * time;

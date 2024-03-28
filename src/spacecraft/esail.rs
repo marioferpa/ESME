@@ -21,18 +21,33 @@ pub struct ESail {
 
 impl ESail {
 
-    // Test
     // This should return not only the angle but the direction of the restoring
     // force, right?
-    pub fn verlet_angle (&self, index: usize) -> f32 {    // TODO Use uom quantity
-
-        // This should check the verlet in the index and calculate its angle
-        // with respect to the line formed by the two previous elements.
-        // If the index is 0 or 1, the angle should be zero (?)
+    // TODO return radians
+    pub fn verlet_angle (&self, index: usize) -> f64 {  // TODO Use uom quantity
 
         if index <= 1 { return 0.0 };
 
-        return 3.14;
+        let reference_line = PositionVector::from_a_to_b(
+            self.elements[index - 2].current_coordinates.clone(),
+            self.elements[index - 1].current_coordinates.clone()
+        );
+
+        let verlet_line = PositionVector::from_a_to_b(
+            self.elements[index - 1].current_coordinates.clone(),
+            self.elements[index].current_coordinates.clone()
+        );
+
+        let angle = physics::position_vector::angle_between(
+            &reference_line,
+            &verlet_line
+        );
+
+
+        return angle;
+
+        // I have an angle_between method with position vector, is it used, is
+        // it good?
     }
 }
 
