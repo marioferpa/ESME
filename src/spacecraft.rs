@@ -34,37 +34,74 @@ impl Plugin for SpacecraftPlugin {
     }
 }
 
-// TODO Rename "wire" to "tether"
 #[derive(Resource)]
 pub struct SpacecraftParameters {
-    pub rpm:                quantities::Frequency,  // This could be angular velocity, so I get value and direction together.
+    // This could be angular velocity, so I get value and direction together.
+    pub rpm:                quantities::Frequency,
     pub rotation_axis:      DVec3,
-    pub tether_length:        quantities::Length,
-    pub tether_radius:        quantities::Length, 
-    pub tether_density:       quantities::MassDensity,
-    pub tether_potential:     quantities::ElectricPotential,
-    pub tether_resolution:    quantities::LinearNumberDensity,
-    pub body_size:          quantities::Length, // Will become what, a tuple of lengths?
-    pub esail_origin:       PositionVector, 
+    pub tether_length:      quantities::Length,
+    pub tether_radius:      quantities::Length, 
+    pub tether_density:     quantities::MassDensity,
+    pub tether_potential:   quantities::ElectricPotential,
+    pub tether_resolution:  quantities::LinearNumberDensity,
+    pub body_size:          quantities::Length,
+    pub tether_origin:      PositionVector, 
 }
 
 
 impl Default for SpacecraftParameters {
     fn default() -> SpacecraftParameters {
+
+        let default_rpm =    
+            quantities::Frequency::new::<frequency::cycle_per_minute>(0.0);
+
+        let default_rotation_axis =      
+            DVec3::new(0.0, 0.0, 1.0);
+
+        let default_tether_length =        
+            quantities::Length::new::<length::meter>
+                (settings::TETHER_LENGTH_METERS);
+
+        let default_tether_radius =
+            quantities::Length::new::<length::micrometer>
+                (settings::TETHER_RADIUS_MICROMETERS);
+
+        let default_tether_density =
+            quantities::MassDensity::new::
+                <mass_density::gram_per_cubic_centimeter>(2.7);
+
+        let default_tether_potential = 
+            quantities::ElectricPotential::new::
+                <electric_potential::kilovolt>(0.0);
+
+        let default_tether_potential =     
+            quantities::ElectricPotential::new::
+                <electric_potential::kilovolt>(0.0);
+
+        let default_tether_resolution = 
+            quantities::LinearNumberDensity::new::
+                <linear_number_density::per_meter>
+                    (settings::TETHER_POINTS_PER_METER);
+
+        let body_size = quantities::Length::new::<length::meter>(0.15);
+
+        // TODO Make it relative to body size
+        let tether_origin = PositionVector::new(
+            quantities::Length::new::<length::meter>(0.15 / 2.0),
+            quantities::Length::new::<length::meter>(0.0),
+            quantities::Length::new::<length::meter>(0.0),
+        );
+
         SpacecraftParameters {
-            rpm:                quantities::Frequency::new::<frequency::cycle_per_minute>(0.0),
-            rotation_axis:      DVec3::new(0.0, 0.0, 1.0),  // Is it correct? I think so, right hand rule
-            tether_length:        quantities::Length::new::<length::meter>(settings::TETHER_LENGTH_METERS),
-            tether_radius:        quantities::Length::new::<length::micrometer>(10.0),
-            tether_density:       quantities::MassDensity::new::<mass_density::gram_per_cubic_centimeter>(2.7),
-            tether_potential:     quantities::ElectricPotential::new::<electric_potential::kilovolt>(0.0),
-            tether_resolution:    quantities::LinearNumberDensity::new::<linear_number_density::per_meter>(settings::TETHER_POINTS_PER_METER),
-            body_size:          quantities::Length::new::<length::meter>(0.15),
-            esail_origin:       PositionVector::new(
-                                    quantities::Length::new::<length::meter>(0.15 / 2.0),
-                                    quantities::Length::new::<length::meter>(0.0),
-                                    quantities::Length::new::<length::meter>(0.0),
-                                    ),
+            rpm:                default_rpm,
+            rotation_axis:      default_rotation_axis,
+            tether_length:      default_tether_length,
+            tether_radius:      default_tether_radius,
+            tether_density:     default_tether_density,
+            tether_potential:   default_tether_potential,
+            tether_resolution:  default_tether_resolution,
+            body_size,
+            tether_origin
         }
     }
 }

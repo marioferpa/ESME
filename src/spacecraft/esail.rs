@@ -86,7 +86,7 @@ pub fn spawn_esail (
 
     for number in 0.. number_of_elements {
 
-        let x = spacecraft_parameters.esail_origin.x() + 
+        let x = spacecraft_parameters.tether_origin.x() + 
             spacecraft_parameters.segment_length() * number as f64;
 
         let is_deployed = if number == 0 {
@@ -112,7 +112,7 @@ pub fn spawn_esail (
         .insert(
             ESail {
                 origin: PositionVector::new(
-                    spacecraft_parameters.esail_origin.x(),
+                    spacecraft_parameters.tether_origin.x(),
                     zero,
                     zero
                 ),
