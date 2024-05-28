@@ -10,6 +10,6 @@ pub fn update_esail_voltage (
     for mut electrical_element in electrical_query.iter_mut() {
 
         //println!("Updating charge of component {:?}", electrical_element);
-        electrical_element.potential = spacecraft_parameters.wire_potential;
+        electrical_element.potential = spacecraft_parameters.tether_potential;
     }
 }

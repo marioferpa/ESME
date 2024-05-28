@@ -9,6 +9,7 @@ mod graphics;
 mod gui;
 mod physics;
 mod resources;
+mod settings;
 mod simulation;
 mod solar_wind;
 mod spacecraft;

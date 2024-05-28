@@ -17,18 +17,12 @@ pub struct ESail {
     pub elements:   Vec<VerletObject>,  
 }
 
-// A method for calculating the angle of a certain verlet? Based on index or
-// what? Index is fine I think
-
 impl ESail {
 
     // This should return not only the angle but the direction of the restoring
     // force, right?
-    // TODO I don't think the calculation is correct. Or maybe it isn't in radians?
-    // Because I'm seeing up to 3 radians when the sail is mostly straight
     pub fn verlet_angle (&self, index: usize) -> quantities::Angle {
 
-        //if index <= 1 { return 0.0 };
         if index <= 1 { return quantities::Angle::new::<angle::radian>(0.0) };
 
         let reference_line = PositionVector::from_a_to_b(
@@ -48,9 +42,25 @@ impl ESail {
 
 
         return angle;
+    }
 
-        // I have an angle_between method with position vector, is it used, is
-        // it good?
+
+    // Wait, instead of returning angle and direction, I could return the vector
+    // with the correct magnitude and direction instead
+
+    pub fn restoring_vector (&self, index: usize) -> Option<PositionVector> {
+
+        // TODO Basically everything
+
+        if index <= 1 { return None };
+
+        // I need the point of the line that is closest to the index
+        // I will follow this: 
+        // https://stackoverflow.com/questions/5227373/minimal-perpendicular-vector-between-a-point-and-a-line 
+
+        // 
+
+        return Some(PositionVector::empty());
     }
 }
 

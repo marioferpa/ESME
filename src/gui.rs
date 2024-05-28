@@ -41,10 +41,10 @@ impl GUIPlugin {
             ui.add(egui::Slider::new(&mut spacecraft_parameters.rpm.value, 0.0..=MAX_RPM).text("rpm"));
 
             ui.horizontal(|ui| { ui.label("Wire potential V_0"); });
-            ui.add(egui::Slider::new(&mut spacecraft_parameters.wire_potential.value, 0.0..=MAX_VOLTAGE).text("V"));
+            ui.add(egui::Slider::new(&mut spacecraft_parameters.tether_potential.value, 0.0..=MAX_VOLTAGE).text("V"));
 
             ui.horizontal(|ui| {
-                ui.label( format!("Deployed wire length: {} m", spacecraft_parameters.wire_length.get::<length::meter>()));
+                ui.label( format!("Deployed wire length: {} m", spacecraft_parameters.tether_length.get::<length::meter>()));
             });
 
             ui.separator();

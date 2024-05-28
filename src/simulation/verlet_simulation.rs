@@ -229,8 +229,8 @@ pub fn coulomb_force_per_meter(
     let r_0             = 2.0 * (r0_numerator / r0_denominator).sqrt();    
 
     // Second: r_s, stopping distance of protons
-    let exp_numerator   = resources::M_PROTON * solar_wind.velocity * solar_wind.velocity * (r_0 / spacecraft.wire_radius).ln();
-    let exp_denominator = resources::Q_E * spacecraft.wire_potential; 
+    let exp_numerator   = resources::M_PROTON * solar_wind.velocity * solar_wind.velocity * (r_0 / spacecraft.tether_radius).ln();
+    let exp_denominator = resources::Q_E * spacecraft.tether_potential; 
     let exp             = (exp_numerator / exp_denominator).exp();  
     let rs_denominator  = (exp.value - 1.0).sqrt();
     let r_s             = r_0 / rs_denominator;
