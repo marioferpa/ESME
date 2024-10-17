@@ -42,7 +42,6 @@ impl ESail {
             &verlet_line
         );
 
-
         return angle;
     }
 

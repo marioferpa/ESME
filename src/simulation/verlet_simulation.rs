@@ -134,7 +134,6 @@ pub fn verlet_simulation (
 
 
 
-/// Updates the position of a verlet object
 fn verlet_integration (
     verlet_object:  &mut physics::verlet_object::VerletObject,
     angle:          quantities::Angle<V>,   // This V made the compiler shut up,
@@ -145,6 +144,7 @@ fn verlet_integration (
 ) {
 
     if verlet_object.is_deployed == false { return };
+
 
     // Centrifugal force -------------------------------------------------------
 
