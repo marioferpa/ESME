@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+// Should this file be called tether? And the component too?
+
 use uom::si::*;
 //use uom::si::angle::radian;
 use uom::si::f64 as quantities;  

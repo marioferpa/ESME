@@ -32,7 +32,7 @@ pub fn verlet_simulation (
         for index in 0..esail.elements.len() {
 
             let angle = esail.verlet_angle(index);
-            println!("Angle: {}", angle.get::<angle::radian>());
+            //println!("Angle: {}", angle.get::<angle::radian>());
 
             // Ok, I have the angle now, but not the restoring force direction
 
@@ -40,7 +40,6 @@ pub fn verlet_simulation (
 
             verlet_integration(
                 verlet_object, 
-                //angle.get::<angle::radian>(),    // Consider passing UOM directly
                 angle,
                 &mut sim_params, 
                 &craft_params, 
@@ -59,8 +58,6 @@ pub fn verlet_simulation (
         for _ in 0..sim_params.iterations {
 
             for index in 0..esail.elements.len() {
-
-                //println!("Test angle: {}", esail.verlet_angle(index));
 
 
                 // Vector between current and previous elements ----------------
@@ -82,7 +79,8 @@ pub fn verlet_simulation (
                         preceding_element_coordinates.clone(),
                     );
 
-                let distance_between_elements = vector_between_elements.clone().length();
+                let distance_between_elements = 
+                    vector_between_elements.clone().length();
 
 
 
@@ -90,11 +88,16 @@ pub fn verlet_simulation (
                 // Difference to ideal -----------------------------------------
 
 
-                let difference = if distance_between_elements.get::<meter>() > 0.0 {
+                let difference = 
+                    if distance_between_elements.get::<meter>() > 0.0 {
+
                     (desired_distance_between_elements.get::<meter>() 
                     - distance_between_elements.get::<meter>())
                     / distance_between_elements.get::<meter>()
-                } else {
+
+                } 
+
+                else {
                     0.0
                 };
 
@@ -105,8 +108,10 @@ pub fn verlet_simulation (
                 let correction_vector = 
                     vector_between_elements.mul(0.5 * difference);
 
-                    // Maybe a method to give the negative?
-                esail.elements[index].correct_current_coordinates(correction_vector.clone().mul(-1.0));
+                // Maybe a method to give the negative?
+                esail.elements[index].correct_current_coordinates(
+                    correction_vector.clone().mul(-1.0)
+                );
 
 
                 if esail.elements[index].is_deployed {
@@ -115,7 +120,9 @@ pub fn verlet_simulation (
 
                     if preceding_verlet.is_deployed {
 
-                        preceding_verlet.correct_current_coordinates(correction_vector);
+                        preceding_verlet.correct_current_coordinates(
+                            correction_vector
+                        );
                     }
                 }
             }

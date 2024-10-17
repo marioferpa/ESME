@@ -25,6 +25,3 @@ impl Default for ElectricallyCharged {
 pub struct Position (
     pub Vec<quantities::Length>,
 );
-
-// pub struct rotation
-

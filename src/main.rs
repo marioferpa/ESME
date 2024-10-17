@@ -22,7 +22,7 @@ const BACKGROUND_COLOR: Color = Color::rgb(0.0, 0.0, 0.0);
 
 fn main() {
     App::new()
-        .insert_resource(Msaa::Sample4)   // "Multi-Sample Anti-Aliasing"
+        .insert_resource(Msaa::Sample4)
         .insert_resource(ClearColor(BACKGROUND_COLOR))
         .add_plugins(DefaultPlugins)
         .add_plugins(EguiPlugin)

@@ -59,10 +59,10 @@ pub (super) fn draw_esail (
     
     for verlet_object in esail.elements.iter() {
 
-        println!(
-            "Verlet's x: {:?}", 
-            verlet_object.current_coordinates.x().get::<meter>() as f32, 
-        );
+        //println!(
+        //    "Verlet's x: {:?}", 
+        //    verlet_object.current_coordinates.x().get::<meter>() as f32, 
+        //);
 
         let sphere =
             commands.spawn ( 

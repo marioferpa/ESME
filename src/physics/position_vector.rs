@@ -1,10 +1,8 @@
 use uom::si::f64 as quantities;  
 use uom::si::*;
 use uom::si::length::meter;
-use uom::si::angle::radian;
 
 use std::ops::{ Add, Sub, Mul };
-use std::f64::consts::PI;
 
 pub fn dot_product (
     first: &PositionVector, 
@@ -86,7 +84,7 @@ impl PositionVector {
         let pos_x = acceleration.x() * time * time;
         let pos_y = acceleration.y() * time * time;
         let pos_z = acceleration.z() * time * time;
-
+    
         return Self::new(pos_x, pos_y, pos_z);
     }
 
