@@ -87,7 +87,8 @@ impl Default for SpacecraftParameters {
 
         // TODO Make it relative to body size
         let tether_origin = PositionVector::new(
-            quantities::Length::new::<length::meter>(0.15 / 2.0),
+            //quantities::Length::new::<length::meter>(0.15 / 2.0),
+            quantities::Length::new::<length::meter>(0.20 / 2.0),
             quantities::Length::new::<length::meter>(0.0),
             quantities::Length::new::<length::meter>(0.0),
         );

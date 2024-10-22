@@ -42,6 +42,32 @@ pub struct PositionVector ( pub Vec<quantities::Length> );
 
 impl PositionVector {
 
+    // From ChatGPT, does it work correctly?
+    pub fn rotate_z (&mut self, angle: f32) -> Self {
+
+        let x = self.0[0];
+        let y = self.0[1];
+        let z = self.0[2]; // This stays the same
+
+        // Convert the angle to a Quantity type (radians assumed)
+        let cos_angle = quantities::Angle::new::<uom::si::angle::radian>(angle.cos().into());
+        let sin_angle = quantities::Angle::new::<uom::si::angle::radian>(angle.sin().into());
+
+        //println!("Cosine angle: {:?}", cos_angle);
+        //println!("x: {:?}", x);
+
+        let new_x = x * cos_angle - y * sin_angle;
+        let new_y = x * sin_angle + y * cos_angle;
+
+        //println!("new_x: {:?}", new_x);
+
+        //self.0[0] = new_x;
+        //self.0[1] = new_y;
+        //self.0[2] = z; // Z remains unchanged
+
+        return Self::new(new_x, new_y, z);
+    }
+
     /// Return a new PositionVector of capacity 3 with the requested values
     pub fn new (
         x: quantities::Length, 

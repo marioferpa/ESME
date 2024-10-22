@@ -15,16 +15,25 @@ use physics::position_vector::PositionVector as PositionVector;
 use physics::acceleration_vector::AccelerationVector as AccelerationVector;
 
 pub fn verlet_simulation (
-    time:               Res<Time>, 
     mut esail_query:    Query<&mut spacecraft::esail::ESail>,
+
+    time:               Res<Time>, 
     solar_wind:         Res<solar_wind::SolarWind>,
     craft_params:       Res<spacecraft::SpacecraftParameters>,
     mut sim_params:     ResMut<resources::SimulationParameters>,
 ) {
 
+    println!("Second: Verlet simulation");
+    println!("");
+
     let mut esail = esail_query.single_mut();
 
     for _ in 0..time::timestep_calculation(&time, &mut sim_params) {
+
+        // The constraints don't seem to affect the first element, so
+        // verlet_integration must be doing something against the rotation.
+        //
+        // verlet_integration doesn't do anything to undeployed elements!
 
 
         // Verlet integration --------------------------------------------------
@@ -137,7 +146,6 @@ pub fn verlet_simulation (
 fn verlet_integration (
     verlet_object:  &mut physics::verlet_object::VerletObject,
     angle:          quantities::Angle<V>,   // This V made the compiler shut up,
-                                            // but I don't know what it means
     sim_params:     &mut ResMut<resources::SimulationParameters>,
     craft_params:   &Res<spacecraft::SpacecraftParameters>,
     solar_wind:     &Res<solar_wind::SolarWind>,
