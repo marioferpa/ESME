@@ -23,9 +23,6 @@ pub fn verlet_simulation (
     mut sim_params:     ResMut<resources::SimulationParameters>,
 ) {
 
-    println!("Second: Verlet simulation");
-    println!("");
-
     let mut esail = esail_query.single_mut();
 
     for _ in 0..time::timestep_calculation(&time, &mut sim_params) {
@@ -117,13 +114,20 @@ pub fn verlet_simulation (
                 let correction_vector = 
                     vector_between_elements.mul(0.5 * difference);
 
+                // Is the rotation problem here? Should this not happen for the first element?
+
                 // Maybe a method to give the negative?
-                esail.elements[index].correct_current_coordinates(
-                    correction_vector.clone().mul(-1.0)
-                );
+                //esail.elements[index].correct_current_coordinates(
+                //    correction_vector.clone().mul(-1.0)
+                //);
 
 
                 if esail.elements[index].is_deployed {
+
+                    // Test, moving this here
+                    esail.elements[index].correct_current_coordinates(
+                        correction_vector.clone().mul(-1.0)
+                    );
 
                     let preceding_verlet = &mut esail.elements[index - 1];
 

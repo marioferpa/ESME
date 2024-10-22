@@ -17,9 +17,10 @@ impl Plugin for SimulationPlugin {
         app
             .add_systems(
                 Update, (
+                    rotate_body
+                        .before(verlet_simulation::verlet_simulation),   
                     verlet_simulation::verlet_simulation,
                     //voltage::update_esail_voltage // Not used anymore? TODO
-                    rotate_body.before(verlet_simulation::verlet_simulation),   
                 )
             )
         ;
@@ -27,9 +28,6 @@ impl Plugin for SimulationPlugin {
 }
 
 
-// TEST
-// If this is going to move the esail's first element, it should run before the
-// verlet simulation, right? TODO
 fn rotate_body (
     mut body_query: Query<
         &mut Transform, 
@@ -39,25 +37,19 @@ fn rotate_body (
     time:               Res<Time>, 
 ) {
 
-    println!("");
-    println!("First: rotate body and sail");
+    let speed = 0.5;    // No units, just a multiplier
 
     let mut body_transform = body_query.single_mut();
 
     let mut esail = esail_query.single_mut();
 
-    body_transform.rotate_z(time.delta_seconds() * 0.1);
+    body_transform.rotate_z(time.delta_seconds() * speed);
 
     let mut first_verlet = &mut esail.elements[0];
 
-    // Why's the value stuck? I would expect it to grow... It's like it is
-    // overwritten or something.
 
     let rotated_coordinates = 
-        first_verlet.current_coordinates.rotate_z(time.delta_seconds() * 0.1);
+        first_verlet.current_coordinates.rotate_z(time.delta_seconds() * speed);
 
     first_verlet.update_coordinates(rotated_coordinates);
-
-    // This works only if verlet_simulation is off, meaning that that overwrites
-    // the position or something.
 }
