@@ -1,6 +1,4 @@
 use uom::si::f64 as quantities;  
-use bevy::math::DVec3;
-use uom::si::acceleration::meter_per_second_squared;
 use std::ops::{ Mul };
 
 #[derive(Debug, Clone)]
@@ -26,22 +24,20 @@ impl AccelerationVector {
 
 
 
-    /// Creates a new AccelerationVector of capacity 3 along a direction vector
+    //pub fn from_direction (
+    //    magnitude: quantities::Acceleration, 
+    //    direction: DVec3
+    //) -> Self {
 
-    pub fn from_direction (
-        magnitude: quantities::Acceleration, 
-        direction: DVec3
-    ) -> Self {
+    //    let normalised_direction = direction.normalize();
+    //    let components = normalised_direction * magnitude.get::<meter_per_second_squared>();
 
-        let normalised_direction = direction.normalize();
-        let components = normalised_direction * magnitude.get::<meter_per_second_squared>();
+    //    let x = quantities::Acceleration::new::<meter_per_second_squared>(components.x);
+    //    let y = quantities::Acceleration::new::<meter_per_second_squared>(components.y);
+    //    let z = quantities::Acceleration::new::<meter_per_second_squared>(components.z);
 
-        let x = quantities::Acceleration::new::<meter_per_second_squared>(components.x);
-        let y = quantities::Acceleration::new::<meter_per_second_squared>(components.y);
-        let z = quantities::Acceleration::new::<meter_per_second_squared>(components.z);
-
-        return Self::new(x, y, z);
-    }
+    //    return Self::new(x, y, z);
+    //}
 
 
 

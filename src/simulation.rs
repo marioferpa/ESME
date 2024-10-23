@@ -51,7 +51,7 @@ fn rotate_body (
     body_transform.rotate_z(angle);
 
 
-    let mut first_verlet = &mut esail.elements[0];
+    let first_verlet = &mut esail.elements[0];
 
     let rotated_coordinates = first_verlet.current_coordinates.rotate_z(angle);
 

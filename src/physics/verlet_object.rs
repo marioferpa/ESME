@@ -1,6 +1,3 @@
-use bevy::prelude::*;
-
-//#[derive(Component, Debug )]
 #[derive(Debug )]
 pub struct VerletObject { 
     pub previous_coordinates:   super::position_vector::PositionVector, 

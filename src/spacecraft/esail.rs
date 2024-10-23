@@ -49,20 +49,20 @@ impl ESail {
     // Wait, instead of returning angle and direction, I could return the vector
     // with the correct magnitude and direction instead
 
-    pub fn restoring_vector (&self, index: usize) -> Option<PositionVector> {
+    //pub fn restoring_vector (&self, index: usize) -> Option<PositionVector> {
 
-        // TODO Basically everything
+    //    // TODO Basically everything
 
-        if index <= 1 { return None };
+    //    if index <= 1 { return None };
 
-        // I need the point of the line that is closest to the index
-        // I will follow this: 
-        // https://stackoverflow.com/questions/5227373/minimal-perpendicular-vector-between-a-point-and-a-line 
+    //    // I need the point of the line that is closest to the index
+    //    // I will follow this: 
+    //    // https://stackoverflow.com/questions/5227373/minimal-perpendicular-vector-between-a-point-and-a-line 
 
-        // 
+    //    // 
 
-        return Some(PositionVector::empty());
-    }
+    //    return Some(PositionVector::empty());
+    //}
 }
 
 pub fn spawn_esail (

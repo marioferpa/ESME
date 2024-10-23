@@ -75,23 +75,18 @@ impl ForceVector {
 
 
 
-    /// Returns the length of the ForceVector
     // Should be called "magnitude" maybe
 
-    pub fn length (self) -> quantities::Length {
-        
-        let x = self.0[0] * self.0[0];
-        let y = self.0[1] * self.0[1];
-        let z = self.0[2] * self.0[2];
+    //pub fn length (self) -> quantities::Length {
+    //    
+    //    let x = self.0[0] * self.0[0];
+    //    let y = self.0[1] * self.0[1];
+    //    let z = self.0[2] * self.0[2];
 
-        let length = (x.value + y.value + z.value).sqrt();
+    //    let length = (x.value + y.value + z.value).sqrt();
 
-        return quantities::Length::new::<length::meter>(length);    // Finish this
-    }
-
-    //pub fn direction(&self) -> DVec3 {
+    //    return quantities::Length::new::<length::meter>(length);    // Finish this
     //}
-
 }
 
 impl Add for ForceVector {

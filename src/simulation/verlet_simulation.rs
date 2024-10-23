@@ -7,7 +7,6 @@ use std::ops::{ Mul };
 
 use uom::si::quantities;
 use uom::si::length::meter;
-use uom::si::angle;
 use uom::si::f64::V;    //??
 
 use physics::force_vector::ForceVector as ForceVector;
@@ -149,7 +148,7 @@ pub fn verlet_simulation (
 
 fn verlet_integration (
     verlet_object:  &mut physics::verlet_object::VerletObject,
-    angle:          quantities::Angle<V>,   // This V made the compiler shut up,
+    _angle:         quantities::Angle<V>,   // This V made the compiler shut up,
     sim_params:     &mut ResMut<resources::SimulationParameters>,
     craft_params:   &Res<spacecraft::SpacecraftParameters>,
     solar_wind:     &Res<solar_wind::SolarWind>,

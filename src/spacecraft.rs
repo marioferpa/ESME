@@ -70,10 +70,6 @@ impl Default for SpacecraftParameters {
             quantities::MassDensity::new::
                 <mass_density::gram_per_cubic_centimeter>(2.7);
 
-        let default_tether_potential = 
-            quantities::ElectricPotential::new::
-                <electric_potential::kilovolt>(0.0);
-
         let default_tether_potential =     
             quantities::ElectricPotential::new::
                 <electric_potential::kilovolt>(0.0);

@@ -21,7 +21,7 @@ impl Default for ElectricallyCharged {
     }
 }
  
-#[derive(Component)]
-pub struct Position (
-    pub Vec<quantities::Length>,
-);
+//#[derive(Component)]
+//pub struct Position (
+//    pub Vec<quantities::Length>,
+//);
