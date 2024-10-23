@@ -35,21 +35,25 @@ fn rotate_body (
     >,
     mut esail_query:    Query<&mut spacecraft::esail::ESail>,
     time:               Res<Time>, 
+
+    craft_params:       Res<spacecraft::SpacecraftParameters>,
 ) {
 
-    let speed = 0.5;    // No units, just a multiplier
+    let rpm = craft_params.rpm.value as f32;
+
+    let angle = time.delta_seconds() * rpm * std::f32::consts::PI / 30.0; 
+
 
     let mut body_transform = body_query.single_mut();
 
     let mut esail = esail_query.single_mut();
 
-    body_transform.rotate_z(time.delta_seconds() * speed);
+    body_transform.rotate_z(angle);
+
 
     let mut first_verlet = &mut esail.elements[0];
 
-
-    let rotated_coordinates = 
-        first_verlet.current_coordinates.rotate_z(time.delta_seconds() * speed);
+    let rotated_coordinates = first_verlet.current_coordinates.rotate_z(angle);
 
     first_verlet.update_coordinates(rotated_coordinates);
 }
