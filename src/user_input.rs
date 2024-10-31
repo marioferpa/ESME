@@ -14,13 +14,31 @@ impl Plugin for UserInputPlugin {
             .add_systems(
                 Update, (
                     pan_orbit_camera,
-                    //keyboard_input
+                    handle_keys,
                 )
             )  
         ;
     }
 }
 
+
+// TODO Reintroduce keyboard_input so I can use it to test stuff?
+
+fn handle_keys (
+    keyboard:   Res<Input<KeyCode>>,
+) {
+
+    if keyboard.just_pressed(KeyCode::T) {
+
+        println!("'T' is for Testing");
+    }
+}
+
+
+// TODO If you move the camera and then click on the same point to continue
+// moving, it works as expected. But if you click somewhere else, the camera
+// makes a really strange jump. I don't remember if it's always been like that
+// or if something has changed, in any case I don't like it now.
 
 fn pan_orbit_camera(
     window_query:       Query<&Window, With<PrimaryWindow>>,

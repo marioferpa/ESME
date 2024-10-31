@@ -22,8 +22,11 @@ const BACKGROUND_COLOR: Color = Color::rgb(0.0, 0.0, 0.0);
 
 fn main() {
     App::new()
-        .insert_resource(Msaa::Sample4)
         .insert_resource(ClearColor(BACKGROUND_COLOR))
+        .insert_resource(Msaa::Sample4)
+        .insert_resource(solar_wind::SolarWind{..Default::default()})
+        .insert_resource(resources::SimulationParameters{..Default::default()})
+
         .add_plugins(DefaultPlugins)
         .add_plugins(EguiPlugin)
         .add_plugins(graphics::GraphicsPlugin)
@@ -33,7 +36,6 @@ fn main() {
         .add_plugins(spacecraft::SpacecraftPlugin)
         .add_plugins(user_input::UserInputPlugin)
         .add_plugins(WorldInspectorPlugin::new())
-        .insert_resource(solar_wind::SolarWind{..Default::default()})
-        .insert_resource(resources::SimulationParameters{..Default::default()})
+
         .run();
 }
