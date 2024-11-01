@@ -4,7 +4,7 @@ use bevy::input::mouse::MouseWheel;
 
 use bevy::window::PrimaryWindow;
 
-use crate::{ graphics, };
+use crate::{ graphics, spacecraft };
 
 pub struct UserInputPlugin;
 
@@ -25,12 +25,18 @@ impl Plugin for UserInputPlugin {
 // TODO Reintroduce keyboard_input so I can use it to test stuff?
 
 fn handle_keys (
-    keyboard:   Res<Input<KeyCode>>,
+    keyboard:           Res<Input<KeyCode>>,
+    mut esail_query:    Query<&mut spacecraft::esail::ESail>,
+    mut sail_event:     EventWriter<spacecraft::esail::SailExtended>,
 ) {
+
+    let mut esail = esail_query.single_mut();
 
     if keyboard.just_pressed(KeyCode::T) {
 
         println!("'T' is for Testing");
+
+        esail.extend_sail(sail_event);
     }
 }
 

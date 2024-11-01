@@ -3,7 +3,6 @@ use bevy::prelude::*;
 // Should this file be called tether? And the component too?
 
 use uom::si::*;
-//use uom::si::angle::radian;
 use uom::si::f64 as quantities;  
 
 use crate::{ physics };
@@ -12,6 +11,9 @@ use physics::force_vector::ForceVector as ForceVector;
 use physics::verlet_object::VerletObject as VerletObject;
 use physics::position_vector::PositionVector as PositionVector;
 
+// Test
+#[derive(Event)]
+pub struct SailExtended;
 
 #[derive(Component)]
 pub struct ESail {  
@@ -20,6 +22,35 @@ pub struct ESail {
 }
 
 impl ESail {
+
+    // TEST: A method for extending the sail TODO
+    
+    pub fn extend_sail (
+        &mut self,
+        mut sail_event:   EventWriter<SailExtended>,
+    ) {
+
+        // Create a new VerletObject
+        // Options:
+        // * Put it at the start, let the system stabilise
+        // * Put at start, move everything outwards (no bueno)
+        // * Put at the end?
+
+        // Putting the new element in the second position and not the first,
+        // because the first is undeployed and it would mess up everything
+
+        if self.elements.len() > 1 {    // FIXME What if the sail has only one
+            if let Some(second_element) = self.elements.get(1).cloned() {
+                self.elements.insert(1, second_element);
+            }
+        }
+
+        println!("Number of elements after extension: {}", self.elements.len()); 
+
+        // It seems to be working, but with invisible balls, could it be? TODO
+        // Continue here!
+        sail_event.send(SailExtended);
+    }
 
     // This should return not only the angle but the direction of the restoring
     // force, right?
@@ -107,7 +138,6 @@ pub fn spawn_esail (
         elements.push(verlet);
     }
 
-    //println!("New ESail: {:?}", deployed_elements);
 
     commands.entity(esail_entity)
         .insert(
@@ -120,8 +150,6 @@ pub fn spawn_esail (
                 elements: elements,
             }
         )
-        // TODO This doesn't do anything
-        //.insert(components::ElectricallyCharged{ ..Default::default() })
         ;
 
     println!("(New) E-sail spawned");

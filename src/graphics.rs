@@ -28,14 +28,16 @@ impl Plugin for GraphicsPlugin {
                     axes::spawn_axes,
                     camera::spawn_camera,
                     lights::spawn_light,
-                    draw_esail::draw_esail,
+                    draw_esail::first_esail_draw,
                 )
             )
             .add_systems(
                 Update, (
                     gizmo_visibility,
-                    //update_transform_verlets,   //Replaced by update_new_esail
-                    update_rotation_axes
+                    update_rotation_axes,
+                    // TODO I need a redraw esail function, or change draw_esail
+                    // so it can start over
+                    //draw_esail::draw_esail,
                 )
             )
             .add_systems(

@@ -1,4 +1,4 @@
-#[derive(Debug )]
+#[derive(Debug, Clone)]
 pub struct VerletObject { 
     pub previous_coordinates:   super::position_vector::PositionVector, 
     pub current_coordinates:    super::position_vector::PositionVector,

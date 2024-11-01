@@ -18,6 +18,8 @@ impl Plugin for SpacecraftPlugin {
         app
             .insert_resource(SpacecraftParameters{..Default::default()})
 
+            .add_event::<esail::SailExtended>()
+
             .add_systems(
                 PreStartup, (
                     esail::spawn_esail,
@@ -103,7 +105,6 @@ impl Default for SpacecraftParameters {
     }
 }
 
-// Should I write a test that ensures that wire_length is a multiple of wire_resolution?
 
 impl SpacecraftParameters {
 
@@ -118,7 +119,8 @@ impl SpacecraftParameters {
     }
 
     pub fn segment_mass(&self) -> quantities::Mass {
-        let segment_volume = consts::PI * self.tether_radius * self.tether_radius * self.segment_length();
+        let segment_volume = consts::PI * self.tether_radius * 
+            self.tether_radius * self.segment_length();
         return segment_volume * self.tether_density;
     }
 
