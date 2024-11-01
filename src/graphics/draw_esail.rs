@@ -6,7 +6,7 @@ use crate::{ resources, spacecraft };
 
 pub (super) fn update_esail_graphics (
     esail_query:            Query<&spacecraft::esail::ESail>,
-    simulation_parameters:  ResMut <resources::SimulationParameters>,
+    simulation_parameters:  Res<resources::SimulationParameters>,
     mut transform_query:    Query<&mut Transform>,
     mut balls_resource:         ResMut<super::Balls>,
 
@@ -37,11 +37,18 @@ pub (super) fn update_esail_graphics (
         //    &mut materials
         //);
 
-        //redraw_esail(
-        //    &mut commands,
-        //    &mut balls_resource
-        //);
+        draw_esail(
+            &mut balls_resource,
+            &mut commands,
+            &esail,
+            &mut meshes,
+            &mut materials,
+            &simulation_parameters
+        );
 
+        // Test, because I think that the change doesn't happen fast enough or
+        // something and the next step can't find the entities it needs
+        return
     }
 
     for (index, verlet) in esail.elements.iter().enumerate() {
@@ -71,43 +78,21 @@ pub (super) fn update_esail_graphics (
 }
 
 // Test
-fn add_new_ball(
-    commands:           &mut Commands,
-    mut balls_resource: &mut ResMut<super::Balls>,
-    mut meshes:         &mut ResMut<Assets<Mesh>>,
-    mut materials:      &mut ResMut<Assets<StandardMaterial>>,
-) {
-
-    // Trying to insert in second position, as in extend_esail()
-
-    if balls_resource.0.len() > 1 {
-        if let Some(second_ball) = balls_resource.0.get(1).cloned() {
-            balls_resource.0.insert(1, second_ball);
-        }
-    }
-}
-
-// Test: Maybe I can make a function that deletes the old sail and then calls
-// draw_esail()?
-
-fn redraw_esail (
-    mut commands:           &mut Commands,
-    mut balls_resource:     &mut ResMut<super::Balls>,
-) {
-
-    // Access the Balls resource, despawn all entities inside
-    // (Sail should disappear when pressing T then)
-
-    for ball_entity in &balls_resource.0 {
-
-        commands.entity(*ball_entity).despawn();
-    }
-
-    // Call draw_esail (Can I from here? It requires direct access to resources,
-    // not references. It would be better to trigger a redraw from Update
-
-    // Is that it?
-}
+//fn add_new_ball(
+//    commands:           &mut Commands,
+//    mut balls_resource: &mut ResMut<super::Balls>,
+//    mut meshes:         &mut ResMut<Assets<Mesh>>,
+//    mut materials:      &mut ResMut<Assets<StandardMaterial>>,
+//) {
+//
+//    // Trying to insert in second position, as in extend_esail()
+//
+//    if balls_resource.0.len() > 1 {
+//        if let Some(second_ball) = balls_resource.0.get(1).cloned() {
+//            balls_resource.0.insert(1, second_ball);
+//        }
+//    }
+//}
 
 fn delete_balls (
     mut commands:           &mut Commands,
@@ -120,8 +105,7 @@ fn delete_balls (
     }
 }
 
-// Test
-fn draw_esail ( // Should be draw_esail, and the other first_draw or smth
+fn draw_esail (
     mut balls_resource:     &mut ResMut<super::Balls>,
     mut commands:           &mut Commands,
     esail:                  &spacecraft::esail::ESail,
@@ -161,8 +145,10 @@ fn draw_esail ( // Should be draw_esail, and the other first_draw or smth
                     transform: Transform::from_xyz(
                         verlet_object.current_coordinates.x().get::<meter>() as f32 * 
                             simulation_parameters.pixels_per_meter as f32, 
-                        0.0,    // TODO
-                        0.0     // TODO
+                        verlet_object.current_coordinates.y().get::<meter>() as f32 * 
+                            simulation_parameters.pixels_per_meter as f32, 
+                        verlet_object.current_coordinates.z().get::<meter>() as f32 * 
+                            simulation_parameters.pixels_per_meter as f32, 
                     ),
                     ..default()
                 }
