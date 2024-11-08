@@ -42,11 +42,17 @@ impl ESail {
         sail_event.send(SailExtended);
     }
 
-    // This should return not only the angle but the direction of the restoring
-    // force, right?
-    pub fn verlet_angle (&self, index: usize) -> quantities::Angle {
+    //pub fn verlet_angle (&self, index: usize) -> quantities::Angle {
+    pub fn verlet_angle (&self, index: usize) -> 
+        (quantities::Angle, PositionVector) {
 
-        if index <= 1 { return quantities::Angle::new::<angle::radian>(0.0) };
+        //if index <= 1 { return quantities::Angle::new::<angle::radian>(0.0) };
+        if index <= 1 { 
+            return (
+                quantities::Angle::new::<angle::radian>(0.0),
+                PositionVector::empty()
+            )
+        };
 
         // If the chain is A-B-C, C being the verlet we're interested in, then
         // A-B is the reference_line, and B-C is the verlet_line
@@ -73,7 +79,7 @@ impl ESail {
         //    println!("restoring_direction: {:?}", restoring_direction);
         //}
 
-        return angle;
+        return (angle, restoring_direction);
     }
 
 

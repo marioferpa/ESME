@@ -31,16 +31,15 @@ pub fn verlet_simulation (
 
         for index in 0..esail.elements.len() {
 
-            let angle = esail.verlet_angle(index);
-            //println!("Angle: {}", angle.get::<angle::radian>());
-
-            // Ok, I have the angle now, but not the restoring force direction
+            //let angle = esail.verlet_angle(index);
+            let (angle, restoring_direction) = esail.verlet_angle(index);
 
             let verlet_object = &mut esail.elements[index];
 
             verlet_integration(
                 verlet_object, 
-                angle,
+                &angle,
+                &restoring_direction,
                 &mut sim_params, 
                 &craft_params, 
                 &solar_wind
@@ -141,7 +140,8 @@ pub fn verlet_simulation (
 
 fn verlet_integration (
     verlet_object:  &mut physics::verlet_object::VerletObject,
-    _angle:         quantities::Angle<V>,   // This V made the compiler shut up,
+    _angle:         &quantities::Angle<V>,   // This V made the compiler shut up,
+    _restoring_direction:   &physics::position_vector::PositionVector,
     sim_params:     &mut ResMut<resources::SimulationParameters>,
     craft_params:   &Res<spacecraft::SpacecraftParameters>,
     solar_wind:     &Res<solar_wind::SolarWind>,
