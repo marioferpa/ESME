@@ -73,7 +73,8 @@ impl ESail {
         );
 
         // TEST
-        let restoring_direction = reference_line - verlet_line;
+        //let restoring_direction = reference_line - verlet_line;
+        let restoring_direction = verlet_line - reference_line ;    // Better like this, inverted?
 
         //if index == 2 {
         //    println!("restoring_direction: {:?}", restoring_direction);

@@ -1,12 +1,14 @@
 use bevy::prelude::*;
 use bevy::math::DVec3;
 
-use crate::{ physics, resources, solar_wind, spacecraft, time };
+use crate::{ physics, resources, settings, solar_wind, spacecraft, time };
 
 use std::ops::{ Mul };
 
-use uom::si::quantities;
-use uom::si::length::meter;
+//use uom::si::quantities;
+use uom::si::f64 as quantities;
+use uom::si::length;
+use uom::si::pressure;
 use uom::si::f64::V;    //??
 
 use physics::force_vector::ForceVector as ForceVector;
@@ -36,10 +38,14 @@ pub fn verlet_simulation (
 
             let verlet_object = &mut esail.elements[index];
 
+            if restoring_direction.0.is_empty() { continue }; // Because of a runtime crash
+
+            //println!("Restoring direction: {:?}", restoring_direction.to_unit_vector());
+
             verlet_integration(
                 verlet_object, 
                 &angle,
-                &restoring_direction,
+                &restoring_direction.to_unit_vector(),
                 &mut sim_params, 
                 &craft_params, 
                 &solar_wind
@@ -86,11 +92,11 @@ pub fn verlet_simulation (
 
 
                 let difference = 
-                    if distance_between_elements.get::<meter>() > 0.0 {
+                    if distance_between_elements.get::<length::meter>() > 0.0 {
 
-                    (desired_distance_between_elements.get::<meter>() 
-                    - distance_between_elements.get::<meter>())
-                    / distance_between_elements.get::<meter>()
+                    (desired_distance_between_elements.get::<length::meter>() 
+                    - distance_between_elements.get::<length::meter>())
+                    / distance_between_elements.get::<length::meter>()
 
                 } 
 
@@ -140,8 +146,9 @@ pub fn verlet_simulation (
 
 fn verlet_integration (
     verlet_object:  &mut physics::verlet_object::VerletObject,
-    _angle:         &quantities::Angle<V>,   // This V made the compiler shut up,
-    _restoring_direction:   &physics::position_vector::PositionVector,
+    angle:          &quantities::Angle,
+    //restoring_direction:   &physics::position_vector::PositionVector,
+    restoring_direction:   &DVec3,
     sim_params:     &mut ResMut<resources::SimulationParameters>,
     craft_params:   &Res<spacecraft::SpacecraftParameters>,
     solar_wind:     &Res<solar_wind::SolarWind>,
@@ -168,7 +175,6 @@ fn verlet_integration (
 
 
 
-
     // Coulomb drag force ------------------------------------------------------
     
     let coulomb_force_magnitude = 
@@ -189,12 +195,40 @@ fn verlet_integration (
     // stiffness as a force, why not modelling the longitudinal as a force too,
     // and the verlet would stop making sense
     
+    // TESTING!!
 
+    let young_modulus = 
+        quantities::Pressure::new::<pressure::gigapascal>(
+            settings::ALUMINIUM_YOUNG_MODULUS_GIGAPASCALS
+        );
+
+    let tether_radius =
+        quantities::Length::new::<length::micrometer>(
+            settings::TETHER_RADIUS_MICROMETERS
+        );
+
+    let second_moment_of_area =
+        std::f64::consts::PI * 0.25 * tether_radius * tether_radius * 
+        tether_radius * tether_radius;
+
+    let restoring_force_magnitude = 
+        //young_modulus * second_moment_of_area * *angle; // Wrong units?
+        young_modulus * second_moment_of_area * *angle / 
+        (craft_params.segment_length() * craft_params.segment_length());
+
+
+    let restoring_force = ForceVector::from_direction(
+        restoring_force_magnitude,
+        *restoring_direction
+    );
+
+    println!("Restoring force: {:?}", restoring_force);
 
 
     // Total force -------------------------------------------------------------
 
-    let total_force = coulomb_force + centrifugal_force;
+    //let total_force = coulomb_force + centrifugal_force;
+    let total_force = coulomb_force + centrifugal_force + restoring_force;
 
     verlet_object.current_force = total_force.clone();
 

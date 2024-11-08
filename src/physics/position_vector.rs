@@ -1,3 +1,5 @@
+use bevy::math::DVec3;
+
 use uom::si::f64 as quantities;  
 use uom::si::*;
 use uom::si::length::meter;
@@ -80,14 +82,11 @@ impl PositionVector {
         return Self(vector);
     }
 
-
-
     #[allow(dead_code)]
     pub fn empty () -> Self {
         return PositionVector( Vec::new() );    // Make it capacity 3
     }
 
-    // Untested ?
     pub fn from_a_to_b (
         point_a: Self,
         point_b: Self,
@@ -115,7 +114,7 @@ impl PositionVector {
     /// Returns the length of the PositionVector
     pub fn length(self) -> quantities::Length {
         
-        let x = self.0[0] * self.0[0];
+        let x = self.0[0] * self.0[0];  // TODO use self.x()?
         let y = self.0[1] * self.0[1];
         let z = self.0[2] * self.0[2];
 
@@ -142,6 +141,20 @@ impl PositionVector {
     //    vector.extend(vec![zero, zero, zero]);
     //    return Self(vector);
     //}
+
+    // Untested
+    pub fn to_unit_vector (&self) -> DVec3 {
+
+        let lengths: [f64; 3] = [
+            self.x().get::<meter>(),
+            self.y().get::<meter>(),
+            self.z().get::<meter>(),
+        ];
+
+        let vec = DVec3::from(lengths);
+
+        return vec.normalize()
+    }
 }
 
 
