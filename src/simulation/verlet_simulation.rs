@@ -26,11 +26,6 @@ pub fn verlet_simulation (
 
     for _ in 0..time::timestep_calculation(&time, &mut sim_params) {
 
-        // The constraints don't seem to affect the first element, so
-        // verlet_integration must be doing something against the rotation.
-        //
-        // verlet_integration doesn't do anything to undeployed elements!
-
 
         // Verlet integration --------------------------------------------------
 
@@ -51,8 +46,6 @@ pub fn verlet_simulation (
                 &solar_wind
             );
         }
-
-
 
 
         // Constraints ---------------------------------------------------------

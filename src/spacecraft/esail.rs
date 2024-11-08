@@ -23,18 +23,10 @@ pub struct ESail {
 
 impl ESail {
 
-    // TEST: A method for extending the sail TODO
-    
     pub fn extend_sail (
         &mut self,
         mut sail_event:   EventWriter<SailExtended>,
     ) {
-
-        // Create a new VerletObject
-        // Options:
-        // * Put it at the start, let the system stabilise
-        // * Put at start, move everything outwards (no bueno)
-        // * Put at the end?
 
         // Putting the new element in the second position and not the first,
         // because the first is undeployed and it would mess up everything
@@ -47,8 +39,6 @@ impl ESail {
 
         println!("Number of elements after extension: {}", self.elements.len()); 
 
-        // It seems to be working, but with invisible balls, could it be? TODO
-        // Continue here!
         sail_event.send(SailExtended);
     }
 
@@ -57,6 +47,9 @@ impl ESail {
     pub fn verlet_angle (&self, index: usize) -> quantities::Angle {
 
         if index <= 1 { return quantities::Angle::new::<angle::radian>(0.0) };
+
+        // If the chain is A-B-C, C being the verlet we're interested in, then
+        // A-B is the reference_line, and B-C is the verlet_line
 
         let reference_line = PositionVector::from_a_to_b(
             self.elements[index - 2].current_coordinates.clone(),
@@ -72,6 +65,13 @@ impl ESail {
             &reference_line,
             &verlet_line
         );
+
+        // TEST
+        let restoring_direction = reference_line - verlet_line;
+
+        //if index == 2 {
+        //    println!("restoring_direction: {:?}", restoring_direction);
+        //}
 
         return angle;
     }
