@@ -33,7 +33,6 @@ pub fn verlet_simulation (
 
         for index in 0..esail.elements.len() {
 
-            //let angle = esail.verlet_angle(index);
             let (angle, restoring_direction) = esail.verlet_angle(index);
 
             let verlet_object = &mut esail.elements[index];
@@ -212,13 +211,20 @@ fn verlet_integration (
         tether_radius * tether_radius;
 
     let restoring_force_magnitude = 
-        //young_modulus * second_moment_of_area * *angle; // Wrong units?
         young_modulus * second_moment_of_area * *angle / 
         (craft_params.segment_length() * craft_params.segment_length());
 
 
+    // I'd say that the direction is maybe flipped, but also not correct. Like
+    // it shouldn't go straigth to the tether because it reaches an equilibrium
+    // perpendicular to the cable, it should get there in an arch I guess,
+    // minimise the angle? // TODO
+    // This must be it, what else would make it tend to the perpendicular? 
+    // Also I need to fix the thing where a longer tether just fucking breaks
+
     let restoring_force = ForceVector::from_direction(
-        restoring_force_magnitude,
+        //restoring_force_magnitude,
+        restoring_force_magnitude * 0.1, // TEST FIXME
         *restoring_direction
     );
 

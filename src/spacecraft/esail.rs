@@ -42,11 +42,9 @@ impl ESail {
         sail_event.send(SailExtended);
     }
 
-    //pub fn verlet_angle (&self, index: usize) -> quantities::Angle {
     pub fn verlet_angle (&self, index: usize) -> 
         (quantities::Angle, PositionVector) {
 
-        //if index <= 1 { return quantities::Angle::new::<angle::radian>(0.0) };
         if index <= 1 { 
             return (
                 quantities::Angle::new::<angle::radian>(0.0),
@@ -73,8 +71,9 @@ impl ESail {
         );
 
         // TEST
-        //let restoring_direction = reference_line - verlet_line;
-        let restoring_direction = verlet_line - reference_line ;    // Better like this, inverted?
+        // FIXME Both go in the opposite direction?
+        let restoring_direction = reference_line - verlet_line;
+        //let restoring_direction = verlet_line - reference_line ;    // Better like this, inverted?
 
         //if index == 2 {
         //    println!("restoring_direction: {:?}", restoring_direction);
