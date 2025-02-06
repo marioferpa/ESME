@@ -19,4 +19,17 @@ impl VelocityVector {
 
         return Self(vector);
     }
+
+    
+    pub fn from_acceleration (
+        acceleration:   super::acceleration_vector::AccelerationVector,
+        time:           quantities::Time,
+    ) -> Self {
+
+        let velocity_x = acceleration.x() * time;
+        let velocity_y = acceleration.y() * time;
+        let velocity_z = acceleration.z() * time;
+
+        return Self::new(velocity_x, velocity_y, velocity_z);
+    }
 }

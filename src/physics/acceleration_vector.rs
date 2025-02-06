@@ -41,9 +41,7 @@ impl AccelerationVector {
 
 
 
-    // It would be better if I could just multiply a force vector times a mass and get an
-    // acceleration vector
-    pub fn from_force(
+    pub fn from_force (
         force: super::force_vector::ForceVector, 
         mass: quantities::Mass
     ) -> Self {
