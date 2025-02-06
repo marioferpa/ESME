@@ -228,7 +228,7 @@ fn verlet_integration (
         *restoring_direction
     );
 
-    println!("Restoring force: {:?}", restoring_force);
+    //println!("Restoring force: {:?}", restoring_force);
 
 
     // Total force -------------------------------------------------------------

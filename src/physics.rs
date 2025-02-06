@@ -13,6 +13,7 @@ pub mod acceleration_vector;
 pub mod force_vector;
 pub mod position_vector;
 pub mod runge_kutta_object; // Test
+pub mod velocity_vector;
 pub mod verlet_object;
 
 // All operations in this plugin should be done in physical units. Get rid of
