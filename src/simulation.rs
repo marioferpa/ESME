@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 use crate::spacecraft;
 
+mod runge_kutta_simulation;
 mod verlet_simulation;
 mod voltage;
 
@@ -20,6 +21,7 @@ impl Plugin for SimulationPlugin {
                     rotate_body
                         .before(verlet_simulation::verlet_simulation),   
                     verlet_simulation::verlet_simulation,
+                    runge_kutta_simulation::runge_kutta_simulation,
                     //voltage::update_esail_voltage // Not used anymore? TODO
                 )
             )
