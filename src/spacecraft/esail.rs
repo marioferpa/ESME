@@ -19,6 +19,9 @@ pub struct SailExtended;
 pub struct ESail {  
     pub origin:     PositionVector, 
     pub elements:   Vec<VerletObject>,  
+
+    // Test
+    pub rk_elements:    Vec<physics::runge_kutta_object::RungeKuttaObject>,
 }
 
 impl ESail {
@@ -154,6 +157,9 @@ pub fn spawn_esail (
                     zero
                 ),
                 elements: elements,
+                rk_elements:    vec![
+                    physics::runge_kutta_object::RungeKuttaObject::default()
+                ],
             }
         )
         ;
