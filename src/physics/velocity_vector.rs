@@ -1,5 +1,7 @@
 use uom::si::f64 as quantities;  
 
+use std::ops::{ Add, };
+
 #[derive(Debug, Clone)]
 pub struct VelocityVector (
     pub Vec<quantities::Velocity>
@@ -32,4 +34,46 @@ impl VelocityVector {
 
         return Self::new(velocity_x, velocity_y, velocity_z);
     }
+
+    pub fn x(&self) -> quantities::Velocity {
+        return self.0[0];
+    }
+
+    pub fn y(&self) -> quantities::Velocity {
+        return self.0[1];
+    }
+
+    pub fn z(&self) -> quantities::Velocity {
+        return self.0[2];
+    }
 }
+
+impl Add for VelocityVector {
+    type Output = Self;
+
+    fn add (self, other: Self) -> Self {
+
+        let x = self.0[0] + other.0[0];
+        let y = self.0[1] + other.0[1];
+        let z = self.0[2] + other.0[2];
+
+        return Self::new(x, y, z);
+    }
+}
+
+//impl Mul<quantities::Time> for VelocityVector {
+//
+//    type Output = super::position_vector::PositionVector;
+//
+//    fn mul (
+//        self, 
+//        time: quantities::Time
+//    ) -> super::position_vector::PositionVector {
+//
+//        let x = self.0[0] * time;
+//        let y = self.0[1] * time;
+//        let z = self.0[2] * time;
+//
+//        return super::position_vector::PositionVector::new(x, y, z);
+//    }
+//}

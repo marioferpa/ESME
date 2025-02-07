@@ -99,6 +99,7 @@ impl PositionVector {
         return Self::new(x, y, z);
     }
 
+
     pub fn from_acceleration (
         acceleration: super::acceleration_vector::AccelerationVector, 
         time: quantities::Time
@@ -111,7 +112,20 @@ impl PositionVector {
         return Self::new(pos_x, pos_y, pos_z);
     }
 
-    /// Returns the length of the PositionVector
+
+    pub fn from_velocity (
+        velocity:   super::velocity_vector::VelocityVector,
+        time:       quantities::Time
+    ) -> Self {
+
+        let pos_x = velocity.x() * time;
+        let pos_y = velocity.y() * time;
+        let pos_z = velocity.z() * time;
+    
+        return Self::new(pos_x, pos_y, pos_z);
+    }
+
+
     pub fn length(self) -> quantities::Length {
         
         let x = self.0[0] * self.0[0];  // TODO use self.x()?
