@@ -15,6 +15,8 @@ pub fn runge_kutta_simulation (
     mut esail_query:    Query<&mut spacecraft::esail::ESail>,
 ) {
 
+    // https://chatgpt.com/share/67add64f-76fc-800e-8cd8-a4261dee2ed3
+
     let mut esail = esail_query.single_mut();
 
     // These three are temporary
@@ -26,7 +28,6 @@ pub fn runge_kutta_simulation (
     let timestep = quantities::Time::new::<time::second>(0.8);
 
     // TODO Maybe I have to do this multiple times per timestep, as in verlet_sim
-
 
 
 
@@ -54,25 +55,29 @@ pub fn runge_kutta_simulation (
 
     // K2 ----------------------------------------------------------------------
 
-    //let mut k2_vector: Vec<(VelocityVector, AccelerationVector)> = Vec::new();
+    let mut k2_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
-    //// I may need an intermediate state here, and to operate on it
+    for (index, rk_element) in esail.rk_elements.iter().enumerate() {
 
-    //for (index, rk_element) in esail.rk_elements.iter().enumerate() {
+        let k1_velocity = k1_vector[index as usize].1.clone();
 
+        let intermediate_velocity = 
+            rk_element.velocity.clone() + k1_velocity / 2.0;
 
-    //    let k1_velocity     = k1_vector[index as usize].0.clone();
-    //    let k1_acceleration = k1_vector[index as usize].1.clone();
+        // Because constant force for now:
+        let intermediate_acceleration = AccelerationVector::from_force(
+            force.clone(), element_mass
+        );
 
-    //    let k2_velocity = k1_velocity + VelocityVector::from_acceleration(
-    //        k1_acceleration.clone(),
-    //        timestep / 2.0
-    //    );
-
-    //    k2_vector.push((
-    //        k2_velocity, k1_acceleration
-    //    ));
-    //}
+        k2_vector.push((
+            PositionVector::from_velocity(
+                intermediate_velocity, timestep / 2.0
+            ), 
+            VelocityVector::from_acceleration(
+                intermediate_acceleration, timestep / 2.0
+            ), 
+        ));
+    }
 
     //println!("K2: {:?}", k2_vector);
 }

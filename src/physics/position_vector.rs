@@ -4,7 +4,7 @@ use uom::si::f64 as quantities;
 use uom::si::*;
 use uom::si::length::meter;
 
-use std::ops::{ Add, Sub, Mul };
+use std::ops::{ Add, Div, Mul, Sub, };
 
 pub fn dot_product (
     first: &PositionVector, 
@@ -183,6 +183,17 @@ impl Add for PositionVector {
     }
 }
 
+impl Mul<f64> for PositionVector {
+    type Output = Self;
+
+    fn mul(self, value: f64) -> Self {
+        let x = self.0[0] * value;
+        let y = self.0[1] * value;
+        let z = self.0[2] * value;
+        return Self::new(x, y, z);
+    }
+}
+
 impl Sub for PositionVector {
     type Output = Self;
 
@@ -194,13 +205,3 @@ impl Sub for PositionVector {
     }
 }
 
-impl Mul<f64> for PositionVector {
-    type Output = Self;
-
-    fn mul(self, value: f64) -> Self {
-        let x = self.0[0] * value;
-        let y = self.0[1] * value;
-        let z = self.0[2] * value;
-        return Self::new(x, y, z);   // Just for now
-    }
-}
