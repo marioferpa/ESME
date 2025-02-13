@@ -1,6 +1,6 @@
 use uom::si::f64 as quantities;  
 
-use std::ops::{ Add, Div, };
+use std::ops::{ Add, Div, Mul };
 
 #[derive(Debug, Clone)]
 pub struct VelocityVector (
@@ -70,6 +70,17 @@ impl Div<f64> for VelocityVector {
         let y = self.0[1] / value;
         let z = self.0[2] / value;
 
+        return Self::new(x, y, z);
+    }
+}
+
+impl Mul<f64> for VelocityVector {
+    type Output = Self;
+
+    fn mul(self, value: f64) -> Self {
+        let x = self.0[0] * value;
+        let y = self.0[1] * value;
+        let z = self.0[2] * value;
         return Self::new(x, y, z);
     }
 }

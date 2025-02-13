@@ -80,4 +80,69 @@ pub fn runge_kutta_simulation (
     }
 
     //println!("K2: {:?}", k2_vector);
+
+
+
+
+    // K3 ----------------------------------------------------------------------
+
+    let mut k3_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
+
+    for (index, rk_element) in esail.rk_elements.iter().enumerate() {
+        
+        let k2_velocity = k2_vector[index as usize].1.clone();
+
+        let intermediate_velocity = 
+            rk_element.velocity.clone() + k2_velocity / 2.0;
+
+        // Because constant force for now:
+        let intermediate_acceleration = AccelerationVector::from_force(
+            force.clone(), element_mass
+        );
+
+        k3_vector.push((
+            PositionVector::from_velocity(
+                intermediate_velocity, timestep / 2.0
+            ), 
+            VelocityVector::from_acceleration(
+                intermediate_acceleration, timestep / 2.0
+            ), 
+        ));
+    }
+
+
+
+
+    // K4 ----------------------------------------------------------------------
+
+    let mut k4_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
+
+    for (index, rk_element) in esail.rk_elements.iter().enumerate() {
+        
+        let k3_velocity = k3_vector[index as usize].1.clone();
+
+        let intermediate_velocity =
+            rk_element.velocity.clone() + k3_velocity * 2.0; // Want full step now
+
+        // Because constant force for now:
+        let intermediate_acceleration = AccelerationVector::from_force(
+            force.clone(), element_mass
+        );
+
+        k4_vector.push((
+            PositionVector::from_velocity(
+                intermediate_velocity, timestep
+            ), 
+            VelocityVector::from_acceleration(
+                intermediate_acceleration, timestep
+            ), 
+        ));
+    }
+
+
+
+
+    // Final step --------------------------------------------------------------
+
+    // Need to add all k's with their appropriate weights
 }
