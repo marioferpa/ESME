@@ -35,9 +35,9 @@ pub fn runge_kutta_simulation (
 
     let mut k1_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
-    for rk_element in esail.rk_elements.iter() {
+    for rk_object in esail.rk_objects.iter() {
 
-        let velocity        = rk_element.velocity.clone();
+        let velocity        = rk_object.velocity.clone();
         let acceleration    = AccelerationVector::from_force(
             force.clone(), element_mass
         );
@@ -57,12 +57,12 @@ pub fn runge_kutta_simulation (
 
     let mut k2_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
-    for (index, rk_element) in esail.rk_elements.iter().enumerate() {
+    for (index, rk_object) in esail.rk_objects.iter().enumerate() {
 
         let k1_velocity = k1_vector[index].1.clone();
 
         let intermediate_velocity = 
-            rk_element.velocity.clone() + k1_velocity / 2.0;
+            rk_object.velocity.clone() + k1_velocity / 2.0;
 
         // Because constant force for now:
         let intermediate_acceleration = AccelerationVector::from_force(
@@ -88,12 +88,12 @@ pub fn runge_kutta_simulation (
 
     let mut k3_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
-    for (index, rk_element) in esail.rk_elements.iter().enumerate() {
+    for (index, rk_object) in esail.rk_objects.iter().enumerate() {
         
         let k2_velocity = k2_vector[index].1.clone();
 
         let intermediate_velocity = 
-            rk_element.velocity.clone() + k2_velocity / 2.0;
+            rk_object.velocity.clone() + k2_velocity / 2.0;
 
         // Because constant force for now:
         let intermediate_acceleration = AccelerationVector::from_force(
@@ -117,12 +117,12 @@ pub fn runge_kutta_simulation (
 
     let mut k4_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
-    for (index, rk_element) in esail.rk_elements.iter().enumerate() {
+    for (index, rk_object) in esail.rk_objects.iter().enumerate() {
         
         let k3_velocity = k3_vector[index].1.clone();
 
         let intermediate_velocity =
-            rk_element.velocity.clone() + k3_velocity * 2.0; // Want full step now
+            rk_object.velocity.clone() + k3_velocity * 2.0; // Want full step now
 
         // Because constant force for now:
         let intermediate_acceleration = AccelerationVector::from_force(
@@ -144,7 +144,7 @@ pub fn runge_kutta_simulation (
 
     // Final step --------------------------------------------------------------
 
-    for (index, rk_element) in esail.rk_elements.iter().enumerate() {
+    for (index, rk_object) in esail.rk_objects.iter_mut().enumerate() {
 
         let (k1_position, k1_velocity) = k1_vector[index].clone();
         let (k2_position, k2_velocity) = k2_vector[index].clone();
@@ -159,6 +159,7 @@ pub fn runge_kutta_simulation (
             k1_velocity + k2_velocity * 2.0 + k3_velocity * 2.0 + k4_velocity
         ) / 6.0;
 
-        // TODO Mut access to rk_element, modify state
+        rk_object.position += position_increment;
+        rk_object.velocity += velocity_increment;
     }
 }

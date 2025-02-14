@@ -4,7 +4,7 @@ use uom::si::f64 as quantities;
 use uom::si::*;
 use uom::si::length::meter;
 
-use std::ops::{ Add, Div, Mul, Sub, };
+use std::ops::{ Add, AddAssign, Div, Mul, Sub, };
 
 pub fn dot_product (
     first: &PositionVector, 
@@ -175,11 +175,21 @@ impl PositionVector {
 impl Add for PositionVector {
     type Output = Self;
 
-    fn add(self, other: Self) -> Self {
+    fn add (self, other: Self) -> Self {
         let x = self.0[0] + other.0[0];
         let y = self.0[1] + other.0[1];
         let z = self.0[2] + other.0[2];
         return Self::new(x, y, z);
+    }
+}
+
+impl AddAssign for PositionVector {
+
+    fn add_assign (&mut self, other: Self) {
+
+        for (a, b) in self.0.iter_mut().zip(other.0) {
+            *a += b; // Assuming Length implements AddAssign
+        }
     }
 }
 

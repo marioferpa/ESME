@@ -1,6 +1,6 @@
 use uom::si::f64 as quantities;  
 
-use std::ops::{ Add, Div, Mul };
+use std::ops::{ Add, AddAssign, Div, Mul };
 
 #[derive(Debug, Clone)]
 pub struct VelocityVector (
@@ -58,6 +58,16 @@ impl Add for VelocityVector {
         let z = self.0[2] + other.0[2];
 
         return Self::new(x, y, z);
+    }
+}
+
+impl AddAssign for VelocityVector {
+
+    fn add_assign (&mut self, other: Self) {
+
+        for (a, b) in self.0.iter_mut().zip(other.0) {
+            *a += b;
+        }
     }
 }
 

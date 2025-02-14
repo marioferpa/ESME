@@ -21,7 +21,7 @@ pub struct ESail {
     pub elements:   Vec<VerletObject>,  
 
     // Test
-    pub rk_elements:    Vec<physics::runge_kutta_object::RungeKuttaObject>,
+    pub rk_objects:    Vec<physics::runge_kutta_object::RungeKuttaObject>,
 }
 
 impl ESail {
@@ -157,7 +157,7 @@ pub fn spawn_esail (
                     zero
                 ),
                 elements: elements,
-                rk_elements:    vec![
+                rk_objects:    vec![
                     physics::runge_kutta_object::RungeKuttaObject::default()
                 ],
             }
