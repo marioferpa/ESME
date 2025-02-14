@@ -59,7 +59,7 @@ pub fn runge_kutta_simulation (
 
     for (index, rk_element) in esail.rk_elements.iter().enumerate() {
 
-        let k1_velocity = k1_vector[index as usize].1.clone();
+        let k1_velocity = k1_vector[index].1.clone();
 
         let intermediate_velocity = 
             rk_element.velocity.clone() + k1_velocity / 2.0;
@@ -90,7 +90,7 @@ pub fn runge_kutta_simulation (
 
     for (index, rk_element) in esail.rk_elements.iter().enumerate() {
         
-        let k2_velocity = k2_vector[index as usize].1.clone();
+        let k2_velocity = k2_vector[index].1.clone();
 
         let intermediate_velocity = 
             rk_element.velocity.clone() + k2_velocity / 2.0;
@@ -119,7 +119,7 @@ pub fn runge_kutta_simulation (
 
     for (index, rk_element) in esail.rk_elements.iter().enumerate() {
         
-        let k3_velocity = k3_vector[index as usize].1.clone();
+        let k3_velocity = k3_vector[index].1.clone();
 
         let intermediate_velocity =
             rk_element.velocity.clone() + k3_velocity * 2.0; // Want full step now
@@ -144,5 +144,21 @@ pub fn runge_kutta_simulation (
 
     // Final step --------------------------------------------------------------
 
-    // Need to add all k's with their appropriate weights
+    for (index, rk_element) in esail.rk_elements.iter().enumerate() {
+
+        let (k1_position, k1_velocity) = k1_vector[index].clone();
+        let (k2_position, k2_velocity) = k2_vector[index].clone();
+        let (k3_position, k3_velocity) = k3_vector[index].clone();
+        let (k4_position, k4_velocity) = k4_vector[index].clone();
+
+        let position_increment = (
+            k1_position + k2_position * 2.0 + k3_position * 2.0 + k4_position
+        ) / 6.0;
+
+        let velocity_increment = (
+            k1_velocity + k2_velocity * 2.0 + k3_velocity * 2.0 + k4_velocity
+        ) / 6.0;
+
+        // TODO Mut access to rk_element, modify state
+    }
 }

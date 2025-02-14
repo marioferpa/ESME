@@ -183,6 +183,19 @@ impl Add for PositionVector {
     }
 }
 
+impl Div<f64> for PositionVector {
+    type Output = Self;
+
+    fn div (self, value: f64) -> Self {
+
+        let x = self.0[0] / value;
+        let y = self.0[1] / value;
+        let z = self.0[2] / value;
+
+        return Self::new(x, y, z);
+    }
+}
+
 impl Mul<f64> for PositionVector {
     type Output = Self;
 
