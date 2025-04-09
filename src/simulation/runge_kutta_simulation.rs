@@ -11,6 +11,13 @@ use physics::force_vector::ForceVector as ForceVector;
 use physics::position_vector::PositionVector as PositionVector;
 use physics::velocity_vector::VelocityVector as VelocityVector;
 
+// TODO So this is working, but there are no constraints in it yet?
+
+// Plan:
+// · Add two particles
+// · Fix the first one, second will fly away
+// · Introduce spring force on the second one
+
 pub fn runge_kutta_simulation (
     mut esail_query:    Query<&mut spacecraft::esail::ESail>,
 ) {
@@ -19,11 +26,11 @@ pub fn runge_kutta_simulation (
 
     let mut esail = esail_query.single_mut();
 
-    // These three are temporary
+    // These three are temporary FIXME
     let element_mass = quantities::Mass::new::<mass::kilogram>(1.0);
     let force = ForceVector::from_direction(
-        quantities::Force::new::<force::newton>(3.14),
-        DVec3::new(0.0, 0.0, 1.0),
+        quantities::Force::new::<force::newton>(0.00000314),
+        DVec3::new(1.0, 0.0, 0.0),
     );
     let timestep = quantities::Time::new::<time::second>(0.8);
 
@@ -146,6 +153,12 @@ pub fn runge_kutta_simulation (
 
     for (index, rk_object) in esail.rk_objects.iter_mut().enumerate() {
 
+        // Hack to avoid moving the first element (although its k's are being
+        // calculated above)
+
+        if index == 0 { continue };
+
+
         let (k1_position, k1_velocity) = k1_vector[index].clone();
         let (k2_position, k2_velocity) = k2_vector[index].clone();
         let (k3_position, k3_velocity) = k3_vector[index].clone();
@@ -161,5 +174,8 @@ pub fn runge_kutta_simulation (
 
         rk_object.position += position_increment;
         rk_object.velocity += velocity_increment;
+
+        println!("rk_object.position = {:?}", rk_object.position);
+        println!("rk_object.velocity = {:?}", rk_object.velocity);
     }
 }

@@ -7,9 +7,11 @@ use uom::si::f64 as quantities;
 
 use crate::{ physics };
 
-use physics::force_vector::ForceVector as ForceVector;
-use physics::verlet_object::VerletObject as VerletObject;
-use physics::position_vector::PositionVector as PositionVector;
+use physics::force_vector::ForceVector;
+use physics::verlet_object::VerletObject;
+use physics::position_vector::PositionVector;
+use physics::velocity_vector::VelocityVector;
+use physics::runge_kutta_object::RungeKuttaObject;
 
 // Test
 #[derive(Event)]
@@ -148,6 +150,27 @@ pub fn spawn_esail (
     }
 
 
+
+    let mut rk_objects: Vec<RungeKuttaObject> = Vec::new();
+
+    let zero_v =  quantities::Velocity::new::<velocity::meter_per_second>(0.0);
+
+    for number in 0.. number_of_elements {
+
+        let x = spacecraft_parameters.tether_origin.x() + 
+            spacecraft_parameters.segment_length() * number as f64;
+
+
+        let rk_object = RungeKuttaObject {  
+            position:   PositionVector::new(x, zero, zero),
+            velocity:   VelocityVector::new(zero_v, zero_v, zero_v),
+        };
+        
+        rk_objects.push(rk_object);
+    }
+
+
+
     commands.entity(esail_entity)
         .insert(
             ESail {
@@ -157,12 +180,10 @@ pub fn spawn_esail (
                     zero
                 ),
                 elements: elements,
-                rk_objects:    vec![
-                    physics::runge_kutta_object::RungeKuttaObject::default()
-                ],
+                rk_objects,
             }
         )
-        ;
+    ;
 
     println!("(New) E-sail spawned");
 }

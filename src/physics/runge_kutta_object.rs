@@ -7,8 +7,8 @@ use super::velocity_vector::VelocityVector as VelocityVector;
 #[derive(Debug, Clone)]
 pub struct RungeKuttaObject {
     pub position:   PositionVector,
-    // I think I need to make a velocity vector now
     pub velocity:   VelocityVector,
+    // is_deployed, like VerletObject?
 }
 
 impl RungeKuttaObject {

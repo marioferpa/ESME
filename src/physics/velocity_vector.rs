@@ -9,6 +9,11 @@ pub struct VelocityVector (
 
 impl VelocityVector {
 
+    //pub fn empty () -> Self {
+
+    //    return Self( Vec::with_capacity(3) );
+    //}
+
     pub fn new (
         x: quantities::Velocity, 
         y: quantities::Velocity, 

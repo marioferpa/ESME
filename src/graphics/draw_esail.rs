@@ -22,20 +22,10 @@ pub (super) fn update_esail_graphics (
 
     for event in sail_event.read() { // Should be only one
 
-        // Despawn old balls
-
         delete_balls(
             &mut commands,
             &mut balls_resource
         );
-
-        // Don't add a new ball, redraw the whole thing instead
-        //add_new_ball(
-        //    &mut commands, 
-        //    &mut balls_resource, 
-        //    &mut meshes, 
-        //    &mut materials
-        //);
 
         draw_esail(
             &mut balls_resource,
@@ -46,30 +36,32 @@ pub (super) fn update_esail_graphics (
             &simulation_parameters
         );
 
-        // Test, because I think that the change doesn't happen fast enough or
-        // something and the next step can't find the entities it needs
         return
     }
 
-    for (index, verlet) in esail.elements.iter().enumerate() {
+    //for (index, verlet) in esail.elements.iter().enumerate() {
+    for (index, rk) in esail.rk_objects.iter().enumerate() {
 
         let mut ball_transform =
             transform_query.get_mut(balls_resource.0[index]).unwrap();
 
         ball_transform.translation.x = 
-            verlet.current_coordinates
+            //verlet.current_coordinates
+            rk.position
                   .0[0]
                   .get::<meter>() as f32 * 
             simulation_parameters.pixels_per_meter as f32;
 
         ball_transform.translation.y = 
-            verlet.current_coordinates
+            //verlet.current_coordinates
+            rk.position
                   .0[1]
                   .get::<meter>() as f32 * 
             simulation_parameters.pixels_per_meter as f32;
 
         ball_transform.translation.z = 
-            verlet.current_coordinates
+            //verlet.current_coordinates
+            rk.position
                   .0[2]
                   .get::<meter>() as f32 * 
             simulation_parameters.pixels_per_meter as f32;
@@ -77,22 +69,6 @@ pub (super) fn update_esail_graphics (
 
 }
 
-// Test
-//fn add_new_ball(
-//    commands:           &mut Commands,
-//    mut balls_resource: &mut ResMut<super::Balls>,
-//    mut meshes:         &mut ResMut<Assets<Mesh>>,
-//    mut materials:      &mut ResMut<Assets<StandardMaterial>>,
-//) {
-//
-//    // Trying to insert in second position, as in extend_esail()
-//
-//    if balls_resource.0.len() > 1 {
-//        if let Some(second_ball) = balls_resource.0.get(1).cloned() {
-//            balls_resource.0.insert(1, second_ball);
-//        }
-//    }
-//}
 
 fn delete_balls (
     mut commands:           &mut Commands,
@@ -118,7 +94,8 @@ fn draw_esail (
 
     let mut sphere_storage: Vec<Entity> = Vec::new();
     
-    for verlet_object in esail.elements.iter() {
+    //for verlet_object in esail.elements.iter() {
+    for rk_object in esail.rk_objects.iter() {
 
         let sphere =
             commands.spawn ( 
@@ -136,18 +113,22 @@ fn draw_esail (
 
                     material: materials.add(
                         StandardMaterial {
-                            base_color: Color::rgb(1.0, 0.0, 0.0),
+                            //base_color: Color::rgb(1.0, 0.0, 0.0),
+                            base_color: Color::rgb(0.0, 1.0, 0.0),
                             ..Default::default()
                         }
                         .into(),
                     ),
 
                     transform: Transform::from_xyz(
-                        verlet_object.current_coordinates.x().get::<meter>() as f32 * 
+                        //verlet_object.current_coordinates.x().get::<meter>() as f32 * 
+                        rk_object.position.x().get::<meter>() as f32 * 
                             simulation_parameters.pixels_per_meter as f32, 
-                        verlet_object.current_coordinates.y().get::<meter>() as f32 * 
+                        //verlet_object.current_coordinates.y().get::<meter>() as f32 * 
+                        rk_object.position.y().get::<meter>() as f32 * 
                             simulation_parameters.pixels_per_meter as f32, 
-                        verlet_object.current_coordinates.z().get::<meter>() as f32 * 
+                        //verlet_object.current_coordinates.z().get::<meter>() as f32 * 
+                        rk_object.position.z().get::<meter>() as f32 * 
                             simulation_parameters.pixels_per_meter as f32, 
                     ),
                     ..default()
