@@ -68,7 +68,7 @@ impl PositionVector {
         return Self::new(new_x, new_y, z);
     }
 
-    /// Return a new PositionVector of capacity 3 with the requested values
+
     pub fn new (
         x: quantities::Length, 
         y: quantities::Length, 
@@ -82,10 +82,12 @@ impl PositionVector {
         return Self(vector);
     }
 
+
     #[allow(dead_code)]
     pub fn empty () -> Self {
         return PositionVector( Vec::new() );    // Make it capacity 3
     }
+
 
     pub fn from_a_to_b (
         point_a: Self,

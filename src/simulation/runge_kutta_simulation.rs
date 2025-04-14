@@ -3,38 +3,72 @@ use bevy::math::DVec3;
 
 use uom::si::*;
 use uom::si::f64 as quantities;
+use uom::si::force::newton;
+use uom::si::length::meter;
 
 use crate::{ physics, spacecraft, };
 
-use physics::acceleration_vector::AccelerationVector as AccelerationVector;
-use physics::force_vector::ForceVector as ForceVector;
-use physics::position_vector::PositionVector as PositionVector;
-use physics::velocity_vector::VelocityVector as VelocityVector;
+use physics::acceleration_vector::AccelerationVector;
+use physics::force_vector::ForceVector;
+use physics::position_vector::PositionVector;
+use physics::velocity_vector::VelocityVector;
 
-// TODO So this is working, but there are no constraints in it yet?
+// https://chatgpt.com/share/67add64f-76fc-800e-8cd8-a4261dee2ed3
 
-// Plan:
-// · Add two particles
-// · Fix the first one, second will fly away
-// · Introduce spring force on the second one
 
 pub fn runge_kutta_simulation (
-    mut esail_query:    Query<&mut spacecraft::esail::ESail>,
+    mut esail_query:        Query<&mut spacecraft::esail::ESail>,
+    spacecraft_parameters:  Res<spacecraft::SpacecraftParameters>,
 ) {
 
-    // https://chatgpt.com/share/67add64f-76fc-800e-8cd8-a4261dee2ed3
 
     let mut esail = esail_query.single_mut();
 
-    // These three are temporary FIXME
+    // TODO FIXME Use real values here
+
     let element_mass = quantities::Mass::new::<mass::kilogram>(1.0);
-    let force = ForceVector::from_direction(
+    let force = ForceVector::from_direction(    // wind_force?
         quantities::Force::new::<force::newton>(0.00000314),
         DVec3::new(1.0, 0.0, 0.0),
     );
     let timestep = quantities::Time::new::<time::second>(0.8);
 
-    // TODO Maybe I have to do this multiple times per timestep, as in verlet_sim
+    // Maybe I'll have to do this multiple times per timestep, as in verlet_sim
+
+
+    
+    for (index, rk_object) in esail.rk_objects.iter().enumerate() {
+
+        if index == 0 { continue };
+
+        let distance_vector = PositionVector::from_a_to_b(
+            rk_object.position.clone(),
+            esail.rk_objects[index-1].position.clone()
+        );
+
+        // Not sure of the sign
+
+        //let elongation = spacecraft_parameters.segment_length() - 
+        //    distance_vector.clone().length(); 
+
+        let elongation = - spacecraft_parameters.segment_length() +
+            distance_vector.clone().length(); 
+
+
+        // Totally made up k!! FIXME
+        let force = uom::si::f64::Force::new::<newton>(10.0);
+        let length = uom::si::f64::Length::new::<meter>(5.0);
+        let k = force / length;
+
+
+        let restoring_force = ForceVector::from_direction(
+            elongation * k, distance_vector.to_unit_vector()
+        );
+
+        // Could be correct, but it's positive, so pointing outwards?
+        println!("Restoring force: {:?}", restoring_force);
+    }
+
 
 
 
@@ -175,7 +209,9 @@ pub fn runge_kutta_simulation (
         rk_object.position += position_increment;
         rk_object.velocity += velocity_increment;
 
-        println!("rk_object.position = {:?}", rk_object.position);
-        println!("rk_object.velocity = {:?}", rk_object.velocity);
+        //println!("rk_object.position = {:?}", rk_object.position);
+        //println!("rk_object.velocity = {:?}", rk_object.velocity);
     }
+
+
 }

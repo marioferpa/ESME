@@ -1,9 +1,13 @@
+use bevy::math::DVec3;
+
 use uom::si::f64 as quantities;  
 use uom::si::*;
-use bevy::math::DVec3;
 use uom::si::force::newton;
+use uom::si::length::meter;
+
 
 use std::ops::{ Add, Div };
+
 
 #[derive(Debug, Clone)]
 pub struct ForceVector ( pub Vec<quantities::Force> );
@@ -11,8 +15,6 @@ pub struct ForceVector ( pub Vec<quantities::Force> );
 
 impl ForceVector {
 
-
-    /// Creates a new ForceVector of capacity 3 with the requested values
 
     pub fn new (
         x: quantities::Force, 
@@ -28,17 +30,11 @@ impl ForceVector {
     }
 
 
-
-    /// Creates a new ForceVector with all zeros.
-
     pub fn empty () -> Self {
 
         return Self( Vec::with_capacity(3) );
     }
 
-
-
-    /// Creates a new ForceVector of capacity 3 along a direction vector
 
     pub fn from_direction (
         magnitude: quantities::Force, 
@@ -55,6 +51,20 @@ impl ForceVector {
         return Self::new(x, y, z);
     }
 
+
+    // Test!
+    // Wait did the GPT dupe me again? I don't know if stiffness is what I
+    // should be using
+    pub fn hookes_law (
+    ) -> Self {
+
+        let force = uom::si::f64::Force::new::<newton>(10.0);
+        let length = uom::si::f64::Length::new::<meter>(5.0);
+
+        let stiffness = force / length; // This is in N/m
+
+        return Self::empty()
+    }
 
 
     pub fn x (&self) -> quantities::Force {
