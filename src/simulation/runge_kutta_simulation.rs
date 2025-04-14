@@ -36,7 +36,12 @@ pub fn runge_kutta_simulation (
     // Maybe I'll have to do this multiple times per timestep, as in verlet_sim
 
 
+    let mut restoring_forces: Vec<ForceVector> = Vec::new();
+
+    let zero_force =  quantities::Force::new::<newton>(0.0);
+    restoring_forces.push(ForceVector::new(zero_force, zero_force, zero_force));
     
+
     for (index, rk_object) in esail.rk_objects.iter().enumerate() {
 
         if index == 0 { continue };
@@ -46,18 +51,15 @@ pub fn runge_kutta_simulation (
             esail.rk_objects[index-1].position.clone()
         );
 
-        // Not sure of the sign
-
         //let elongation = spacecraft_parameters.segment_length() - 
         //    distance_vector.clone().length(); 
-
         let elongation = - spacecraft_parameters.segment_length() +
             distance_vector.clone().length(); 
 
 
         // Totally made up k!! FIXME
-        let force = uom::si::f64::Force::new::<newton>(10.0);
-        let length = uom::si::f64::Length::new::<meter>(5.0);
+        let force = uom::si::f64::Force::new::<newton>(0.1);
+        let length = uom::si::f64::Length::new::<meter>(1.0);
         let k = force / length;
 
 
@@ -67,6 +69,8 @@ pub fn runge_kutta_simulation (
 
         // Could be correct, but it's positive, so pointing outwards?
         println!("Restoring force: {:?}", restoring_force);
+
+        restoring_forces.push(restoring_force);
     }
 
 
@@ -76,11 +80,13 @@ pub fn runge_kutta_simulation (
 
     let mut k1_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
-    for rk_object in esail.rk_objects.iter() {
+    //for rk_object in esail.rk_objects.iter() {
+    for (index, rk_object) in esail.rk_objects.iter().enumerate() {
 
         let velocity        = rk_object.velocity.clone();
         let acceleration    = AccelerationVector::from_force(
-            force.clone(), element_mass
+            //force.clone(), element_mass
+            restoring_forces[index].clone(), element_mass
         );
 
         k1_vector.push((
