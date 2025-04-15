@@ -1,4 +1,5 @@
 use uom::si::f64 as quantities;  
+use uom::si::velocity;
 
 use std::ops::{ Add, AddAssign, Div, Mul };
 
@@ -13,6 +14,18 @@ impl VelocityVector {
 
     //    return Self( Vec::with_capacity(3) );
     //}
+
+    // Test
+    pub fn modulus_m_per_s (self) -> quantities::Velocity {
+        
+        let x = self.x() * self.x();
+        let y = self.y() * self.y();
+        let z = self.z() * self.z();
+
+        let velocity = (x.value + y.value + z.value).sqrt();
+
+        quantities::Velocity::new::<velocity::meter_per_second>(velocity)
+    }
 
     pub fn new (
         x: quantities::Velocity, 
@@ -99,21 +112,3 @@ impl Mul<f64> for VelocityVector {
         return Self::new(x, y, z);
     }
 }
-
-//impl Mul<quantities::Time> for VelocityVector {
-//
-//    type Output = super::position_vector::PositionVector;
-//
-//    fn mul (
-//        self, 
-//        time: quantities::Time
-//    ) -> super::position_vector::PositionVector {
-//
-//        let x = self.0[0] * time;
-//        let y = self.0[1] * time;
-//        let z = self.0[2] * time;
-//
-//        return super::position_vector::PositionVector::new(x, y, z);
-//    }
-//}
-

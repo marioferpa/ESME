@@ -21,6 +21,8 @@ pub fn runge_kutta_simulation (
     spacecraft_parameters:  Res<spacecraft::SpacecraftParameters>,
 ) {
 
+    // Missing bending stiffness?
+
 
     let mut esail = esail_query.single_mut();
 
@@ -29,7 +31,7 @@ pub fn runge_kutta_simulation (
     let element_mass = quantities::Mass::new::<mass::kilogram>(1.0);
     let force = ForceVector::from_direction(    // wind_force?
         quantities::Force::new::<force::newton>(0.00000314),
-        DVec3::new(1.0, 0.0, 0.0),
+        DVec3::new(0.0, 0.0, -1.0),
     );
     let timestep = quantities::Time::new::<time::second>(0.8);
 
@@ -51,20 +53,31 @@ pub fn runge_kutta_simulation (
             esail.rk_objects[index-1].position.clone()
         );
 
-        //let elongation = spacecraft_parameters.segment_length() - 
+        //let elongation = - spacecraft_parameters.segment_length() +
         //    distance_vector.clone().length(); 
-        let elongation = - spacecraft_parameters.segment_length() +
+        let elongation = spacecraft_parameters.segment_length() -
             distance_vector.clone().length(); 
 
 
-        // Totally made up k!! FIXME
-        let force = uom::si::f64::Force::new::<newton>(0.1);
+        // Totally made up k!! FIXME If it's too big it explodes btw
+        // It explodes eventually anyways...
+        // How can I damp this thing?
+        let force = uom::si::f64::Force::new::<newton>(0.01);
         let length = uom::si::f64::Length::new::<meter>(1.0);
         let k = force / length;
 
+        // Maybe this is ok, but I'm also missing the bending moment? I think
+        // so. Back to where I was, hopefully it's easier here
+
+
+        // Check mass-spring-damper models! They add a second term for damping,
+        // depends on a constant and the derivative of elongation!
+        // TODO How do I get the derivative of elongation? Wait isn't that the
+        // velocity
 
         let restoring_force = ForceVector::from_direction(
             elongation * k, distance_vector.to_unit_vector()
+            //elongation * k + rk_object.velocity *  
         );
 
         // Could be correct, but it's positive, so pointing outwards?
@@ -74,6 +87,8 @@ pub fn runge_kutta_simulation (
     }
 
 
+    // FIXME I seem to be using only restoring force on K1, instead of wind -
+    // restoring, and only wind in other terms?
 
 
     // K1 ----------------------------------------------------------------------
@@ -86,7 +101,7 @@ pub fn runge_kutta_simulation (
         let velocity        = rk_object.velocity.clone();
         let acceleration    = AccelerationVector::from_force(
             //force.clone(), element_mass
-            restoring_forces[index].clone(), element_mass
+            force.clone() - restoring_forces[index].clone(), element_mass
         );
 
         k1_vector.push((
@@ -113,7 +128,8 @@ pub fn runge_kutta_simulation (
 
         // Because constant force for now:
         let intermediate_acceleration = AccelerationVector::from_force(
-            force.clone(), element_mass
+            //force.clone(), element_mass
+            force.clone() - restoring_forces[index].clone(), element_mass
         );
 
         k2_vector.push((
@@ -144,7 +160,8 @@ pub fn runge_kutta_simulation (
 
         // Because constant force for now:
         let intermediate_acceleration = AccelerationVector::from_force(
-            force.clone(), element_mass
+            //force.clone(), element_mass
+            force.clone() - restoring_forces[index].clone(), element_mass
         );
 
         k3_vector.push((
@@ -173,7 +190,8 @@ pub fn runge_kutta_simulation (
 
         // Because constant force for now:
         let intermediate_acceleration = AccelerationVector::from_force(
-            force.clone(), element_mass
+            //force.clone(), element_mass
+            force.clone() - restoring_forces[index].clone(), element_mass
         );
 
         k4_vector.push((

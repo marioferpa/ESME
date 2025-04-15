@@ -211,7 +211,7 @@ impl Div<f64> for PositionVector {
 impl Mul<f64> for PositionVector {
     type Output = Self;
 
-    fn mul(self, value: f64) -> Self {
+    fn mul (self, value: f64) -> Self {
         let x = self.0[0] * value;
         let y = self.0[1] * value;
         let z = self.0[2] * value;
@@ -222,7 +222,7 @@ impl Mul<f64> for PositionVector {
 impl Sub for PositionVector {
     type Output = Self;
 
-    fn sub(self, other: Self) -> Self {
+    fn sub (self, other: Self) -> Self {
         let x = self.0[0] - other.0[0];
         let y = self.0[1] - other.0[1];
         let z = self.0[2] - other.0[2];
