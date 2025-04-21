@@ -18,18 +18,13 @@ use physics::velocity_vector::VelocityVector;
 // https://chatgpt.com/share/67add64f-76fc-800e-8cd8-a4261dee2ed3
 
 
-// I'd say this is correct? I think it needs either better tuning of the
-// restoring force values, or multiple steps per frame (I'd say it's about
-// tuning)
 pub fn runge_kutta_simulation (
     mut esail_query:        Query<&mut spacecraft::esail::ESail>,
     spacecraft_parameters:  Res<spacecraft::SpacecraftParameters>,
 ) {
 
-    // Missing bending stiffness?
-
-
     let mut esail = esail_query.single_mut();
+
 
     // TODO FIXME Use real values here
 
@@ -43,13 +38,16 @@ pub fn runge_kutta_simulation (
 
     let mut restoring_forces: Vec<ForceVector> = Vec::new();
 
-    let zero_force =  quantities::Force::new::<newton>(0.0);
-    restoring_forces.push(ForceVector::new(zero_force, zero_force, zero_force));
-    
 
     for (index, rk_object) in esail.rk_objects.iter().enumerate() {
 
-        if index == 0 { continue };
+        if index == 0 { 
+
+            let zero_force =  quantities::Force::new::<newton>(0.0);
+            restoring_forces.push(ForceVector::new(zero_force, zero_force, zero_force));
+
+            continue 
+        };
 
         let distance_vector = PositionVector::from_a_to_b(
             rk_object.position.clone(),
@@ -62,13 +60,13 @@ pub fn runge_kutta_simulation (
 
         // Made-up k value!!
         // Small k -> balls separate too much
-        let force   = quantities::Force::new::<newton>(0.1);
+        let force   = quantities::Force::new::<newton>(0.05);
         let length  = quantities::Length::new::<meter>(1.0);
         let k = force / length;
 
 
-        // Damping test (made-up as well!!)
-        let force       = quantities::Force::new::<newton>(0.0001);
+        // Damping test (made-up values as well!!)
+        let force       = quantities::Force::new::<newton>(0.01);
         let velocity    = quantities::Velocity::new::<meter_per_second>(1.0);
         let c = force / velocity;
 
@@ -83,10 +81,16 @@ pub fn runge_kutta_simulation (
 
         let _delet = rk_object.velocity.project_onto(&distance_vector); 
 
+        // Am I doing this correctly? I want the derivative of the elongation,
+        // I'm using the velocity of the particle instead?
+
+        // How is it failing even if I make c zero (by making its force 0)???
+
         let restoring_force = ForceVector::from_direction(
-            elongation * k,
-            //elongation * k + 
-            //rk_object.velocity.project_onto(&distance_vector) * c, 
+            //elongation * k,
+            elongation * k
+            //+ rk_object.velocity.project_onto(&distance_vector) * c, 
+            + quantities::Force::new::<newton>(0.00001), 
             distance_vector.to_unit_vector()
         );
 

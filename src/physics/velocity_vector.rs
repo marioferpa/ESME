@@ -16,17 +16,13 @@ impl VelocityVector {
     pub fn project_onto(
         &self, 
         direction: &PositionVector
-    //) -> Self {
     ) -> quantities::Velocity {
-
-        // I need the angle between the vectors first?
 
         let velocity_unit = self.to_unit_vector();
         let direction_unit = direction.to_unit_vector();
 
-        // Now I can get the angle between the two DVec3!
-
-        let angle_radians = velocity_unit.angle_between(direction_unit);
+        //let angle_radians = velocity_unit.angle_between(direction_unit);
+        let angle_radians = direction_unit.angle_between(velocity_unit);
 
         // Now modulus is self.modulus_m_per_s times cosine of angle, and vector
         // would be that times direction
@@ -83,7 +79,6 @@ impl VelocityVector {
     }
 
 
-    //pub fn modulus_m_per_s (self) -> quantities::Velocity {
     pub fn modulus (self) -> quantities::Velocity {
         
         let x = self.x() * self.x();
