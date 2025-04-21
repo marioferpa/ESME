@@ -158,7 +158,6 @@ impl PositionVector {
     //    return Self(vector);
     //}
 
-    // Untested
     pub fn to_unit_vector (&self) -> DVec3 {
 
         let lengths: [f64; 3] = [

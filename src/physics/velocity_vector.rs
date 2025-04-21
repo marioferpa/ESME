@@ -1,7 +1,9 @@
+use bevy::math::DVec3;
+use std::ops::{ Add, AddAssign, Div, Mul };
 use uom::si::f64 as quantities;  
 use uom::si::velocity;
 
-use std::ops::{ Add, AddAssign, Div, Mul };
+use super::position_vector::PositionVector;
 
 #[derive(Debug, Clone)]
 pub struct VelocityVector (
@@ -10,13 +12,79 @@ pub struct VelocityVector (
 
 impl VelocityVector {
 
-    //pub fn empty () -> Self {
+    // Test
+    pub fn project_onto(
+        &self, 
+        direction: &PositionVector
+    //) -> Self {
+    ) -> quantities::Velocity {
 
-    //    return Self( Vec::with_capacity(3) );
-    //}
+        // I need the angle between the vectors first?
+
+        let velocity_unit = self.to_unit_vector();
+        let direction_unit = direction.to_unit_vector();
+
+        // Now I can get the angle between the two DVec3!
+
+        let angle_radians = velocity_unit.angle_between(direction_unit);
+
+        // Now modulus is self.modulus_m_per_s times cosine of angle, and vector
+        // would be that times direction
+
+        let projected_v_scalar = self.clone().modulus() * angle_radians.cos();
+
+        let projected_velocity = VelocityVector::from_direction(
+            projected_v_scalar,
+            direction_unit,
+        );
+
+        // Everything breaks, and projected velocity is NaN. I don't know if
+        // it's NaN because it breaks or if it breaks because it's NaN
+        //
+        // It's NaN as a consequence, because if I don't use it in the restoring
+        // force the projected velocity seems alright (in the correct order of
+        // magnitude at least)
+
+        println!("");
+        println!("Velocity: {:?}", self.0);
+        println!("Projected velocity: {:?}", projected_velocity);
+
+        return projected_velocity.modulus();
+    }
+
 
     // Test
-    pub fn modulus_m_per_s (self) -> quantities::Velocity {
+    pub fn to_unit_vector (&self) -> DVec3 {
+
+        let velocities: [f64; 3] = [
+            self.x().get::<velocity::meter_per_second>(),
+            self.y().get::<velocity::meter_per_second>(),
+            self.z().get::<velocity::meter_per_second>(),
+        ];
+
+        let vec = DVec3::from(velocities);
+
+        return vec.normalize()
+    }
+
+    pub fn from_direction (
+        velocity:   quantities::Velocity, 
+        direction:  DVec3
+    ) -> Self {
+
+        let normalised_direction = direction.normalize();
+        let components = normalised_direction * velocity.get::<velocity::meter_per_second>();
+
+        let x = quantities::Velocity::new::<velocity::meter_per_second>(components.x);
+        let y = quantities::Velocity::new::<velocity::meter_per_second>(components.y);
+        let z = quantities::Velocity::new::<velocity::meter_per_second>(components.z);
+
+        return Self::new(x, y, z);
+    }
+
+
+    //pub fn modulus_m_per_s (self) -> quantities::Velocity {
+    pub fn modulus (self) -> quantities::Velocity {
         
         let x = self.x() * self.x();
         let y = self.y() * self.y();

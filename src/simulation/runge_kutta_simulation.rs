@@ -5,6 +5,8 @@ use uom::si::*;
 use uom::si::f64 as quantities;
 use uom::si::force::newton;
 use uom::si::length::meter;
+use uom::si::time::second;
+use uom::si::velocity::meter_per_second;
 
 use crate::{ physics, spacecraft, };
 
@@ -16,6 +18,9 @@ use physics::velocity_vector::VelocityVector;
 // https://chatgpt.com/share/67add64f-76fc-800e-8cd8-a4261dee2ed3
 
 
+// I'd say this is correct? I think it needs either better tuning of the
+// restoring force values, or multiple steps per frame (I'd say it's about
+// tuning)
 pub fn runge_kutta_simulation (
     mut esail_query:        Query<&mut spacecraft::esail::ESail>,
     spacecraft_parameters:  Res<spacecraft::SpacecraftParameters>,
@@ -35,8 +40,6 @@ pub fn runge_kutta_simulation (
     );
     let timestep = quantities::Time::new::<time::second>(0.8);
 
-    // Maybe I'll have to do this multiple times per timestep, as in verlet_sim
-
 
     let mut restoring_forces: Vec<ForceVector> = Vec::new();
 
@@ -53,42 +56,47 @@ pub fn runge_kutta_simulation (
             esail.rk_objects[index-1].position.clone()
         );
 
-        //let elongation = - spacecraft_parameters.segment_length() +
-        //    distance_vector.clone().length(); 
         let elongation = spacecraft_parameters.segment_length() -
             distance_vector.clone().length(); 
 
 
-        // Totally made up k!! FIXME If it's too big it explodes btw
-        // It explodes eventually anyways...
-        // How can I damp this thing?
-        let force = uom::si::f64::Force::new::<newton>(0.01);
-        let length = uom::si::f64::Length::new::<meter>(1.0);
+        // Made-up k value!!
+        // Small k -> balls separate too much
+        let force   = quantities::Force::new::<newton>(0.1);
+        let length  = quantities::Length::new::<meter>(1.0);
         let k = force / length;
 
-        // Maybe this is ok, but I'm also missing the bending moment? I think
-        // so. Back to where I was, hopefully it's easier here
+
+        // Damping test (made-up as well!!)
+        let force       = quantities::Force::new::<newton>(0.0001);
+        let velocity    = quantities::Velocity::new::<meter_per_second>(1.0);
+        let c = force / velocity;
 
 
-        // Check mass-spring-damper models! They add a second term for damping,
-        // depends on a constant and the derivative of elongation!
-        // TODO How do I get the derivative of elongation? Wait isn't that the
-        // velocity
+        // FIXME The elongation can be positive or negative, but as it stands
+        // the damping value is always negative, so it sometimes contributes to
+        // make the system stretch!
+
+        // At least I need to find the velocity along the line betweeen the two
+        // points
+        // A along_direction() method on VelocityVector perhaps?
+
+        let _delet = rk_object.velocity.project_onto(&distance_vector); 
 
         let restoring_force = ForceVector::from_direction(
-            elongation * k, distance_vector.to_unit_vector()
-            //elongation * k + rk_object.velocity *  
+            elongation * k,
+            //elongation * k + 
+            //rk_object.velocity.project_onto(&distance_vector) * c, 
+            distance_vector.to_unit_vector()
         );
 
-        // Could be correct, but it's positive, so pointing outwards?
-        println!("Restoring force: {:?}", restoring_force);
+        //println!("Restoring force: {:?}", restoring_force);
+
 
         restoring_forces.push(restoring_force);
     }
 
 
-    // FIXME I seem to be using only restoring force on K1, instead of wind -
-    // restoring, and only wind in other terms?
 
 
     // K1 ----------------------------------------------------------------------
