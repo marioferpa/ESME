@@ -4,8 +4,6 @@ use uom::si::time::second;
 
 use crate::{ resources };
 
-/// Calculates how many timesteps should happen in the current frame,
-/// considering any potential unspent time from the previous frame.
 pub fn timestep_calculation (
     time: &Res<Time>,
     sim_params: &mut ResMut<resources::SimulationParameters>,

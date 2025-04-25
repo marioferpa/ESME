@@ -8,7 +8,7 @@ use uom::si::length::meter;
 use uom::si::time::second;
 use uom::si::velocity::meter_per_second;
 
-use crate::{ physics, spacecraft, };
+use crate::{ physics, resources, spacecraft, time, };
 
 use physics::acceleration_vector::AccelerationVector;
 use physics::force_vector::ForceVector;
@@ -20,234 +20,246 @@ use physics::velocity_vector::VelocityVector;
 
 pub fn runge_kutta_simulation (
     mut esail_query:        Query<&mut spacecraft::esail::ESail>,
+    mut sim_params:         ResMut<resources::SimulationParameters>,
     spacecraft_parameters:  Res<spacecraft::SpacecraftParameters>,
+    time:                   Res<Time>, 
 ) {
 
     let mut esail = esail_query.single_mut();
 
-
     // TODO FIXME Use real values here
-
     let element_mass = quantities::Mass::new::<mass::kilogram>(1.0);
     let force = ForceVector::from_direction(    // wind_force?
-        quantities::Force::new::<force::newton>(0.00000314),
+        quantities::Force::new::<force::newton>(0.00314),
         DVec3::new(0.0, 0.0, -1.0),
     );
-    let timestep = quantities::Time::new::<time::second>(0.8);
 
+    // I probably used this temporarily? But now I need to use the correct time
+    // that passed? FIXME
+    //let timestep = quantities::Time::new::<second>(0.8); // Wait what?
+    let timestep = quantities::Time::new::<second>(
+        time.delta_seconds() as f64 //+ sim_params.leftover_time 
+    );
 
-    let mut restoring_forces: Vec<ForceVector> = Vec::new();
 
 
-    for (index, rk_object) in esail.rk_objects.iter().enumerate() {
 
-        if index == 0 { 
+    // Doesn't seem to change much, or anything?
+    //for _ in 0..time::timestep_calculation(&time, &mut sim_params) {
 
-            let zero_force =  quantities::Force::new::<newton>(0.0);
-            restoring_forces.push(ForceVector::new(zero_force, zero_force, zero_force));
 
-            continue 
-        };
+        let mut restoring_forces: Vec<ForceVector> = Vec::new();
 
-        let distance_vector = PositionVector::from_a_to_b(
-            rk_object.position.clone(),
-            esail.rk_objects[index-1].position.clone()
-        );
 
-        let elongation = spacecraft_parameters.segment_length() -
-            distance_vector.clone().length(); 
+        for (index, rk_object) in esail.rk_objects.iter().enumerate() {
 
+            if index == 0 { 
 
-        // Made-up k value!!
-        // Small k -> balls separate too much
-        let force   = quantities::Force::new::<newton>(0.05);
-        let length  = quantities::Length::new::<meter>(1.0);
-        let k = force / length;
+                let zero_force =  quantities::Force::new::<newton>(0.0);
+                restoring_forces.push(
+                    ForceVector::new(zero_force, zero_force, zero_force)
+                );
 
+                continue 
+            };
 
-        // Damping test (made-up values as well!!)
-        let force       = quantities::Force::new::<newton>(0.01);
-        let velocity    = quantities::Velocity::new::<meter_per_second>(1.0);
-        let c = force / velocity;
+            let distance_vector = PositionVector::from_a_to_b(
+                rk_object.position.clone(),
+                esail.rk_objects[index-1].position.clone()
+            );
 
+            let elongation = spacecraft_parameters.segment_length() -
+                distance_vector.clone().length(); 
 
-        // FIXME The elongation can be positive or negative, but as it stands
-        // the damping value is always negative, so it sometimes contributes to
-        // make the system stretch!
 
-        // At least I need to find the velocity along the line betweeen the two
-        // points
-        // A along_direction() method on VelocityVector perhaps?
+            // Made-up k value!!
+            // Small k -> balls separate too much
+            let force   = quantities::Force::new::<newton>(1.0);
+            let length  = quantities::Length::new::<meter>(1.0);
+            let k = force / length;
 
-        let _delet = rk_object.velocity.project_onto(&distance_vector); 
 
-        // Am I doing this correctly? I want the derivative of the elongation,
-        // I'm using the velocity of the particle instead?
+            // Damping test (made-up values as well!!)
+            let force       = quantities::Force::new::<newton>(0.01);
+            let velocity    = 
+                quantities::Velocity::new::<meter_per_second>(1.0);
+            let c = force / velocity;
 
-        // How is it failing even if I make c zero (by making its force 0)???
 
-        let restoring_force = ForceVector::from_direction(
-            //elongation * k,
-            elongation * k
-            //+ rk_object.velocity.project_onto(&distance_vector) * c, 
-            + quantities::Force::new::<newton>(0.00001), 
-            distance_vector.to_unit_vector()
-        );
+            // FIXME The elongation can be positive or negative, but as it
+            // stands the damping value is always negative, so it sometimes
+            // contributes to make the system stretch!
 
-        //println!("Restoring force: {:?}", restoring_force);
+            // At least I need to find the velocity along the line betweeen the
+            // two points A along_direction() method on VelocityVector perhaps?
 
+            let _delet = rk_object.velocity.project_onto(&distance_vector); 
 
-        restoring_forces.push(restoring_force);
-    }
+            // Am I doing this correctly? I want the derivative of the
+            // elongation, I'm using the velocity of the particle instead?
 
+            // How is it failing even if I make c zero (by making its force
+            // 0)???
 
+            let restoring_force = ForceVector::from_direction(
+                elongation * k,
+                //+ rk_object.velocity.project_onto(&distance_vector) * c, 
+                distance_vector.to_unit_vector()
+            );
 
+            //println!("Restoring force: {:?}", restoring_force);
 
-    // K1 ----------------------------------------------------------------------
 
-    let mut k1_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
+            restoring_forces.push(restoring_force);
+        }
 
-    //for rk_object in esail.rk_objects.iter() {
-    for (index, rk_object) in esail.rk_objects.iter().enumerate() {
 
-        let velocity        = rk_object.velocity.clone();
-        let acceleration    = AccelerationVector::from_force(
-            //force.clone(), element_mass
-            force.clone() - restoring_forces[index].clone(), element_mass
-        );
 
-        k1_vector.push((
-            PositionVector::from_velocity(velocity, timestep),
-            VelocityVector::from_acceleration(acceleration, timestep)
-        ));
-    }
 
-    //println!("K1: {:?}", k1_vector);
+        // K1 ------------------------------------------------------------------
 
+        let mut k1_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
+        //for rk_object in esail.rk_objects.iter() {
+        for (index, rk_object) in esail.rk_objects.iter().enumerate() {
 
+            let velocity        = rk_object.velocity.clone();
+            let acceleration    = AccelerationVector::from_force(
+                //force.clone(), element_mass
+                force.clone() - restoring_forces[index].clone(), element_mass
+            );
 
-    // K2 ----------------------------------------------------------------------
+            k1_vector.push((
+                PositionVector::from_velocity(velocity, timestep),
+                VelocityVector::from_acceleration(acceleration, timestep)
+            ));
+        }
 
-    let mut k2_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
+        //println!("K1: {:?}", k1_vector);
 
-    for (index, rk_object) in esail.rk_objects.iter().enumerate() {
 
-        let k1_velocity = k1_vector[index].1.clone();
 
-        let intermediate_velocity = 
-            rk_object.velocity.clone() + k1_velocity / 2.0;
 
-        // Because constant force for now:
-        let intermediate_acceleration = AccelerationVector::from_force(
-            //force.clone(), element_mass
-            force.clone() - restoring_forces[index].clone(), element_mass
-        );
+        // K2 ----------------------------------------------------------------------
 
-        k2_vector.push((
-            PositionVector::from_velocity(
-                intermediate_velocity, timestep / 2.0
-            ), 
-            VelocityVector::from_acceleration(
-                intermediate_acceleration, timestep / 2.0
-            ), 
-        ));
-    }
+        let mut k2_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
-    //println!("K2: {:?}", k2_vector);
+        for (index, rk_object) in esail.rk_objects.iter().enumerate() {
 
+            let k1_velocity = k1_vector[index].1.clone();
 
+            let intermediate_velocity = 
+                rk_object.velocity.clone() + k1_velocity / 2.0;
 
+            // Because constant force for now:
+            let intermediate_acceleration = AccelerationVector::from_force(
+                //force.clone(), element_mass
+                force.clone() - restoring_forces[index].clone(), element_mass
+            );
 
-    // K3 ----------------------------------------------------------------------
+            k2_vector.push((
+                PositionVector::from_velocity(
+                    intermediate_velocity, timestep / 2.0
+                ), 
+                VelocityVector::from_acceleration(
+                    intermediate_acceleration, timestep / 2.0
+                ), 
+            ));
+        }
 
-    let mut k3_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
+        //println!("K2: {:?}", k2_vector);
 
-    for (index, rk_object) in esail.rk_objects.iter().enumerate() {
-        
-        let k2_velocity = k2_vector[index].1.clone();
 
-        let intermediate_velocity = 
-            rk_object.velocity.clone() + k2_velocity / 2.0;
 
-        // Because constant force for now:
-        let intermediate_acceleration = AccelerationVector::from_force(
-            //force.clone(), element_mass
-            force.clone() - restoring_forces[index].clone(), element_mass
-        );
 
-        k3_vector.push((
-            PositionVector::from_velocity(
-                intermediate_velocity, timestep / 2.0
-            ), 
-            VelocityVector::from_acceleration(
-                intermediate_acceleration, timestep / 2.0
-            ), 
-        ));
-    }
+        // K3 ----------------------------------------------------------------------
 
+        let mut k3_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
+        for (index, rk_object) in esail.rk_objects.iter().enumerate() {
+            
+            let k2_velocity = k2_vector[index].1.clone();
 
+            let intermediate_velocity = 
+                rk_object.velocity.clone() + k2_velocity / 2.0;
 
-    // K4 ----------------------------------------------------------------------
+            // Because constant force for now:
+            let intermediate_acceleration = AccelerationVector::from_force(
+                //force.clone(), element_mass
+                force.clone() - restoring_forces[index].clone(), element_mass
+            );
 
-    let mut k4_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
+            k3_vector.push((
+                PositionVector::from_velocity(
+                    intermediate_velocity, timestep / 2.0
+                ), 
+                VelocityVector::from_acceleration(
+                    intermediate_acceleration, timestep / 2.0
+                ), 
+            ));
+        }
 
-    for (index, rk_object) in esail.rk_objects.iter().enumerate() {
-        
-        let k3_velocity = k3_vector[index].1.clone();
 
-        let intermediate_velocity =
-            rk_object.velocity.clone() + k3_velocity * 2.0; // Want full step now
 
-        // Because constant force for now:
-        let intermediate_acceleration = AccelerationVector::from_force(
-            //force.clone(), element_mass
-            force.clone() - restoring_forces[index].clone(), element_mass
-        );
 
-        k4_vector.push((
-            PositionVector::from_velocity(
-                intermediate_velocity, timestep
-            ), 
-            VelocityVector::from_acceleration(
-                intermediate_acceleration, timestep
-            ), 
-        ));
-    }
+        // K4 ----------------------------------------------------------------------
 
+        let mut k4_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
+        for (index, rk_object) in esail.rk_objects.iter().enumerate() {
+            
+            let k3_velocity = k3_vector[index].1.clone();
 
+            let intermediate_velocity =
+                rk_object.velocity.clone() + k3_velocity * 2.0; // Want full step now
 
-    // Final step --------------------------------------------------------------
+            // Because constant force for now:
+            let intermediate_acceleration = AccelerationVector::from_force(
+                //force.clone(), element_mass
+                force.clone() - restoring_forces[index].clone(), element_mass
+            );
 
-    for (index, rk_object) in esail.rk_objects.iter_mut().enumerate() {
+            k4_vector.push((
+                PositionVector::from_velocity(
+                    intermediate_velocity, timestep
+                ), 
+                VelocityVector::from_acceleration(
+                    intermediate_acceleration, timestep
+                ), 
+            ));
+        }
 
-        // Hack to avoid moving the first element (although its k's are being
-        // calculated above)
 
-        if index == 0 { continue };
 
 
-        let (k1_position, k1_velocity) = k1_vector[index].clone();
-        let (k2_position, k2_velocity) = k2_vector[index].clone();
-        let (k3_position, k3_velocity) = k3_vector[index].clone();
-        let (k4_position, k4_velocity) = k4_vector[index].clone();
+        // Final step --------------------------------------------------------------
 
-        let position_increment = (
-            k1_position + k2_position * 2.0 + k3_position * 2.0 + k4_position
-        ) / 6.0;
+        for (index, rk_object) in esail.rk_objects.iter_mut().enumerate() {
 
-        let velocity_increment = (
-            k1_velocity + k2_velocity * 2.0 + k3_velocity * 2.0 + k4_velocity
-        ) / 6.0;
+            // Hack to avoid moving the first element (although its k's are being
+            // calculated above)
 
-        rk_object.position += position_increment;
-        rk_object.velocity += velocity_increment;
+            if index == 0 { continue };
 
-        //println!("rk_object.position = {:?}", rk_object.position);
-        //println!("rk_object.velocity = {:?}", rk_object.velocity);
-    }
 
+            let (k1_position, k1_velocity) = k1_vector[index].clone();
+            let (k2_position, k2_velocity) = k2_vector[index].clone();
+            let (k3_position, k3_velocity) = k3_vector[index].clone();
+            let (k4_position, k4_velocity) = k4_vector[index].clone();
 
+            let position_increment = (
+                k1_position + k2_position * 2.0 + k3_position * 2.0 + k4_position
+            ) / 6.0;
+
+            let velocity_increment = (
+                k1_velocity + k2_velocity * 2.0 + k3_velocity * 2.0 + k4_velocity
+            ) / 6.0;
+
+            rk_object.position += position_increment;
+            rk_object.velocity += velocity_increment;
+
+            //println!("rk_object.position = {:?}", rk_object.position);
+            //println!("rk_object.velocity = {:?}", rk_object.velocity);
+        }
+    //}
 }
