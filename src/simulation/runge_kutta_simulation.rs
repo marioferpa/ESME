@@ -28,23 +28,22 @@ pub fn runge_kutta_simulation (
     let mut esail = esail_query.single_mut();
 
     // TODO FIXME Use real values here
+    // TODO At least add the real force magnitude from the sail!!!! FIXME
     let element_mass = quantities::Mass::new::<mass::kilogram>(1.0);
     let force = ForceVector::from_direction(    // wind_force?
         quantities::Force::new::<force::newton>(0.00314),
         DVec3::new(0.0, 0.0, -1.0),
     );
 
-    // I probably used this temporarily? But now I need to use the correct time
-    // that passed? FIXME
-    //let timestep = quantities::Time::new::<second>(0.8); // Wait what?
     let timestep = quantities::Time::new::<second>(
-        time.delta_seconds() as f64 //+ sim_params.leftover_time 
+        time.delta_seconds() as f64
     );
 
 
 
 
     // Doesn't seem to change much, or anything?
+    // If I used it I would need to use a smaller timestep I guess?
     //for _ in 0..time::timestep_calculation(&time, &mut sim_params) {
 
 
@@ -72,15 +71,15 @@ pub fn runge_kutta_simulation (
                 distance_vector.clone().length(); 
 
 
-            // Made-up k value!!
-            // Small k -> balls separate too much
-            let force   = quantities::Force::new::<newton>(1.0);
+            // Made-up k value!! FIXME
+            let force   = quantities::Force::new::<newton>(2.0);
             let length  = quantities::Length::new::<meter>(1.0);
             let k = force / length;
 
 
-            // Damping test (made-up values as well!!)
-            let force       = quantities::Force::new::<newton>(0.01);
+            // Damping test (made-up values as well!!) FIXME
+            //let force       = quantities::Force::new::<newton>(0.0001);
+            let force       = quantities::Force::new::<newton>(0.0);
             let velocity    = 
                 quantities::Velocity::new::<meter_per_second>(1.0);
             let c = force / velocity;
@@ -88,22 +87,32 @@ pub fn runge_kutta_simulation (
 
             // FIXME The elongation can be positive or negative, but as it
             // stands the damping value is always negative, so it sometimes
-            // contributes to make the system stretch!
+            // contributes to make the system stretch!?
 
             // At least I need to find the velocity along the line betweeen the
             // two points A along_direction() method on VelocityVector perhaps?
 
-            let _delet = rk_object.velocity.project_onto(&distance_vector); 
-
             // Am I doing this correctly? I want the derivative of the
             // elongation, I'm using the velocity of the particle instead?
 
-            // How is it failing even if I make c zero (by making its force
-            // 0)???
+            // I seriously can't understand how this is different with no
+            // restoring force and with a restoring force of zero
+
+            if index == 2 {
+
+                // Project onto is a scalar! I don't think I've had that into
+                // account lately?
+                // And it is always positive!
+                println!(
+                    "Velocity projection: {:?}", 
+                    rk_object.velocity.project_onto(&distance_vector)
+                );
+            }
 
             let restoring_force = ForceVector::from_direction(
-                elongation * k,
+                elongation * k  // Hooke's law
                 //+ rk_object.velocity.project_onto(&distance_vector) * c, 
+                ,
                 distance_vector.to_unit_vector()
             );
 

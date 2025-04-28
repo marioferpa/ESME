@@ -27,25 +27,21 @@ impl VelocityVector {
         // Now modulus is self.modulus_m_per_s times cosine of angle, and vector
         // would be that times direction
 
+        // Isn't this what I should be returning?
         let projected_v_scalar = self.clone().modulus() * angle_radians.cos();
 
-        let projected_velocity = VelocityVector::from_direction(
-            projected_v_scalar,
-            direction_unit,
-        );
 
-        // Everything breaks, and projected velocity is NaN. I don't know if
-        // it's NaN because it breaks or if it breaks because it's NaN
-        //
-        // It's NaN as a consequence, because if I don't use it in the restoring
-        // force the projected velocity seems alright (in the correct order of
-        // magnitude at least)
+        //let projected_velocity = VelocityVector::from_direction(
+        //    projected_v_scalar,
+        //    direction_unit,
+        //);
 
-        println!("");
-        println!("Velocity: {:?}", self.0);
-        println!("Projected velocity: {:?}", projected_velocity);
+        //// I think this shouldn't always be positive, but the modulus is doing
+        //// exactly that
 
-        return projected_velocity.modulus();
+        //return projected_velocity.modulus();
+
+        return projected_v_scalar
     }
 
 
