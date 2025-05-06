@@ -35,22 +35,27 @@ pub fn runge_kutta_simulation (
         DVec3::new(0.0, 0.0, -1.0),
     );
 
+
+    let steps = time::timestep_calculation(&time, &mut sim_params);
+
     let timestep = quantities::Time::new::<second>(
-        time.delta_seconds() as f64
+        time.delta_seconds() as f64 / (steps as f64 + 1.0)
     );
 
 
+    for step in 0..steps {
 
-
-    // Doesn't seem to change much, or anything?
-    // If I used it I would need to use a smaller timestep I guess?
-    //for _ in 0..time::timestep_calculation(&time, &mut sim_params) {
-
+        // Most times it's just one timestep, but I've seen two some times
+        //println!("Timestep {step}");
+        //println!("Elapsed time: {}", time.delta_seconds());
 
         let mut restoring_forces: Vec<ForceVector> = Vec::new();
 
 
         for (index, rk_object) in esail.rk_objects.iter().enumerate() {
+
+
+            // First element doesn't move
 
             if index == 0 { 
 
@@ -62,6 +67,8 @@ pub fn runge_kutta_simulation (
                 continue 
             };
 
+
+
             let distance_vector = PositionVector::from_a_to_b(
                 rk_object.position.clone(),
                 esail.rk_objects[index-1].position.clone()
@@ -70,16 +77,20 @@ pub fn runge_kutta_simulation (
             let elongation = spacecraft_parameters.segment_length() -
                 distance_vector.clone().length(); 
 
+            if index == 2 {
+
+                println!("Elongation of second element: {:?}", elongation);
+            }
+
 
             // Made-up k value!! FIXME
-            let force   = quantities::Force::new::<newton>(2.0);
+            let force   = quantities::Force::new::<newton>(1.0);
             let length  = quantities::Length::new::<meter>(1.0);
-            let k = force / length;
+            let k = force / length * 10.0;
 
 
             // Damping test (made-up values as well!!) FIXME
-            //let force       = quantities::Force::new::<newton>(0.0001);
-            let force       = quantities::Force::new::<newton>(0.0);
+            let force       = quantities::Force::new::<newton>(0.0001);
             let velocity    = 
                 quantities::Velocity::new::<meter_per_second>(1.0);
             let c = force / velocity;
@@ -100,24 +111,20 @@ pub fn runge_kutta_simulation (
 
             if index == 2 {
 
-                // Project onto is a scalar! I don't think I've had that into
-                // account lately?
-                // And it is always positive!
                 println!(
-                    "Velocity projection: {:?}", 
-                    rk_object.velocity.project_onto(&distance_vector)
+                    "Velocity projection times c: {:?}", 
+                    rk_object.velocity.project_onto(&distance_vector) * c
                 );
             }
 
             let restoring_force = ForceVector::from_direction(
                 elongation * k  // Hooke's law
-                //+ rk_object.velocity.project_onto(&distance_vector) * c, 
+                //+ rk_object.velocity.project_onto(&distance_vector) * c
                 ,
                 distance_vector.to_unit_vector()
             );
 
             //println!("Restoring force: {:?}", restoring_force);
-
 
             restoring_forces.push(restoring_force);
         }
@@ -129,7 +136,6 @@ pub fn runge_kutta_simulation (
 
         let mut k1_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
-        //for rk_object in esail.rk_objects.iter() {
         for (index, rk_object) in esail.rk_objects.iter().enumerate() {
 
             let velocity        = rk_object.velocity.clone();
@@ -149,7 +155,7 @@ pub fn runge_kutta_simulation (
 
 
 
-        // K2 ----------------------------------------------------------------------
+        // K2 ------------------------------------------------------------------
 
         let mut k2_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
@@ -270,5 +276,5 @@ pub fn runge_kutta_simulation (
             //println!("rk_object.position = {:?}", rk_object.position);
             //println!("rk_object.velocity = {:?}", rk_object.velocity);
         }
-    //}
+    }
 }
