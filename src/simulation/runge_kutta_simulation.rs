@@ -55,8 +55,8 @@ pub fn runge_kutta_simulation (
             .collect();
 
 
-        let restoring_forces = restoring_forces(
-            rk_positions, &spacecraft_parameters
+        let restoring_forces = calculate_restoring_forces(
+            rk_positions.clone(), &spacecraft_parameters
         );
 
         let mut k1_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
@@ -87,6 +87,27 @@ pub fn runge_kutta_simulation (
         // case)
 
         let mut k2_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
+
+        // Recalculating this, let's see if it does something
+        // Is it a tiny bit better maybe?
+
+        let k1_positions: Vec<PositionVector> = k1_vector
+            .iter()
+            .map(|(pos, _vel)| pos.clone())
+            .collect();
+
+        let updated_positions: Vec<PositionVector> = rk_positions
+            .iter()
+            .zip(k1_positions.iter())
+            .map(|(a, b)| a.clone() + b.clone())
+            .collect();
+
+        let restoring_forces = calculate_restoring_forces(
+            //k1_positions, &spacecraft_parameters
+            updated_positions, &spacecraft_parameters
+        );
+
+
 
         for (index, rk_object) in esail.rk_objects.iter().enumerate() {
 
@@ -120,6 +141,22 @@ pub fn runge_kutta_simulation (
 
         // K3 ----------------------------------------------------------------------
 
+        let k2_positions: Vec<PositionVector> = k2_vector
+            .iter()
+            .map(|(pos, _vel)| pos.clone())
+            .collect();
+
+        let updated_positions: Vec<PositionVector> = rk_positions
+            .iter()
+            .zip(k2_positions.iter())
+            .map(|(a, b)| a.clone() + b.clone())
+            .collect();
+
+        let restoring_forces = calculate_restoring_forces(
+            updated_positions, &spacecraft_parameters
+        );
+
+
         let mut k3_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
         for (index, rk_object) in esail.rk_objects.iter().enumerate() {
@@ -149,6 +186,22 @@ pub fn runge_kutta_simulation (
 
 
         // K4 ----------------------------------------------------------------------
+
+        let k3_positions: Vec<PositionVector> = k3_vector
+            .iter()
+            .map(|(pos, _vel)| pos.clone())
+            .collect();
+
+        let updated_positions: Vec<PositionVector> = rk_positions
+            .iter()
+            .zip(k3_positions.iter())
+            .map(|(a, b)| a.clone() + b.clone())
+            .collect();
+
+        let restoring_forces = calculate_restoring_forces(
+            updated_positions, &spacecraft_parameters
+        );
+
 
         let mut k4_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
@@ -212,7 +265,7 @@ pub fn runge_kutta_simulation (
 
 
 
-fn restoring_forces (
+fn calculate_restoring_forces (
     rk_objects_positions:   Vec<PositionVector>,
     spacecraft_parameters:  &Res<spacecraft::SpacecraftParameters>,
 ) -> Vec<ForceVector> {
