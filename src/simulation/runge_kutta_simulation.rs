@@ -43,96 +43,21 @@ pub fn runge_kutta_simulation (
     );
 
 
+    // Most times it's just one timestep, but I've seen two some times
     for step in 0..steps {
-
-        // Most times it's just one timestep, but I've seen two some times
-        //println!("Timestep {step}");
-        //println!("Elapsed time: {}", time.delta_seconds());
-
-        let mut restoring_forces: Vec<ForceVector> = Vec::new();
-
-
-        for (index, rk_object) in esail.rk_objects.iter().enumerate() {
-
-
-            // First element doesn't move
-
-            if index == 0 { 
-
-                let zero_force =  quantities::Force::new::<newton>(0.0);
-                restoring_forces.push(
-                    ForceVector::new(zero_force, zero_force, zero_force)
-                );
-
-                continue 
-            };
-
-
-
-            let distance_vector = PositionVector::from_a_to_b(
-                rk_object.position.clone(),
-                esail.rk_objects[index-1].position.clone()
-            );
-
-            let elongation = spacecraft_parameters.segment_length() -
-                distance_vector.clone().length(); 
-
-            if index == 2 {
-
-                println!("Elongation of second element: {:?}", elongation);
-            }
-
-
-            // Made-up k value!! FIXME
-            let force   = quantities::Force::new::<newton>(1.0);
-            let length  = quantities::Length::new::<meter>(1.0);
-            let k = force / length * 10.0;
-
-
-            // Damping test (made-up values as well!!) FIXME
-            let force       = quantities::Force::new::<newton>(0.0001);
-            let velocity    = 
-                quantities::Velocity::new::<meter_per_second>(1.0);
-            let c = force / velocity;
-
-
-            // FIXME The elongation can be positive or negative, but as it
-            // stands the damping value is always negative, so it sometimes
-            // contributes to make the system stretch!?
-
-            // At least I need to find the velocity along the line betweeen the
-            // two points A along_direction() method on VelocityVector perhaps?
-
-            // Am I doing this correctly? I want the derivative of the
-            // elongation, I'm using the velocity of the particle instead?
-
-            // I seriously can't understand how this is different with no
-            // restoring force and with a restoring force of zero
-
-            if index == 2 {
-
-                println!(
-                    "Velocity projection times c: {:?}", 
-                    rk_object.velocity.project_onto(&distance_vector) * c
-                );
-            }
-
-            let restoring_force = ForceVector::from_direction(
-                elongation * k  // Hooke's law
-                //+ rk_object.velocity.project_onto(&distance_vector) * c
-                ,
-                distance_vector.to_unit_vector()
-            );
-
-            //println!("Restoring force: {:?}", restoring_force);
-
-            restoring_forces.push(restoring_force);
-        }
-
-
 
 
         // K1 ------------------------------------------------------------------
+
+        let rk_positions: Vec<PositionVector> = esail.rk_objects
+            .iter()
+            .map(|obj| obj.position.clone())
+            .collect();
+
+
+        let restoring_forces = restoring_forces(
+            rk_positions, &spacecraft_parameters
+        );
 
         let mut k1_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
@@ -140,7 +65,6 @@ pub fn runge_kutta_simulation (
 
             let velocity        = rk_object.velocity.clone();
             let acceleration    = AccelerationVector::from_force(
-                //force.clone(), element_mass
                 force.clone() - restoring_forces[index].clone(), element_mass
             );
 
@@ -150,12 +74,17 @@ pub fn runge_kutta_simulation (
             ));
         }
 
-        //println!("K1: {:?}", k1_vector);
-
 
 
 
         // K2 ------------------------------------------------------------------
+
+        // Ok, now: according to ChatGPT I need to recalculate spring strength
+        // at every step. However I cannot use the esail's rk_objects, right?
+        // Because they haven't been updated yet? So how can I do it? 
+
+        // I need to do it using the intermediate positions (k1_vector in this
+        // case)
 
         let mut k2_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
@@ -168,7 +97,9 @@ pub fn runge_kutta_simulation (
 
             // Because constant force for now:
             let intermediate_acceleration = AccelerationVector::from_force(
-                //force.clone(), element_mass
+
+                // Is this restoring_forces part what geepetee is telling me to
+                // change on each k step?
                 force.clone() - restoring_forces[index].clone(), element_mass
             );
 
@@ -277,4 +208,62 @@ pub fn runge_kutta_simulation (
             //println!("rk_object.velocity = {:?}", rk_object.velocity);
         }
     }
+}
+
+
+
+fn restoring_forces (
+    rk_objects_positions:   Vec<PositionVector>,
+    spacecraft_parameters:  &Res<spacecraft::SpacecraftParameters>,
+) -> Vec<ForceVector> {
+    
+    let mut restoring_forces: Vec<ForceVector> = Vec::new();
+
+    for (index, rk_object_position) in rk_objects_positions.iter().enumerate() {
+
+        if index == 0 { 
+
+            // First element doesn't move
+
+            let zero_force =  quantities::Force::new::<newton>(0.0);
+            restoring_forces.push(
+                ForceVector::new(zero_force, zero_force, zero_force)
+            );
+
+            continue 
+        };
+
+
+        let distance_vector = PositionVector::from_a_to_b(
+            rk_object_position.clone(),
+            rk_objects_positions[index-1].clone()
+        );
+
+        let elongation = spacecraft_parameters.segment_length() -
+            distance_vector.clone().length(); 
+
+        // Made-up k value!! FIXME
+        let force   = quantities::Force::new::<newton>(1.0);
+        let length  = quantities::Length::new::<meter>(1.0);
+        let k = force / length * 10.0;
+
+        // Damping test (made-up values as well!!)
+        //let force       = quantities::Force::new::<newton>(0.0001);
+        //let velocity    = 
+        //    quantities::Velocity::new::<meter_per_second>(1.0);
+        //let c = force / velocity;
+
+        let restoring_force = ForceVector::from_direction(
+            elongation * k  // Hooke's law
+            //+ rk_object.velocity.project_onto(&distance_vector) * c
+            ,
+            distance_vector.to_unit_vector()
+        );
+
+        //println!("Restoring force: {:?}", restoring_force);
+
+        restoring_forces.push(restoring_force);
+    }
+
+    return restoring_forces
 }
