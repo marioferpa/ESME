@@ -29,9 +29,11 @@ pub fn runge_kutta_simulation (
 
     // TODO FIXME Use real values here
     // TODO At least add the real force magnitude from the sail!!!! FIXME
-    let element_mass = quantities::Mass::new::<mass::kilogram>(1.0);
+
+    let element_mass = quantities::Mass::new::<mass::kilogram>(0.01); //(1.0);
     let force = ForceVector::from_direction(    // wind_force?
-        quantities::Force::new::<force::newton>(0.00314),
+        quantities::Force::new::<force::newton>(0.000314),
+        //quantities::Force::new::<force::newton>(0.0),   // TESTING
         DVec3::new(0.0, 0.0, -1.0),
     );
 
@@ -298,13 +300,13 @@ fn calculate_restoring_forces (
         // Made-up k value!! FIXME
         let force   = quantities::Force::new::<newton>(1.0);
         let length  = quantities::Length::new::<meter>(1.0);
-        let k = force / length * 10.0;
+        let k = force / length * 0.25;  // 50 seems better than 10, still goes wild 
 
         // Damping test (made-up values as well!!)
-        //let force       = quantities::Force::new::<newton>(0.0001);
-        //let velocity    = 
-        //    quantities::Velocity::new::<meter_per_second>(1.0);
-        //let c = force / velocity;
+        let force       = quantities::Force::new::<newton>(0.0001);
+        let velocity    = 
+            quantities::Velocity::new::<meter_per_second>(1.0);
+        let c = force / velocity;
 
         let restoring_force = ForceVector::from_direction(
             elongation * k  // Hooke's law

@@ -23,5 +23,4 @@ impl RungeKuttaObject {
             velocity:   VelocityVector::new(zero_v, zero_v, zero_v)
         }
     }
-
 }
