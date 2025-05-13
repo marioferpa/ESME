@@ -32,7 +32,7 @@ pub fn runge_kutta_simulation (
 
     let element_mass = quantities::Mass::new::<mass::kilogram>(0.01); //(1.0);
     let force = ForceVector::from_direction(    // wind_force?
-        quantities::Force::new::<force::newton>(0.000314),
+        quantities::Force::new::<force::newton>(0.0000314),
         //quantities::Force::new::<force::newton>(0.0),   // TESTING
         DVec3::new(0.0, 0.0, -1.0),
     );
@@ -45,20 +45,26 @@ pub fn runge_kutta_simulation (
     );
 
 
-    // Most times it's just one timestep, but I've seen two some times
     for step in 0..steps {
 
 
         // K1 ------------------------------------------------------------------
 
-        let rk_positions: Vec<PositionVector> = esail.rk_objects
-            .iter()
-            .map(|obj| obj.position.clone())
-            .collect();
+        //let rk_positions: Vec<PositionVector> = esail.rk_objects
+        //    .iter()
+        //    .map(|obj| obj.position.clone())
+        //    .collect();
+
+        let (rk_positions, rk_velocities): 
+            (Vec<PositionVector>, Vec<VelocityVector>) = esail.rk_objects
+                .iter()
+                .map(|obj| (obj.position.clone(), obj.velocity.clone()))
+                .unzip();
 
 
         let restoring_forces = calculate_restoring_forces(
-            rk_positions.clone(), &spacecraft_parameters
+            //rk_positions.clone(), &spacecraft_parameters
+            rk_positions.clone(), rk_velocities.clone(), &spacecraft_parameters
         );
 
         let mut k1_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
@@ -93,10 +99,17 @@ pub fn runge_kutta_simulation (
         // Recalculating this, let's see if it does something
         // Is it a tiny bit better maybe?
 
-        let k1_positions: Vec<PositionVector> = k1_vector
-            .iter()
-            .map(|(pos, _vel)| pos.clone())
-            .collect();
+        //let k1_positions: Vec<PositionVector> = k1_vector
+        //    .iter()
+        //    .map(|(pos, _vel)| pos.clone())
+        //    .collect();
+
+        let (k1_positions, k1_velocities): 
+            (Vec<PositionVector>, Vec<VelocityVector>) = k1_vector
+                .iter()
+                .map(|vec| (vec.0.clone(), vec.1.clone()))
+                .unzip();
+
 
         let updated_positions: Vec<PositionVector> = rk_positions
             .iter()
@@ -105,8 +118,7 @@ pub fn runge_kutta_simulation (
             .collect();
 
         let restoring_forces = calculate_restoring_forces(
-            //k1_positions, &spacecraft_parameters
-            updated_positions, &spacecraft_parameters
+            updated_positions, rk_velocities.clone(), &spacecraft_parameters
         );
 
 
@@ -143,11 +155,18 @@ pub fn runge_kutta_simulation (
 
         // K3 ----------------------------------------------------------------------
 
-        let k2_positions: Vec<PositionVector> = k2_vector
-            .iter()
-            .map(|(pos, _vel)| pos.clone())
-            .collect();
+        //let k2_positions: Vec<PositionVector> = k2_vector
+        //    .iter()
+        //    .map(|(pos, _vel)| pos.clone())
+        //    .collect();
 
+        let (k2_positions, k2_velocities): 
+            (Vec<PositionVector>, Vec<VelocityVector>) = k2_vector
+                .iter()
+                .map(|vec| (vec.0.clone(), vec.1.clone()))
+                .unzip();
+        
+        
         let updated_positions: Vec<PositionVector> = rk_positions
             .iter()
             .zip(k2_positions.iter())
@@ -155,7 +174,8 @@ pub fn runge_kutta_simulation (
             .collect();
 
         let restoring_forces = calculate_restoring_forces(
-            updated_positions, &spacecraft_parameters
+            //updated_positions, &spacecraft_parameters
+            updated_positions, rk_velocities.clone(), &spacecraft_parameters
         );
 
 
@@ -189,10 +209,16 @@ pub fn runge_kutta_simulation (
 
         // K4 ----------------------------------------------------------------------
 
-        let k3_positions: Vec<PositionVector> = k3_vector
-            .iter()
-            .map(|(pos, _vel)| pos.clone())
-            .collect();
+        //let k3_positions: Vec<PositionVector> = k3_vector
+        //    .iter()
+        //    .map(|(pos, _vel)| pos.clone())
+        //    .collect();
+
+        let (k3_positions, k3_velocities): 
+            (Vec<PositionVector>, Vec<VelocityVector>) = k3_vector
+                .iter()
+                .map(|vec| (vec.0.clone(), vec.1.clone()))
+                .unzip();
 
         let updated_positions: Vec<PositionVector> = rk_positions
             .iter()
@@ -201,7 +227,8 @@ pub fn runge_kutta_simulation (
             .collect();
 
         let restoring_forces = calculate_restoring_forces(
-            updated_positions, &spacecraft_parameters
+            //updated_positions, &spacecraft_parameters
+            updated_positions, rk_velocities.clone(), &spacecraft_parameters
         );
 
 
@@ -269,8 +296,19 @@ pub fn runge_kutta_simulation (
 
 fn calculate_restoring_forces (
     rk_objects_positions:   Vec<PositionVector>,
+    rk_objects_velocities:  Vec<VelocityVector>,
     spacecraft_parameters:  &Res<spacecraft::SpacecraftParameters>,
 ) -> Vec<ForceVector> {
+
+    // I think I'm treating elongation derivative and velocity as the same
+    // thing, is it the same?
+    // No, I'm trying to project velocity onto a vector and calling that
+    // elongation derivative. But maybe I should check the variation of the
+    // elongation itself, how however, storing all the previous elongations
+    // somewhere?
+
+    // I have the Vec<VelocityVector> now, but I guess I have to update it on
+    // every step as well? TODO Try that before deactivating it again
     
     let mut restoring_forces: Vec<ForceVector> = Vec::new();
 
@@ -303,14 +341,16 @@ fn calculate_restoring_forces (
         let k = force / length * 0.25;  // 50 seems better than 10, still goes wild 
 
         // Damping test (made-up values as well!!)
-        let force       = quantities::Force::new::<newton>(0.0001);
-        let velocity    = 
-            quantities::Velocity::new::<meter_per_second>(1.0);
-        let c = force / velocity;
+        // Keeps exploding...
+
+        //let force       = quantities::Force::new::<newton>(0.0001);
+        //let velocity    = 
+        //    quantities::Velocity::new::<meter_per_second>(1.0);
+        //let c = force / velocity;
 
         let restoring_force = ForceVector::from_direction(
             elongation * k  // Hooke's law
-            //+ rk_object.velocity.project_onto(&distance_vector) * c
+            //+ rk_objects_velocities[index].project_onto(&distance_vector) * c
             ,
             distance_vector.to_unit_vector()
         );

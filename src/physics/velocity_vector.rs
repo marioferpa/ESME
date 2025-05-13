@@ -21,27 +21,16 @@ impl VelocityVector {
         let velocity_unit = self.to_unit_vector();
         let direction_unit = direction.to_unit_vector();
 
-        //let angle_radians = velocity_unit.angle_between(direction_unit);
-        let angle_radians = direction_unit.angle_between(velocity_unit);
+        //let angle_radians = direction_unit.angle_between(velocity_unit);
+        //let projected_v_scalar = self.clone().modulus() * angle_radians.cos();
 
-        // Now modulus is self.modulus_m_per_s times cosine of angle, and vector
-        // would be that times direction
-
-        // Isn't this what I should be returning?
-        let projected_v_scalar = self.clone().modulus() * angle_radians.cos();
+        //return projected_v_scalar
 
 
-        //let projected_velocity = VelocityVector::from_direction(
-        //    projected_v_scalar,
-        //    direction_unit,
-        //);
+        // ChatGPT suggested alternative
+        let cosine = velocity_unit.dot(direction_unit);
 
-        //// I think this shouldn't always be positive, but the modulus is doing
-        //// exactly that
-
-        //return projected_velocity.modulus();
-
-        return projected_v_scalar
+        return self.clone().modulus() * cosine
     }
 
 
