@@ -8,7 +8,7 @@ use uom::si::length::meter;
 use uom::si::time::second;
 use uom::si::velocity::meter_per_second;
 
-use crate::{ physics, resources, spacecraft, time, };
+use crate::{ physics, resources, solar_wind, spacecraft, time, };
 
 use physics::acceleration_vector::AccelerationVector;
 use physics::force_vector::ForceVector;
@@ -25,17 +25,27 @@ pub fn runge_kutta_simulation (
     mut esail_query:        Query<&mut spacecraft::esail::ESail>,
     mut sim_params:         ResMut<resources::SimulationParameters>,
     spacecraft_parameters:  Res<spacecraft::SpacecraftParameters>,
+    solar_wind:             Res<solar_wind::SolarWind>,
     time:                   Res<Time>, 
 ) {
 
     let mut esail = esail_query.single_mut();
 
-    // Fictional values for now, update
+    let coulomb_force_magnitude = 
+        super::verlet_simulation::coulomb_force_per_meter(
+            &solar_wind, &spacecraft_parameters
+        ) * spacecraft_parameters.segment_length();
+
+
+    // Fictional, update TODO
     let element_mass = quantities::Mass::new::<mass::kilogram>(0.01); //(1.0);
+
     let wind_force = ForceVector::from_direction(
-        quantities::Force::new::<force::newton>(0.0000314),
-        DVec3::new(0.0, 0.0, -1.0),
-    );
+        coulomb_force_magnitude, 
+        solar_wind.direction
+    ); 
+
+    println!("Wind force: {:?}", wind_force);
 
 
     let steps = time::timestep_calculation(&time, &mut sim_params);
@@ -316,12 +326,13 @@ fn calculate_restoring_forces (
         let elongation = (spacecraft_parameters.segment_length() - 
             distance_vector.clone().length()).min(quantities::Length::new::<meter>(0.0));
 
-        println!("Elongation: {:?}", elongation);
+        //println!("Elongation: {:?}", elongation);
 
         // Made-up k value!! FIXME
         let force   = quantities::Force::new::<newton>(1.0);
         let length  = quantities::Length::new::<meter>(1.0);
         let k = force / length * 0.15;
+
 
         // Damping test (made-up values as well!!)
         // Keeps exploding...

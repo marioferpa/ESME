@@ -5,7 +5,7 @@ use crate::{ resources, solar_wind, spacecraft };
 
 use uom::si::*;
 
-const MAX_VOLTAGE:  f64 = 30.0e3;   // Volts
+const MAX_VOLTAGE:  f64 = 100.0e3;   // Volts
 const MAX_RPM:      f64 = 25.0;      // rpm
 
 pub struct GUIPlugin;
