@@ -23,7 +23,7 @@ pub struct ESail {
     pub elements:   Vec<VerletObject>,  
 
     // Test
-    pub rk_objects:    Vec<physics::runge_kutta_object::RungeKuttaObject>,
+    pub rk_objects: Vec<RungeKuttaObject>,
 }
 
 impl ESail {

@@ -15,7 +15,10 @@ use physics::force_vector::ForceVector;
 use physics::position_vector::PositionVector;
 use physics::velocity_vector::VelocityVector;
 
-// https://chatgpt.com/share/67add64f-76fc-800e-8cd8-a4261dee2ed3
+
+// Problem now is (without damping): The elements that are far from the pivot
+// point take a long time to start moving, so longer space to cover, they reach
+// a high velocity and then they have a lot of inertia, so they overshoot.
 
 
 pub fn runge_kutta_simulation (
@@ -27,13 +30,10 @@ pub fn runge_kutta_simulation (
 
     let mut esail = esail_query.single_mut();
 
-    // TODO FIXME Use real values here
-    // TODO At least add the real force magnitude from the sail!!!! FIXME
-
+    // Fictional values for now, update
     let element_mass = quantities::Mass::new::<mass::kilogram>(0.01); //(1.0);
-    let force = ForceVector::from_direction(    // wind_force?
+    let wind_force = ForceVector::from_direction(
         quantities::Force::new::<force::newton>(0.0000314),
-        //quantities::Force::new::<force::newton>(0.0),   // TESTING
         DVec3::new(0.0, 0.0, -1.0),
     );
 
@@ -50,10 +50,8 @@ pub fn runge_kutta_simulation (
 
         // K1 ------------------------------------------------------------------
 
-        //let rk_positions: Vec<PositionVector> = esail.rk_objects
-        //    .iter()
-        //    .map(|obj| obj.position.clone())
-        //    .collect();
+        // Apart from the restoring_forces function, I'd say K1 is pretty
+        // straigh-forward
 
         let (rk_positions, rk_velocities): 
             (Vec<PositionVector>, Vec<VelocityVector>) = esail.rk_objects
@@ -63,17 +61,18 @@ pub fn runge_kutta_simulation (
 
 
         let restoring_forces = calculate_restoring_forces(
-            //rk_positions.clone(), &spacecraft_parameters
             rk_positions.clone(), rk_velocities.clone(), &spacecraft_parameters
         );
+
 
         let mut k1_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
         for (index, rk_object) in esail.rk_objects.iter().enumerate() {
 
             let velocity        = rk_object.velocity.clone();
+
             let acceleration    = AccelerationVector::from_force(
-                force.clone() - restoring_forces[index].clone(), element_mass
+                wind_force.clone() - restoring_forces[index].clone(), element_mass
             );
 
             k1_vector.push((
@@ -87,22 +86,10 @@ pub fn runge_kutta_simulation (
 
         // K2 ------------------------------------------------------------------
 
-        // Ok, now: according to ChatGPT I need to recalculate spring strength
-        // at every step. However I cannot use the esail's rk_objects, right?
-        // Because they haven't been updated yet? So how can I do it? 
 
-        // I need to do it using the intermediate positions (k1_vector in this
-        // case)
 
         let mut k2_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
-        // Recalculating this, let's see if it does something
-        // Is it a tiny bit better maybe?
-
-        //let k1_positions: Vec<PositionVector> = k1_vector
-        //    .iter()
-        //    .map(|(pos, _vel)| pos.clone())
-        //    .collect();
 
         let (k1_positions, k1_velocities): 
             (Vec<PositionVector>, Vec<VelocityVector>) = k1_vector
@@ -117,6 +104,7 @@ pub fn runge_kutta_simulation (
             .map(|(a, b)| a.clone() + b.clone())
             .collect();
 
+
         let restoring_forces = calculate_restoring_forces(
             updated_positions, rk_velocities.clone(), &spacecraft_parameters
         );
@@ -130,12 +118,10 @@ pub fn runge_kutta_simulation (
             let intermediate_velocity = 
                 rk_object.velocity.clone() + k1_velocity / 2.0;
 
-            // Because constant force for now:
-            let intermediate_acceleration = AccelerationVector::from_force(
-
-                // Is this restoring_forces part what geepetee is telling me to
-                // change on each k step?
-                force.clone() - restoring_forces[index].clone(), element_mass
+            let intermediate_acceleration = 
+                AccelerationVector::from_force(
+                    wind_force.clone() - restoring_forces[index].clone(), 
+                    element_mass
             );
 
             k2_vector.push((
@@ -153,7 +139,7 @@ pub fn runge_kutta_simulation (
 
 
 
-        // K3 ----------------------------------------------------------------------
+        // K3 ------------------------------------------------------------------
 
         //let k2_positions: Vec<PositionVector> = k2_vector
         //    .iter()
@@ -190,8 +176,8 @@ pub fn runge_kutta_simulation (
 
             // Because constant force for now:
             let intermediate_acceleration = AccelerationVector::from_force(
-                //force.clone(), element_mass
-                force.clone() - restoring_forces[index].clone(), element_mass
+                //wind_force.clone(), element_mass
+                wind_force.clone() - restoring_forces[index].clone(), element_mass
             );
 
             k3_vector.push((
@@ -243,8 +229,8 @@ pub fn runge_kutta_simulation (
 
             // Because constant force for now:
             let intermediate_acceleration = AccelerationVector::from_force(
-                //force.clone(), element_mass
-                force.clone() - restoring_forces[index].clone(), element_mass
+                //wind_force.clone(), element_mass
+                wind_force.clone() - restoring_forces[index].clone(), element_mass
             );
 
             k4_vector.push((
@@ -264,9 +250,7 @@ pub fn runge_kutta_simulation (
 
         for (index, rk_object) in esail.rk_objects.iter_mut().enumerate() {
 
-            // Hack to avoid moving the first element (although its k's are being
-            // calculated above)
-
+            // First element is fixed
             if index == 0 { continue };
 
 
@@ -300,13 +284,6 @@ fn calculate_restoring_forces (
     spacecraft_parameters:  &Res<spacecraft::SpacecraftParameters>,
 ) -> Vec<ForceVector> {
 
-    // I think I'm treating elongation derivative and velocity as the same
-    // thing, is it the same?
-    // No, I'm trying to project velocity onto a vector and calling that
-    // elongation derivative. But maybe I should check the variation of the
-    // elongation itself, how however, storing all the previous elongations
-    // somewhere?
-
     // I have the Vec<VelocityVector> now, but I guess I have to update it on
     // every step as well? TODO Try that before deactivating it again
     
@@ -332,13 +309,19 @@ fn calculate_restoring_forces (
             rk_objects_positions[index-1].clone()
         );
 
-        let elongation = spacecraft_parameters.segment_length() -
-            distance_vector.clone().length(); 
+        //let elongation = spacecraft_parameters.segment_length() -
+        //    distance_vector.clone().length(); 
+
+        // Trying this advice from Pekka
+        let elongation = (spacecraft_parameters.segment_length() - 
+            distance_vector.clone().length()).min(quantities::Length::new::<meter>(0.0));
+
+        println!("Elongation: {:?}", elongation);
 
         // Made-up k value!! FIXME
         let force   = quantities::Force::new::<newton>(1.0);
         let length  = quantities::Length::new::<meter>(1.0);
-        let k = force / length * 0.25;  // 50 seems better than 10, still goes wild 
+        let k = force / length * 0.15;
 
         // Damping test (made-up values as well!!)
         // Keeps exploding...
