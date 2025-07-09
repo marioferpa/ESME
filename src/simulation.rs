@@ -53,9 +53,12 @@ fn rotate_body (
     body_transform.rotate_z(angle);
 
 
-    let first_verlet = &mut esail.elements[0];
+    //let first_verlet = &mut esail.elements[0];
+    let first_element = &mut esail.rk_objects[0];
 
-    let rotated_coordinates = first_verlet.current_coordinates.rotate_z(angle);
+    //let rotated_coordinates = first_verlet.current_coordinates.rotate_z(angle);
+    let rotated_position = first_element.position.rotate_z(angle);
 
-    first_verlet.update_coordinates(rotated_coordinates);
+    //first_verlet.update_coordinates(rotated_coordinates);
+    first_element.position = rotated_position;
 }

@@ -40,6 +40,10 @@ pub fn runge_kutta_simulation (
     // Fictional, update TODO
     let element_mass = quantities::Mass::new::<mass::kilogram>(0.01); //(1.0);
 
+    // Explodes if I use this one!
+    //let element_mass = spacecraft_parameters.segment_mass();
+    //println!("Segment mass: {:?}", element_mass);
+
     let wind_force = ForceVector::from_direction(
         coulomb_force_magnitude, 
         solar_wind.direction
