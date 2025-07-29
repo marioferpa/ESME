@@ -83,6 +83,13 @@ impl ForceVector {
         self.0[2]
     }
 
+    pub fn zero () -> Self {
+
+        let zero_force =  quantities::Force::new::<newton>(0.0);
+
+        return Self::new(zero_force, zero_force, zero_force)
+    }
+
 
 
     // Should be called "magnitude" maybe

@@ -18,6 +18,7 @@ use physics::velocity_vector::VelocityVector;
 // point take a long time to start moving, so longer space to cover, they reach
 // a high velocity and then they have a lot of inertia, so they overshoot.
 
+// TODO Why's the last element moving so fast, I don't get it
 
 pub fn runge_kutta_simulation (
     mut esail_query:        Query<&mut spacecraft::esail::ESail>,
@@ -36,10 +37,9 @@ pub fn runge_kutta_simulation (
 
 
     // Fictional, update TODO
-    let element_mass = quantities::Mass::new::<mass::kilogram>(0.01); //(1.0);
+    //let element_mass = quantities::Mass::new::<mass::kilogram>(0.01);
 
-    // Explodes if I use this one!
-    //let element_mass = spacecraft_parameters.segment_mass();
+    let element_mass = spacecraft_parameters.segment_mass();
     //println!("Segment mass: {:?}", element_mass);
 
     let wind_force = ForceVector::from_direction(
@@ -303,10 +303,7 @@ fn calculate_restoring_forces (
 
             // First element doesn't move
 
-            let zero_force =  quantities::Force::new::<newton>(0.0);
-            restoring_forces.push(
-                ForceVector::new(zero_force, zero_force, zero_force)
-            );
+            restoring_forces.push(ForceVector::zero());
 
             continue 
         };
