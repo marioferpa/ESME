@@ -4,6 +4,8 @@ use bevy::prelude::*;
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
+use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
+
 mod components;
 mod graphics;
 mod gui;
@@ -37,5 +39,8 @@ fn main() {
         .add_plugins(user_input::UserInputPlugin)
         .add_plugins(WorldInspectorPlugin::new())
 
+        .add_plugins(FrameTimeDiagnosticsPlugin::default())
+
         .run();
 }
+

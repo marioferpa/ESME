@@ -20,6 +20,9 @@ use physics::velocity_vector::VelocityVector;
 
 // TODO Why's the last element moving so fast, I don't get it
 
+// IDEA: put an fps counter somewhere. I'm reducing the simulation timestep, but
+// maybe there's a bottleneck there that I don't know about.
+
 pub fn runge_kutta_simulation (
     mut esail_query:        Query<&mut spacecraft::esail::ESail>,
     mut sim_params:         ResMut<resources::SimulationParameters>,
@@ -286,6 +289,12 @@ pub fn runge_kutta_simulation (
 
 
 
+
+// TODO Is there something wrong with the elongation calculation? Sometimes I
+// feel that elements stay put longer than they should and then move suddenly
+// FIXME
+
+
 fn calculate_restoring_forces (
     rk_objects_positions:   Vec<PositionVector>,
     _rk_objects_velocities:  Vec<VelocityVector>,    // Not used! A mistake?
@@ -300,8 +309,6 @@ fn calculate_restoring_forces (
     for (index, rk_object_position) in rk_objects_positions.iter().enumerate() {
 
         if index == 0 { 
-
-            // First element doesn't move
 
             restoring_forces.push(ForceVector::zero());
 
@@ -318,15 +325,18 @@ fn calculate_restoring_forces (
         //    distance_vector.clone().length(); 
 
         // Trying this advice from Pekka
-        let elongation = (spacecraft_parameters.segment_length() - 
-            distance_vector.clone().length()).min(quantities::Length::new::<meter>(0.0));
+        let elongation = (
+            spacecraft_parameters.segment_length() - 
+            distance_vector.clone().length()).min(quantities::Length::new::<meter>(0.0)
+        );
 
         //println!("Elongation: {:?}", elongation);
 
+
         // Made-up k value!! FIXME
-        let force   = quantities::Force::new::<newton>(1.0);
+        let force   = quantities::Force::new::<newton>(0.3);    // Better than 0.15 except for the last elements
         let length  = quantities::Length::new::<meter>(1.0);
-        let k = force / length * 0.15;
+        let k = force / length;
 
 
         // Damping test (made-up values as well!!)

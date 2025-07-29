@@ -26,9 +26,9 @@ impl Default for SimulationParameters {
     fn default() -> SimulationParameters {
         SimulationParameters {
             //iterations:         60,
-            iterations:         120,
+            iterations:         1000,
             //timestep:           quantities::Time::new::<time::second>(1.0/60.0),
-            timestep:           quantities::Time::new::<time::second>(1.0/500.0),
+            timestep:           quantities::Time::new::<time::second>(1.0/1000.0),
             leftover_time:      0.0,
             debug:              false,
             com_visibility:     false,

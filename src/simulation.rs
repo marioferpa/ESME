@@ -19,9 +19,7 @@ impl Plugin for SimulationPlugin {
             .add_systems(
                 Update, (
                     rotate_body
-                        //.before(verlet_simulation::verlet_simulation),   
                         .before(runge_kutta_simulation::runge_kutta_simulation),   
-                    //verlet_simulation::verlet_simulation,
                     runge_kutta_simulation::runge_kutta_simulation,
                     //voltage::update_esail_voltage // Not used anymore? TODO
                 )
