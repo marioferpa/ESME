@@ -22,14 +22,13 @@ pub struct SimulationParameters {
     pub pixels_per_meter:   i32,
 }
 
-// timestep and timestep_s? Which one am I using?
-
 impl Default for SimulationParameters {
     fn default() -> SimulationParameters {
         SimulationParameters {
-            iterations:         60,
-            //iterations:         1,
-            timestep:           quantities::Time::new::<time::second>(1.0/60.0),
+            //iterations:         60,
+            iterations:         120,
+            //timestep:           quantities::Time::new::<time::second>(1.0/60.0),
+            timestep:           quantities::Time::new::<time::second>(1.0/500.0),
             leftover_time:      0.0,
             debug:              false,
             com_visibility:     false,

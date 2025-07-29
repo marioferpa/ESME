@@ -5,7 +5,7 @@
 // Problem, maybe: The simulation seems to be idle for the two first frames
 
 use bevy::prelude::*;
-use crate::{ components, resources, spacecraft };
+use crate::{ components, resources, solar_wind, spacecraft };
 
 use uom::si::*;
 
@@ -68,4 +68,33 @@ fn update_center_of_mass (
 
     com_transform.translation.x = center_mass_x;
     com_transform.translation.y = center_mass_y;
+}
+
+
+#[allow(non_snake_case)]
+pub fn coulomb_force_per_meter( 
+    solar_wind:         &Res<solar_wind::SolarWind>, 
+    spacecraft:         &Res<spacecraft::SpacecraftParameters>,
+) -> uom::si::f64::RadiantExposure {    // Radiant exposure is [mass][time]⁻²
+
+    // First: r_0, distance at which the potential vanishes
+    let r0_numerator    = resources::EPSILON_0 * solar_wind.T_e;
+    let r0_denominator  = solar_wind.n_0 * resources::Q_E * resources::Q_E; 
+    let r_0             = 2.0 * (r0_numerator / r0_denominator).sqrt();    
+
+    // Second: r_s, stopping distance of protons
+    let exp_numerator   = resources::M_PROTON * solar_wind.velocity * solar_wind.velocity * (r_0 / spacecraft.tether_radius).ln();
+    let exp_denominator = resources::Q_E * spacecraft.tether_potential; 
+    let exp             = (exp_numerator / exp_denominator).exp();  
+    let rs_denominator  = (exp.value - 1.0).sqrt();
+    let r_s             = r_0 / rs_denominator;
+
+    // Third: force per unit length
+    let K = 3.09;   // Empirical, from Monte Carlo sims, I need to calculate this myself somehow.
+
+    let force_per_unit_length = r_s * K * resources::M_PROTON * solar_wind.n_0 * solar_wind.velocity * solar_wind.velocity;
+
+    //println!("{}: {:?}", "Force per meter", force_per_unit_length); 
+
+    return force_per_unit_length;
 }

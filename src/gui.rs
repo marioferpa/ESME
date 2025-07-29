@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts};
 
-use crate::{ resources, solar_wind, spacecraft };
+use crate::{ resources, settings, solar_wind, spacecraft };
 
 use uom::si::*;
 
@@ -38,26 +38,51 @@ impl GUIPlugin {
             ui.label("SPACECRAFT");
 
             ui.horizontal(|ui| { ui.label("Spacecraft rotation"); });
-            ui.add(egui::Slider::new(&mut spacecraft_parameters.rpm.value, 0.0..=MAX_RPM).text("rpm"));
+            ui.add(
+                egui::Slider::new(
+                    &mut spacecraft_parameters.rpm.value, 
+                    0.0..=MAX_RPM
+                ).text("rpm")
+            );
 
             ui.horizontal(|ui| { ui.label("Wire potential V_0"); });
-            ui.add(egui::Slider::new(&mut spacecraft_parameters.tether_potential.value, 0.0..=MAX_VOLTAGE).text("V"));
+            ui.add(
+                egui::Slider::new(
+                    &mut spacecraft_parameters.tether_potential.value, 
+                    0.0..=MAX_VOLTAGE
+                ).text("V")
+            );
 
-            ui.horizontal(|ui| {
-                ui.label( format!("Deployed wire length: {} m", spacecraft_parameters.tether_length.get::<length::meter>()));
-            });
+            //ui.horizontal(|ui| {
+            //    ui.label( format!("Deployed wire length: {} m", spacecraft_parameters.tether_length.get::<length::meter>()));
+            //});
+            ui.horizontal(|ui| { ui.label("Deployed wire length"); });
+            ui.add(
+                egui::Slider::new(
+                    &mut spacecraft_parameters.tether_length.value, 
+                    settings::TETHER_LENGTH_METERS..=10.0,
+                ).text("m")
+            );
 
             ui.separator();
 
             ui.label("SOLAR WIND");
             ui.horizontal(|ui| {
                 ui.label("Electron temperature (eV)");
-                // This works, shows it in the correct units, but why can't I mutate it now? 
-                ui.add(egui::DragValue::new(&mut solar_wind.T_e.get::<energy::electronvolt>()));
+                ui.add(
+                    egui::DragValue::new(
+                        &mut solar_wind.T_e.get::<energy::electronvolt>()
+                    )
+                );
             });
 
             ui.horizontal(|ui| {
-                ui.label(format!("Solar wind velocity: {} km/s", solar_wind.velocity.get::<velocity::kilometer_per_second>()));
+                ui.label(
+                    format!(
+                        "Solar wind velocity: {} km/s", 
+                            solar_wind.velocity.get::<velocity::kilometer_per_second>()
+                    )
+                );
             });
 
             ui.separator();

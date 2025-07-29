@@ -32,7 +32,7 @@ pub fn runge_kutta_simulation (
     let mut esail = esail_query.single_mut();
 
     let coulomb_force_magnitude = 
-        super::verlet_simulation::coulomb_force_per_meter(
+        physics::coulomb_force_per_meter(
             &solar_wind, &spacecraft_parameters
         ) * spacecraft_parameters.segment_length();
 
@@ -49,7 +49,7 @@ pub fn runge_kutta_simulation (
         solar_wind.direction
     ); 
 
-    println!("Wind force: {:?}", wind_force);
+    //println!("Wind force: {:?}", wind_force);
 
 
     let steps = time::timestep_calculation(&time, &mut sim_params);

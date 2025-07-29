@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use crate::spacecraft;
 
 mod runge_kutta_simulation;
-mod verlet_simulation;
+//mod verlet_simulation;    // TODO Delet
 mod voltage;
 
 pub struct SimulationPlugin;
@@ -19,8 +19,9 @@ impl Plugin for SimulationPlugin {
             .add_systems(
                 Update, (
                     rotate_body
-                        .before(verlet_simulation::verlet_simulation),   
-                    verlet_simulation::verlet_simulation,
+                        //.before(verlet_simulation::verlet_simulation),   
+                        .before(runge_kutta_simulation::runge_kutta_simulation),   
+                    //verlet_simulation::verlet_simulation,
                     runge_kutta_simulation::runge_kutta_simulation,
                     //voltage::update_esail_voltage // Not used anymore? TODO
                 )
