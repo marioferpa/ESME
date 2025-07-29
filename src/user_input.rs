@@ -27,7 +27,7 @@ impl Plugin for UserInputPlugin {
 fn handle_keys (
     keyboard:           Res<Input<KeyCode>>,
     mut esail_query:    Query<&mut spacecraft::esail::ESail>,
-    mut sail_event:     EventWriter<spacecraft::esail::SailExtended>,
+    sail_event:         EventWriter<spacecraft::esail::SailExtended>,
 ) {
 
     let mut esail = esail_query.single_mut();

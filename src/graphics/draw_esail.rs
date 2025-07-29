@@ -20,7 +20,7 @@ pub (super) fn update_esail_graphics (
 
     let esail = esail_query.single();
 
-    for event in sail_event.read() { // Should be only one
+    for _event in sail_event.read() { // Should be only one
 
         delete_balls(
             &mut commands,
@@ -71,8 +71,8 @@ pub (super) fn update_esail_graphics (
 
 
 fn delete_balls (
-    mut commands:           &mut Commands,
-    mut balls_resource:     &mut ResMut<super::Balls>,
+    commands:       &mut Commands,
+    balls_resource: &mut ResMut<super::Balls>,
 ) {
 
     for ball_entity in &balls_resource.0 {
@@ -82,11 +82,11 @@ fn delete_balls (
 }
 
 fn draw_esail (
-    mut balls_resource:     &mut ResMut<super::Balls>,
-    mut commands:           &mut Commands,
+    balls_resource:         &mut ResMut<super::Balls>,
+    commands:               &mut Commands,
     esail:                  &spacecraft::esail::ESail,
-    mut meshes:             &mut ResMut<Assets<Mesh>>,
-    mut materials:          &mut ResMut<Assets<StandardMaterial>>,
+    meshes:                 &mut ResMut<Assets<Mesh>>,
+    materials:              &mut ResMut<Assets<StandardMaterial>>,
     simulation_parameters:  &Res<resources::SimulationParameters>,
 ) {
 

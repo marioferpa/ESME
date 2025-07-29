@@ -7,8 +7,6 @@ use uom::si::f64 as quantities;
 
 use crate::{ physics };
 
-use physics::force_vector::ForceVector;
-use physics::verlet_object::VerletObject;
 use physics::position_vector::PositionVector;
 use physics::velocity_vector::VelocityVector;
 use physics::runge_kutta_object::RungeKuttaObject;

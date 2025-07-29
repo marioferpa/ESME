@@ -61,7 +61,7 @@ impl ForceVector {
         let force = uom::si::f64::Force::new::<newton>(10.0);
         let length = uom::si::f64::Length::new::<meter>(5.0);
 
-        let stiffness = force / length; // This is in N/m
+        let _stiffness = force / length; // This is in N/m
 
         return Self::empty()
     }

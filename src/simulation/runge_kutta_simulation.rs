@@ -1,12 +1,10 @@
 use bevy::prelude::*;
-use bevy::math::DVec3;
 
 use uom::si::*;
 use uom::si::f64 as quantities;
 use uom::si::force::newton;
 use uom::si::length::meter;
 use uom::si::time::second;
-use uom::si::velocity::meter_per_second;
 
 use crate::{ physics, resources, solar_wind, spacecraft, time, };
 
@@ -59,7 +57,7 @@ pub fn runge_kutta_simulation (
     );
 
 
-    for step in 0..steps {
+    for _step in 0..steps {
 
 
         // K1 ------------------------------------------------------------------
@@ -104,8 +102,9 @@ pub fn runge_kutta_simulation (
 
         let mut k2_vector: Vec<(PositionVector, VelocityVector)> = Vec::new();
 
+        // FIXME k1_velocities not used! Is that a mistake?
 
-        let (k1_positions, k1_velocities): 
+        let (k1_positions, _k1_velocities): 
             (Vec<PositionVector>, Vec<VelocityVector>) = k1_vector
                 .iter()
                 .map(|vec| (vec.0.clone(), vec.1.clone()))
@@ -155,12 +154,10 @@ pub fn runge_kutta_simulation (
 
         // K3 ------------------------------------------------------------------
 
-        //let k2_positions: Vec<PositionVector> = k2_vector
-        //    .iter()
-        //    .map(|(pos, _vel)| pos.clone())
-        //    .collect();
 
-        let (k2_positions, k2_velocities): 
+        // FIXME k2_velocities not used! Is that a mistake?
+
+        let (k2_positions, _k2_velocities): 
             (Vec<PositionVector>, Vec<VelocityVector>) = k2_vector
                 .iter()
                 .map(|vec| (vec.0.clone(), vec.1.clone()))
@@ -209,12 +206,9 @@ pub fn runge_kutta_simulation (
 
         // K4 ----------------------------------------------------------------------
 
-        //let k3_positions: Vec<PositionVector> = k3_vector
-        //    .iter()
-        //    .map(|(pos, _vel)| pos.clone())
-        //    .collect();
+        // FIXME k3_velocities not used! Is that a mistake?
 
-        let (k3_positions, k3_velocities): 
+        let (k3_positions, _k3_velocities): 
             (Vec<PositionVector>, Vec<VelocityVector>) = k3_vector
                 .iter()
                 .map(|vec| (vec.0.clone(), vec.1.clone()))
@@ -294,7 +288,7 @@ pub fn runge_kutta_simulation (
 
 fn calculate_restoring_forces (
     rk_objects_positions:   Vec<PositionVector>,
-    rk_objects_velocities:  Vec<VelocityVector>,
+    _rk_objects_velocities:  Vec<VelocityVector>,    // Not used! A mistake?
     spacecraft_parameters:  &Res<spacecraft::SpacecraftParameters>,
 ) -> Vec<ForceVector> {
 
