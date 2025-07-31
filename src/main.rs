@@ -37,7 +37,7 @@ fn main() {
         .add_plugins(simulation::SimulationPlugin)
         .add_plugins(spacecraft::SpacecraftPlugin)
         .add_plugins(user_input::UserInputPlugin)
-        .add_plugins(WorldInspectorPlugin::new())
+        //.add_plugins(WorldInspectorPlugin::new())
 
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
 
