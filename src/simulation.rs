@@ -20,6 +20,7 @@ impl Plugin for SimulationPlugin {
                 Update, (
                     rotate_body
                         .before(runge_kutta_simulation::runge_kutta_simulation),   
+                    // This is going at 60 fps!! Unacceptable!!
                     runge_kutta_simulation::runge_kutta_simulation,
                     //voltage::update_esail_voltage // Not used anymore? TODO
                 )

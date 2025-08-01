@@ -29,7 +29,21 @@ pub fn runge_kutta_simulation (
     spacecraft_parameters:  Res<spacecraft::SpacecraftParameters>,
     solar_wind:             Res<solar_wind::SolarWind>,
     time:                   Res<Time>, 
+
+    // Test
+    mut last_run:           Local<f64>,
 ) {
+
+    // Test, wanna make sure this isn't going at 60 fps as well
+    let now = time.elapsed_seconds_f64();
+    let delta = now - *last_run;
+    println!("Time since last run: {:.3} seconds", delta);
+    *last_run = now;
+
+    // IT IS GOING AT 60 FPS, FUCK FIXME FIXME FIXME
+
+    // So once every sixty seconds this is 
+
 
     let mut esail = esail_query.single_mut();
 

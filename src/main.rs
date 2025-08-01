@@ -5,6 +5,8 @@ use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 
 use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
+use bevy::window::PresentMode;
+use bevy::render::settings::WgpuSettings;
 
 mod components;
 mod graphics;
@@ -29,7 +31,17 @@ fn main() {
         .insert_resource(solar_wind::SolarWind{..Default::default()})
         .insert_resource(resources::SimulationParameters{..Default::default()})
 
-        .add_plugins(DefaultPlugins)
+        //.add_plugins(DefaultPlugins)
+        .add_plugins(
+            DefaultPlugins.set(WindowPlugin {
+                primary_window: Some(Window {
+                    // ← uncapped, may tear
+                    present_mode: PresentMode::Immediate,
+                    ..default()
+                }),
+                ..default()
+            })
+        )
         .add_plugins(EguiPlugin)
         .add_plugins(graphics::GraphicsPlugin)
         .add_plugins(gui::GUIPlugin)
@@ -39,7 +51,9 @@ fn main() {
         .add_plugins(user_input::UserInputPlugin)
         //.add_plugins(WorldInspectorPlugin::new())
 
+        // For unlimited fps
         .add_plugins(FrameTimeDiagnosticsPlugin::default())
+
 
         .run();
 }
