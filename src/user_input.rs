@@ -28,6 +28,7 @@ fn handle_keys (
     keyboard:           Res<Input<KeyCode>>,
     mut esail_query:    Query<&mut spacecraft::esail::ESail>,
     sail_event:         EventWriter<spacecraft::esail::SailExtended>,
+    mut spacecraft_parameters:  ResMut<spacecraft::SpacecraftParameters>,
 ) {
 
     let mut esail = esail_query.single_mut();
@@ -36,7 +37,8 @@ fn handle_keys (
 
         println!("'T' is for Testing");
 
-        esail.extend_sail(sail_event);
+        //esail.extend_sail(sail_event);
+        esail.extend_sail(sail_event, &mut spacecraft_parameters);
     }
 }
 

@@ -112,9 +112,15 @@ impl SpacecraftParameters {
         return number_of_elements.value as i32;
     }
 
+    // FIXME Wait, I changed self.tether_length and nothing happened? Because this is what's used?
+    // Is it correct, shouldn't it use tether_length also?
     pub fn segment_length (&self) -> quantities::Length {
         let segment_length: f64 = 1.0 / self.tether_resolution.value;
-        return quantities::Length::new::<length::meter>(segment_length);
+        //return quantities::Length::new::<length::meter>(segment_length);
+        return quantities::Length::new::<length::meter>(
+            segment_length *
+            self.tether_length.get::<length::meter>(),
+        )
     }
 
     pub fn segment_mass(&self) -> quantities::Mass {

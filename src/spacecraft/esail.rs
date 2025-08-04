@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use uom::si::*;
 use uom::si::f64 as quantities;  
 
-use crate::{ physics };
+use crate::{ physics, spacecraft };
 
 use physics::position_vector::PositionVector;
 use physics::velocity_vector::VelocityVector;
@@ -23,22 +23,33 @@ pub struct ESail {
 
 impl ESail {
 
+    // What if I tried to change the distance between elements when extending?
+    // That or extending until you get to a multiple of the supposed length,
+    // then spawn a new ball
+
     pub fn extend_sail (
         &mut self,
         mut sail_event:   EventWriter<SailExtended>,
+
+        // Test
+        mut spacecraft_parameters:  &mut ResMut<spacecraft::SpacecraftParameters>,
     ) {
 
         let Some(object) = self.rk_objects.get(0) else { panic!() };
 
         //self.rk_objects.push(object.clone());
 
-        // Trying to put it at the beginning
-        self.rk_objects.insert(0, object.clone());
+        // Trying to put it at the beginning instead 
+        //self.rk_objects.insert(0, object.clone());
 
-        println!(
-            "Number of elements after extension: {}", 
-            self.rk_objects.len()
-        ); 
+        //println!(
+        //    "Number of elements after extension: {}", 
+        //    self.rk_objects.len()
+        //); 
+
+        // Test: trying to extend tether_length instead
+        // Not doing anything?
+        spacecraft_parameters.tether_length += quantities::Length::new::<length::meter>(0.5);
 
         sail_event.send(SailExtended);
     }
