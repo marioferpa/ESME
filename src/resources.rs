@@ -25,7 +25,7 @@ pub struct SimulationParameters {
 impl Default for SimulationParameters {
     fn default() -> SimulationParameters {
         SimulationParameters {
-            iterations:         100,    
+            iterations:         1000,    
             //timestep:           quantities::Time::new::<time::second>(1.0/60.0),
             timestep:           quantities::Time::new::<time::second>(1.0/1000.0),
             leftover_time:      0.0,

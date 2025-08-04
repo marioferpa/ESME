@@ -35,14 +35,10 @@ pub fn runge_kutta_simulation (
 ) {
 
     // Test, wanna make sure this isn't going at 60 fps as well
-    let now = time.elapsed_seconds_f64();
-    let delta = now - *last_run;
-    println!("Time since last run: {:.3} seconds", delta);
-    *last_run = now;
-
-    // IT IS GOING AT 60 FPS, FUCK FIXME FIXME FIXME
-
-    // So once every sixty seconds this is 
+    //let now = time.elapsed_seconds_f64();
+    //let delta = now - *last_run;
+    //println!("Time since last run: {:.3} seconds", delta);
+    //*last_run = now;
 
 
     let mut esail = esail_query.single_mut();
@@ -338,9 +334,10 @@ fn calculate_restoring_forces (
         //let elongation = spacecraft_parameters.segment_length() -
         //    distance_vector.clone().length(); 
 
-        // Trying this advice from Pekka
         let elongation = (
             spacecraft_parameters.segment_length() - 
+            //distance_vector.clone().length()
+            // Trying this advice from Pekka (no force when elongation smaller than normal)
             distance_vector.clone().length()).min(quantities::Length::new::<meter>(0.0)
         );
 
@@ -348,7 +345,7 @@ fn calculate_restoring_forces (
 
 
         // Made-up k value!! FIXME
-        let force   = quantities::Force::new::<newton>(0.3);    // Better than 0.15 except for the last elements
+        let force   = quantities::Force::new::<newton>(0.5);    // 0.3 better than 0.15 except for the last elements
         let length  = quantities::Length::new::<meter>(1.0);
         let k = force / length;
 

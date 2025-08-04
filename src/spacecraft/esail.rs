@@ -18,43 +18,22 @@ pub struct SailExtended;
 #[derive(Component)]
 pub struct ESail {  
     pub origin:     PositionVector, 
-    //pub elements:   Vec<VerletObject>,  // Needed?
     pub rk_objects: Vec<RungeKuttaObject>,
 }
 
 impl ESail {
 
-    // I think this is working correctly with the new rk_objects, it's the
-    // drawing part that is outdated now (don't see why, however)
     pub fn extend_sail (
         &mut self,
         mut sail_event:   EventWriter<SailExtended>,
     ) {
 
-        // Needed?
-        //if self.rk_objects.len() == 1 { return };
-
-
-
-        // Wait how does this work, is it correct?
-        // It's copying the second object and putting the copy in first
-        // position?
-
-
-        //if let Some(second_object) = self.rk_objects.get(1).cloned() {
-
-        //    self.rk_objects.insert(1, second_object);
-        //}
-
-        // What if I copy the first and put it second?
-        // Still all elements get propelled after I do this
-
         let Some(object) = self.rk_objects.get(0) else { panic!() };
 
-        // Transform goes to -inf in both cases...
+        //self.rk_objects.push(object.clone());
 
-        //self.rk_objects.insert(1, object.clone());
-        self.rk_objects.push(object.clone());
+        // Trying to put it at the beginning
+        self.rk_objects.insert(0, object.clone());
 
         println!(
             "Number of elements after extension: {}", 
@@ -63,6 +42,7 @@ impl ESail {
 
         sail_event.send(SailExtended);
     }
+
 
     //pub fn verlet_angle (&self, index: usize) -> 
     //    (quantities::Angle, PositionVector) {
